@@ -224,8 +224,8 @@ namespace MyApiNetCore6.Controllers
                     {
                         foreach (v_ct_PhieuNhap_ChiTiet itm in Input.lstct_PhieuNhap_ChiTiet)
                         {
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                            itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                            itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
                             itm.ID_PHIEUNHAP = Input.ID;
                             var objdm_HangHoa_Kho = _context.dm_HangHoa_Kho!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Input.ID_KHO);
                             if (objdm_HangHoa_Kho != null)
@@ -251,7 +251,7 @@ namespace MyApiNetCore6.Controllers
                             }
 
                         }
-                        Input.TONGTHANHTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.THANHTIEN),0);
+                        Input.TONGTHANHTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.THANHTIEN), 0);
                         Input.TONGTIENGIAMGIA = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGTIENGIAMGIA), 0);
                         Input.TONGTIENVAT = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGTIENVAT), 0);
                         Input.TONGTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGCONG), 0);
@@ -387,15 +387,15 @@ namespace MyApiNetCore6.Controllers
                         });
                     }
                 }
-                 ct_PhieuDatHangNCC objct_PhieuDatHangNCC = new ct_PhieuDatHangNCC();
+                ct_PhieuDatHangNCC objct_PhieuDatHangNCC = new ct_PhieuDatHangNCC();
                 using var transaction = _context.Database.BeginTransaction();
                 {
                     if (Input.lstct_PhieuNhap_ChiTiet != null)
                     {
                         foreach (var itm in Input.lstct_PhieuNhap_ChiTiet)
                         {
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                            itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                            itm.TONGCONG = itm.THANHTIEN  + itm.TONGTIENVAT;
                             var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Input.ID_KHO);
                             if (objdm_HangHoa_Kho != null)
                             {
@@ -416,7 +416,7 @@ namespace MyApiNetCore6.Controllers
                             itm.ID_PHIEUNHAP = Input.ID;
                             _context.ct_PhieuNhap_ChiTiet!.Add(itm);
                         }
-                        Input.TONGTHANHTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.THANHTIEN),0);
+                        Input.TONGTHANHTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.THANHTIEN), 0);
                         Input.TONGTIENGIAMGIA = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGTIENGIAMGIA), 0);
                         Input.TONGTIENVAT = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGTIENVAT), 0);
                         Input.TONGTIEN = Math.Round(Input.lstct_PhieuNhap_ChiTiet.Sum(s => s.TONGCONG), 0);
@@ -460,7 +460,7 @@ namespace MyApiNetCore6.Controllers
                             {
                                 ChungTu = String.Join(";", lstPhieuNhap.Select(e => e.MAPHIEU));
                             }
-                            objct_PhieuDatHangNCC.CHUNGTUKEMTHEO = "(" + Input.MAPHIEU + (string.IsNullOrEmpty(ChungTu) ? "": ";") + ChungTu + ")";
+                            objct_PhieuDatHangNCC.CHUNGTUKEMTHEO = "(" + Input.MAPHIEU + (string.IsNullOrEmpty(ChungTu) ? "" : ";") + ChungTu + ")";
                             _context.Entry(objct_PhieuDatHangNCC).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                         }
                     }
@@ -470,20 +470,24 @@ namespace MyApiNetCore6.Controllers
                 if (Input.CHUNGTUKEMTHEO != null && Input.CHUNGTUKEMTHEO.StartsWith("NCC-") && objct_PhieuDatHangNCC != null && !string.IsNullOrEmpty(objct_PhieuDatHangNCC.ID))
                 {
                     var result = GetQuantityCheck(Input.CHUNGTUKEMTHEO);
-                    if(result != null)
+                    using var transaction1 = _context.Database.BeginTransaction();
                     {
-                        var TongSo = result.Sum(s => s.Status);
-                        var OKCar = await _context.ct_PhieuDatHangNCC!.FirstOrDefaultAsync(e => e.LOC_ID == Input.LOC_ID && e.MAPHIEU == Input.CHUNGTUKEMTHEO);
-                        //if ()
+                        if (result != null)
                         {
-                            if(OKCar != null)
+                            var TongSo = result.Sum(s => s.Status);
+                            var OKCar = await _context.ct_PhieuDatHangNCC!.FirstOrDefaultAsync(e => e.LOC_ID == Input.LOC_ID && e.MAPHIEU == Input.CHUNGTUKEMTHEO);
+                            //if ()
                             {
-                                OKCar.ISHOANTAT = TongSo > 0 ? false : true;
-                                _context.Entry(OKCar).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                                AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
+                                if (OKCar != null)
+                                {
+                                    OKCar.ISHOANTAT = TongSo > 0 ? false : true;
+                                    _context.Entry(OKCar).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
+                                }
                             }
                         }
                     }
+                    transaction1.Commit();
                     v_ct_PhieuDatHangNCC ct_PhieuNhap = new v_ct_PhieuDatHangNCC();
                     ct_PhieuNhap.lstct_PhieuNhap_ChiTiet = new List<v_ct_PhieuDatHangNCC_ChiTiet>();
                     SP_Parameter SP_Parameter = new SP_Parameter();
@@ -684,7 +688,7 @@ namespace MyApiNetCore6.Controllers
                                 if (lstPhieuNhap != null && lstPhieuNhap.Count() > 0)
                                 {
                                     ChungTu = String.Join(";", lstPhieuNhap.Select(e => e.MAPHIEU));
-                                    itm.CHUNGTUKEMTHEO = "("+ (string.IsNullOrEmpty(ChungTu) ? "" : ";") + ChungTu + ")";
+                                    itm.CHUNGTUKEMTHEO = "(" + (string.IsNullOrEmpty(ChungTu) ? "" : ";") + ChungTu + ")";
                                 }
                                 _context.Entry(itm).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                             }
@@ -712,7 +716,7 @@ namespace MyApiNetCore6.Controllers
                         }
                     }
                 }
-                    
+
                 return Ok(new ApiResponse
                 {
                     Success = true,
@@ -733,30 +737,36 @@ namespace MyApiNetCore6.Controllers
         private string strTable = "ct_PhieuNhap";
         private bool InputExistsID(string LOC_ID, string ID)
         {
+
             //bool bolCheckMA = false;
             //while (!bolCheckMA)
             //{
-            //    var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).FirstOrDefault();
-            //    if (check != null)
+            //    using var transaction = _context.Database.BeginTransaction();
             //    {
-            //        if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
+            //        var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).FirstOrDefault();
+            //        if (check != null)
             //        {
-            //            _context.AspNetRequest!.Remove(check);
+            //            if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
+            //            {
+            //                _context.AspNetRequest!.Remove(check);
+            //                _context.SaveChanges();
+            //            }
+            //        }
+            //        else
+            //        {
+            //            AspNetRequest newAspNetRequest = new AspNetRequest();
+            //            newAspNetRequest.ID = ID;
+            //            newAspNetRequest.NAME = strTable;
+            //            newAspNetRequest.THOIGIAN = DateTime.Now;
+            //            newAspNetRequest.LOC_ID = LOC_ID;
+            //            _context.AspNetRequest!.Add(newAspNetRequest);
             //            _context.SaveChanges();
+            //            bolCheckMA = true;
             //        }
             //    }
-            //    else
-            //    {
-            //        AspNetRequest newAspNetRequest = new AspNetRequest();
-            //        newAspNetRequest.ID = ID;
-            //        newAspNetRequest.NAME = strTable;
-            //        newAspNetRequest.THOIGIAN = DateTime.Now;
-            //        newAspNetRequest.LOC_ID = LOC_ID;
-            //        _context.AspNetRequest!.Add(newAspNetRequest);
-            //        _context.SaveChanges();
-            //        bolCheckMA = true;
-            //    }
+            //    transaction.Commit();
             //}
+
             return _context.ct_PhieuNhap!.Any(e => e.LOC_ID == LOC_ID && e.ID == ID);
         }
 

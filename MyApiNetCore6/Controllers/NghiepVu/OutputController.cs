@@ -258,8 +258,8 @@ namespace MyApiNetCore6.Controllers
                         foreach (v_ct_PhieuXuat_ChiTiet itm in Output.lstct_PhieuXuat_ChiTiet)
                         {
                             //Output.TONGTIENTINHTHUE += itm.TONGTIENGIAMGIA;  
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                            itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                            itm.TONGCONG = itm.THANHTIEN  + itm.TONGTIENVAT;
                             itm.ID_PHIEUXUAT = Output.ID;
                             var objdm_HangHoa_Kho = _context.dm_HangHoa_Kho!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Output.ID_KHO);
                             if (objdm_HangHoa_Kho != null)
@@ -277,12 +277,12 @@ namespace MyApiNetCore6.Controllers
                                 }
                                 else
                                 {
-                                    
+
                                     string Strsoluong = "";
                                     if (objdm_HangHoa != null && itm.TYLE_QD >= 1)
                                     {
                                         int soluong = 0;
-                                        if(itm.TYLE_QD > 1)
+                                        if (itm.TYLE_QD > 1)
                                         {
                                             soluong = Convert.ToInt32(objdm_HangHoa_Kho.QTY) / Convert.ToInt32(itm.TYLE_QD);
                                             if (soluong > 0)
@@ -301,9 +301,9 @@ namespace MyApiNetCore6.Controllers
                                         {
                                             Strsoluong = objdm_HangHoa_Kho.QTY.ToString("N0") + " " + objdm_HangHoa.NAME_DVT;
                                             StrHetSoLuong += "Sản phẩm " + itm.NAME + " không đủ tồn kho!" + Strsoluong + Environment.NewLine;
-                                        }    
+                                        }
                                     }
-                                }   
+                                }
                             }
                             else
                             {
@@ -320,7 +320,7 @@ namespace MyApiNetCore6.Controllers
                             }
                         }
                         Output.TONGTHANHTIEN = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.THANHTIEN), 0);
-                        Output.TONGTIENGIAMGIA = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGTIENGIAMGIA),0);
+                        Output.TONGTIENGIAMGIA = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGTIENGIAMGIA), 0);
                         Output.TONGTIENVAT = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGTIENVAT), 0);
                         Output.TONGTIEN = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGCONG), 0);
                         if (!string.IsNullOrEmpty(StrHetSoLuong))
@@ -332,11 +332,11 @@ namespace MyApiNetCore6.Controllers
                                 Data = ""
                             });
                         }
-                            
+
                     }
 
                     _context.Entry(Output).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
+                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
                 }
                 transaction.Commit();
 
@@ -416,7 +416,7 @@ namespace MyApiNetCore6.Controllers
                         CheckValue = true
                     });
                 }
-              
+
                 using var transaction = _context.Database.BeginTransaction();
                 {
                     if (Output.lstct_PhieuXuat_ChiTiet != null)
@@ -424,8 +424,8 @@ namespace MyApiNetCore6.Controllers
                         string StrHetSoLuong = "";
                         foreach (var itm in Output.lstct_PhieuXuat_ChiTiet)
                         {
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                            itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                            itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
                             //Output.TONGTIENTINHTHUE += itm.TONGTIENGIAMGIA;
                             var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Output.ID_KHO);
                             if (objdm_HangHoa_Kho != null)
@@ -443,7 +443,7 @@ namespace MyApiNetCore6.Controllers
                                 }
                                 else
                                 {
-                                    
+
                                     string Strsoluong = "";
                                     if (objdm_HangHoa != null && itm.TYLE_QD >= 1)
                                     {
@@ -472,7 +472,7 @@ namespace MyApiNetCore6.Controllers
 
 
                                 }
-                                
+
                             }
                             else
                             {
@@ -501,12 +501,12 @@ namespace MyApiNetCore6.Controllers
                                 Data = ""
                             });
                         }
-                        Output.TONGTHANHTIEN = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.THANHTIEN),0);
+                        Output.TONGTHANHTIEN = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.THANHTIEN), 0);
                         Output.TONGTIENGIAMGIA = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGTIENGIAMGIA), 0);
                         Output.TONGTIENVAT = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGTIENVAT), 0);
                         Output.TONGTIEN = Math.Round(Output.lstct_PhieuXuat_ChiTiet.Sum(s => s.TONGCONG), 0);
                     }
-                    
+
                     bool bolCheckMA = false;
                     while (!bolCheckMA)
                     {
@@ -522,9 +522,9 @@ namespace MyApiNetCore6.Controllers
                         }
                     }
                     _context.ct_PhieuXuat!.Add(Output);
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
+                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
                 }
-                
+
                 transaction.Commit();
 
                 v_ct_PhieuXuat ct_PhieuXuat = new v_ct_PhieuXuat();
@@ -590,7 +590,7 @@ namespace MyApiNetCore6.Controllers
                         Data = ""
                     });
                 }
-                    
+
                 using var transaction = _context.Database.BeginTransaction();
                 {
                     var lstPhieuGiaoHang_ChiTiet = await _context.ct_PhieuGiaoHang_ChiTiet!.Where(e => e.LOC_ID == Output.LOC_ID && e.ID_PHIEUXUAT == Output.ID).ToListAsync();
@@ -622,7 +622,7 @@ namespace MyApiNetCore6.Controllers
                         return Ok(new ApiResponse
                         {
                             Success = false,
-                            Message = "Có 'Phiếu Thu "+ ChungTu + "' liên quan tới " + Output.MAPHIEU + "!",
+                            Message = "Có 'Phiếu Thu " + ChungTu + "' liên quan tới " + Output.MAPHIEU + "!",
                             Data = ""
                         });
                     }
@@ -633,7 +633,7 @@ namespace MyApiNetCore6.Controllers
                         return Ok(new ApiResponse
                         {
                             Success = false,
-                            Message = "Có 'Phiếu Nhập "+ ChungTu + "' liên quan tới " + Output.MAPHIEU + "!",
+                            Message = "Có 'Phiếu Nhập " + ChungTu + "' liên quan tới " + Output.MAPHIEU + "!",
                             Data = ""
                         });
                     }
@@ -665,12 +665,12 @@ namespace MyApiNetCore6.Controllers
                         }
                     }
                     var lstPhieuDatHang = await _context.ct_PhieuDatHang!.Where(e => e.LOC_ID == Output.LOC_ID && e.ID_PHIEUXUAT == Output.ID).ToListAsync();
-                    foreach(var itm in lstPhieuDatHang)
+                    foreach (var itm in lstPhieuDatHang)
                     {
                         itm.ID_PHIEUXUAT = "";
                     }
                     _context.ct_PhieuXuat!.Remove(Output);
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
+                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
                 }
                 transaction.Commit();
                 return Ok(new ApiResponse
@@ -693,30 +693,36 @@ namespace MyApiNetCore6.Controllers
         private string strTable = "ct_PhieuXuat";
         private bool OutputExistsID(string LOC_ID, string ID)
         {
+
             //bool bolCheckMA = false;
             //while (!bolCheckMA)
             //{
-            //    var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).FirstOrDefault();
-            //    if (check != null)
+            //    using var transaction = _context.Database.BeginTransaction();
             //    {
-            //        if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
+            //        var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).FirstOrDefault();
+            //        if (check != null)
             //        {
-            //            _context.AspNetRequest!.Remove(check);
+            //            if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
+            //            {
+            //                _context.AspNetRequest!.Remove(check);
+            //                _context.SaveChanges();
+            //            }
+            //        }
+            //        else
+            //        {
+            //            AspNetRequest newAspNetRequest = new AspNetRequest();
+            //            newAspNetRequest.ID = ID;
+            //            newAspNetRequest.NAME = strTable;
+            //            newAspNetRequest.THOIGIAN = DateTime.Now;
+            //            newAspNetRequest.LOC_ID = LOC_ID;
+            //            _context.AspNetRequest!.Add(newAspNetRequest);
             //            _context.SaveChanges();
+            //            bolCheckMA = true;
             //        }
             //    }
-            //    else
-            //    {
-            //        AspNetRequest newAspNetRequest = new AspNetRequest();
-            //        newAspNetRequest.ID = ID;
-            //        newAspNetRequest.NAME = strTable;
-            //        newAspNetRequest.THOIGIAN = DateTime.Now;
-            //        newAspNetRequest.LOC_ID = LOC_ID;
-            //        _context.AspNetRequest!.Add(newAspNetRequest);
-            //        _context.SaveChanges();
-            //        bolCheckMA = true;
-            //    }
+            //    transaction.Commit();
             //}
+
             return _context.ct_PhieuXuat!.Any(e => e.LOC_ID == LOC_ID && e.ID == ID);
         }
     }

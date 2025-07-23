@@ -1190,6 +1190,27 @@ namespace MyApiNetCore6.Controllers
         }
         #endregion
 
+        #region
+        [HttpPost(API.Sp_Get_DanhSachHangHoa_BanChay)]
+        public async Task<IActionResult> Sp_Get_DanhSachHangHoa_BanChay(SP_Parameter_Report sp_Parameter)
+        {
+            try
+            {
+                Dictionary<string, object> procParams = GetSP_Parameter_Report(sp_Parameter);
+                return Ok(await Execute_StoredProc<Sp_Get_DanhSachHangHoa_Result>(API.Sp_Get_DanhSachHangHoa_BanChay, procParams));
+            }
+            catch (Exception ex)
+            {
+                return Ok(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = ""
+                });
+            }
+        }
+        #endregion
+
         #region Qũy tiền
         [HttpPost(API.Sp_Get_ThongKeQuyTien)]
         public async Task<IActionResult> Sp_Get_ThongKeQuyTien(SP_Parameter sp_Parameter)
@@ -1236,6 +1257,7 @@ namespace MyApiNetCore6.Controllers
             ApiResponse apiResponse = new ApiResponse();
             List<T> objList = new List<T>();
             DbConnection conn = _context.Database.GetDbConnection();
+            
             try
             {
                 if (conn.State != ConnectionState.Open)
@@ -1243,6 +1265,7 @@ namespace MyApiNetCore6.Controllers
 
                 await using (DbCommand command = conn.CreateCommand())
                 {
+                    command.CommandTimeout = 120;
                     command.CommandText = storedProcName;
                     command.CommandType = CommandType.StoredProcedure;
 

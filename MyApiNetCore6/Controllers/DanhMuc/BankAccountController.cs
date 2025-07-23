@@ -16,6 +16,9 @@ using NuGet.Common;
 using DatabaseTHP.Class;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Net;
+using System.Text;
 
 namespace MyApiNetCore6.Controllers
 {
@@ -31,6 +34,46 @@ namespace MyApiNetCore6.Controllers
             _context = context;
             _configuration = configuration;
         }
+
+        //[HttpGet]
+        //[Authorize(Roles = UserRoles.User)]
+        //public async Task<IActionResult> GetBankAccountAsync()
+        //{
+        //    try
+        //    {
+        //        IList<Datum> bankList = new List<Datum>();
+
+        //        using (var client = new WebClient())
+        //        {
+        //            var rawData = await client.DownloadDataTaskAsync("https://api.vietqr.io/v2/banks");
+        //            var jsonString = Encoding.UTF8.GetString(rawData);
+
+        //            var bankResponse = JsonConvert.DeserializeObject<Bank>(jsonString);
+        //            if (bankResponse?.data != null)
+        //            {
+        //                bankList = bankResponse.data;
+        //            }
+        //        }
+
+        //        return Ok(new ApiResponse
+        //        {
+        //            Success = true,
+        //            Message = "Success",
+        //            Data = bankList
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Ok(new ApiResponse
+        //        {
+        //            Success = false,
+        //            Message = $"Error: {ex.Message}",
+        //            Data = null
+        //        });
+        //    }
+        //}
+
+
         [HttpGet("{LOC_ID}")]
         [Authorize(Roles = UserRoles.User)]
         public async Task<IActionResult> GetBankAccount(string LOC_ID)

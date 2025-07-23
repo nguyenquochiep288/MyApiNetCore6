@@ -287,8 +287,8 @@ namespace MyApiNetCore6.Controllers
 
                         foreach (v_ct_PhieuDatHang_ChiTiet itm in Deposit.lstct_PhieuDatHang_ChiTiet)
                         {
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                            itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                            itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
                             itm.ID_PHIEUDATHANG = Deposit.ID;
                             var objdm_HangHoa_Kho = _context.dm_HangHoa_Kho!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Deposit.ID_KHO);
                             if (objdm_HangHoa_Kho != null)
@@ -459,8 +459,8 @@ namespace MyApiNetCore6.Controllers
                             string StrHetSoLuong = "";
                             foreach (var itm in Deposit.lstct_PhieuDatHang_ChiTiet)
                             {
-                                itm.THANHTIEN = itm.SOLUONG * itm.DONGIA;
-                                itm.TONGCONG = itm.THANHTIEN - itm.TONGTIENGIAMGIA + itm.TONGTIENVAT;
+                                itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
+                                itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
                                 var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Deposit.ID_KHO);
                                 if (objdm_HangHoa_Kho != null)
                                 {
@@ -940,26 +940,35 @@ namespace MyApiNetCore6.Controllers
             //bool bolCheckMA = false;
             //while (!bolCheckMA)
             //{
-            //    var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
-            //    if (check != null)
+            //    using var transaction = _context.Database.BeginTransaction();
             //    {
-            //    }
-            //    else
-            //    {
-            //        AspNetRequest newAspNetRequest = new AspNetRequest();
-            //        newAspNetRequest.ID = ID;
-            //        newAspNetRequest.NAME = strTable;
-            //        newAspNetRequest.THOIGIAN = DateTime.Now;
-            //        newAspNetRequest.LOC_ID = LOC_ID;
-            //        _context.AspNetRequest!.Add(newAspNetRequest);
-            //        AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog();
-            //        _context.SaveChanges();
-            //        check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
-            //        if (check != null && check.ID == ID)
+            //        var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
+            //        if (check != null)
             //        {
-            //            bolCheckMA = true;
+            //            if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
+            //            {
+            //                _context.AspNetRequest!.Remove(check);
+            //                _context.SaveChanges();
+            //            }
+            //        }
+            //        else
+            //        {
+            //            AspNetRequest newAspNetRequest = new AspNetRequest();
+            //            newAspNetRequest.ID = ID;
+            //            newAspNetRequest.NAME = strTable;
+            //            newAspNetRequest.THOIGIAN = DateTime.Now;
+            //            newAspNetRequest.LOC_ID = LOC_ID;
+            //            _context.AspNetRequest!.Add(newAspNetRequest);
+            //            AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog();
+            //            _context.SaveChanges();
+            //            check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
+            //            if (check != null && check.ID == ID)
+            //            {
+            //                bolCheckMA = true;
+            //            }
             //        }
             //    }
+            //    transaction.Commit();
             //}
             return _context.ct_PhieuDatHang!.Any(e => e.LOC_ID == LOC_ID && e.ID == ID);
         }
