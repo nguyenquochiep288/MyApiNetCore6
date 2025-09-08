@@ -21,6 +21,7 @@ namespace MyApiNetCore6.Data
         public virtual DbSet<AuditLog> AuditLog { get; set; }
         public virtual DbSet<view_dm_BangLuong> view_dm_BangLuong { get; set; }
         public virtual DbSet<dm_BangLuong> dm_BangLuong { get; set; }
+        public virtual DbSet<dm_TaiKhoan_Misa> dm_TaiKhoan_Misa { get; set; }
         public virtual DbSet<dm_BangLuong_ChiTiet> dm_BangLuong_ChiTiet { get; set; }
         public virtual DbSet<view_nv_PhepNam> view_nv_PhepNam { get; set; }
         public virtual DbSet<dm_DiaDiemChamCong> dm_DiaDiemChamCong { get; set; }
@@ -286,6 +287,8 @@ namespace MyApiNetCore6.Data
      .HasKey(m => new { m.LOC_ID, m.ID });
             modelBuilder.Entity<AspNetRequest>()
      .HasKey(m => new { m.LOC_ID, m.ID });
+            modelBuilder.Entity<dm_TaiKhoan_Misa>()
+    .HasKey(m => new { m.LOC_ID, m.ID });
         }
     }
 }

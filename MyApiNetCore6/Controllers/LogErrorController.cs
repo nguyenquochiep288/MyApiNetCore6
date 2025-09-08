@@ -32,9 +32,10 @@ namespace MyApiNetCore6.Controllers
         public LogErrorController(dbTrangHiepPhatContext context, IConfiguration configuration)
         {
             _context = context;
-            _context = context;
             _configuration = configuration;
         }
+
+
         [HttpGet("{LOC_ID}")]
         [Authorize(Roles = UserRoles.User)]
         public async Task<IActionResult> GetLogError(string LOC_ID)
