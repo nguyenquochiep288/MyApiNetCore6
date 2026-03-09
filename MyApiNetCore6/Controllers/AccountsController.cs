@@ -1,592 +1,613 @@
-Ôªøusing DatabaseTHP.Class;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using MyApiNetCore6.Data;
-using MyApiNetCore6.Models;
-using MyApiNetCore6.Repositories;
-using System.IdentityModel.Tokens.Jwt;
-using System.Reflection;
-using System.Security.Claims;
+Ôªøusing System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
 using System.Text;
-using DatabaseTHP;
-using System.ComponentModel.DataAnnotations;
+using System.Windows.Forms;
+using DevExpress.XtraEditors;
+ 
+using Ionic.Zip;
+using System.IO;
+using TS24.HD.BaseMethod;
+using System.Reflection;
+using TS24.TO.Commons;
 
-namespace MyApiNetCore6.Controllers
+namespace TS24.HD.BKupRestore
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AccountsController : ControllerBase
+    public partial class Restore : XtraForm
     {
-        private readonly dbApplicationUserContext _context;
-        private readonly UserManager<ApplicationUser> userManager;
-        private readonly RoleManager<IdentityRole> roleManager;
-        private readonly IConfiguration _configuration;
-        private readonly IAccountRepository accountRepo;
-
-        private readonly dbTrangHiepPhatContext _contextTHP;
-        public AccountsController(dbApplicationUserContext context, dbTrangHiepPhatContext contextTHP, IAccountRepository repo, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        public Restore()
         {
-            accountRepo = repo;
-            this.userManager = userManager;
-            this.roleManager = roleManager;
-            _configuration = configuration;
-            //dbTrangHiepPhat = new DatabaseTHP.dbTrangHiepPhat(_configuration.GetConnectionString("TrangHiepPhat"));
-            _context = context;
-            _contextTHP = contextTHP;
-            //Another Way
-
-            //Assembly assem2 = Assembly.Load("DatabaseTHP");
-
-
-
-            ////Get List of Class Name
-
-            //Type[] types = assem2.GetTypes();
-
-            //using var transaction = _contextTHP.Database.BeginTransaction();
-            //string askey = "";
-            //string strpublic = "";
-            //foreach (Type tc in types)
-            //{
-
-            //    var web_NhomQuyen = _contextTHP.web_NoteClass!.FirstOrDefault(x => x.NAMECLASS.Equals(tc.Name));
-            //    if (tc.FullName != null && tc.FullName.Split(".").Count() > 2)
-            //        continue;
-
-
-            //    var web_NoteTable = _contextTHP.web_NoteTable!.FirstOrDefault(x => x.NAMECLASS.Equals(tc.Name));
-            //    if (web_NoteTable == null && tc.Name != "dbTrangHiepPhat")
-            //    {
-            //        web_NoteTable newweb_NoteTable = new web_NoteTable();
-            //        newweb_NoteTable.NAMECLASS = tc.Name;
-            //        _contextTHP.web_NoteTable!.Add(newweb_NoteTable);
-            //    }
-            //    //if (tc.IsAbstract)
-
-            //    //{
-
-            //    //    Response.Write("Abstract Class : " + tc.Name);
-
-            //    //}
-
-            //    //else if (tc.IsPublic)
-
-            //    //{
-
-            //    //    Response.Write("Public Class : " + tc.Name);
-
-            //    //}
-
-            //    //else if (tc.IsSealed)
-
-            //    //{
-
-            //    //    Response.Write("Sealed Class : " + tc.Name);
-
-            //    //}
-
-
-            //    string msg = "";
-            //    var properties = tc.GetProperties();
-            //    var property = properties.Where(p => p.GetCustomAttributes(false)
-            //                .Any(a => a.GetType() == typeof(KeyAttribute))).ToList();
-
-            //    if (property != null)
-            //    {
-            //        foreach (PropertyInfo itm in property)
-            //        {
-            //            msg += ",m." + itm.Name.ToString() + ",";
-            //        }
-            //    }
-            //    if (!string.IsNullOrEmpty(msg))
-            //    {
-            //        askey += "modelBuilder.Entity<" + tc.Name + ">()" + Environment.NewLine;
-            //        askey += ".HasKey(m => new { " + msg.Substring(1) + " });" + Environment.NewLine;
-            //    }
-
-            //    strpublic += "public virtual DbSet<" + tc.Name + ">? " + tc.Name + "s { get; set; }" + Environment.NewLine;
-            //    if (tc.Name != "dbTrangHiepPhat" && (tc.Name == "dm_BangLuong" || tc.Name == "dm_BangLuong_ChiTiet"))
-            //    {
-            //        int i = 1;
-            //        foreach (PropertyInfo itmPropertyInfo in properties)
-            //        {
-            //            var web_NoteClass = _contextTHP.web_NoteClass!.FirstOrDefault(x => x.NAMECLASS.Equals(tc.Name) && x.NAMECOLUMN.Equals(itmPropertyInfo.Name));
-            //            if (web_NoteClass == null)
-            //            {
-            //                web_NoteClass newweb_NoteClass = new web_NoteClass();
-            //                newweb_NoteClass.NAMESPACE = "DatabaseTHP";
-            //                newweb_NoteClass.NAMECLASS = tc.Name;
-            //                newweb_NoteClass.NAMECOLUMN = itmPropertyInfo.Name;
-            //                newweb_NoteClass.DISPLAYNAME = "";
-            //                if (itmPropertyInfo.Attributes.GetType() == typeof(KeyAttribute))
-            //                    newweb_NoteClass.ISPRIMARYKEY = msg.Contains(",m." + itmPropertyInfo.Name);
-            //                else
-            //                    newweb_NoteClass.ISPRIMARYKEY = false;
-            //                newweb_NoteClass.ISREQUIRED = true;
-            //                newweb_NoteClass.ISCREATE = true;
-            //                newweb_NoteClass.ISEDIT = !newweb_NoteClass.ISPRIMARYKEY;
-            //                newweb_NoteClass.ISVIEW = !newweb_NoteClass.ISPRIMARYKEY;
-            //                newweb_NoteClass.ISSEARCH = !newweb_NoteClass.ISPRIMARYKEY;
-            //                newweb_NoteClass.STT = i;
-            //                _contextTHP.web_NoteClass!.Add(newweb_NoteClass);
-            //                _contextTHP.SaveChanges();
-            //            }
-            //            else
-            //            {
-            //                web_NoteClass.STT = i;
-            //                _contextTHP.Entry(web_NoteClass).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-            //                _contextTHP.SaveChanges();
-            //            }
-            //            i += 1;
-            //        }
-            //    }
-
-
-            //    //Get List of Method Names of Class
-
-            //    //MemberInfo[] methodName = tc.GetMethods();
-
-            //    //foreach (MemberInfo method in methodName)
-            //    //{
-
-
-            //    //    if (method.ReflectedType.IsPublic)
-
-            //    //    {
-
-            //    //        Response.Write("Public Method : " + method.Name.ToString());
-
-            //    //    }
-
-            //    //    else
-
-            //    //    {
-
-            //    //        Response.Write("Non-Public Method : " + method.Name.ToString());
-
-            //    //    }
-
-            //    //}
-            //}
-            //transaction.Commit();
-        }
-        [HttpPut("ChangeUser/{id}")]
-        public async Task<IActionResult> ChangeUser([FromBody] SignUpModel signUpModel, string id)
-        {
-            var userExist = await userManager.FindByIdAsync(id);
-            if (userExist != null)
-            {
-                var userExist1 = await userManager.FindByNameAsync(signUpModel.UserName);
-                if (userExist1 != null && userExist1.Id != id)
+            InitializeComponent();
+            lnkGoogle.OpenLink += (o, e) => {
+                var g = BKupGoogleDrive.Init();
+                if (g == null || string.IsNullOrEmpty(g.assemblyauth))
                 {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "T√™n ƒëƒÉng nh·∫≠p " + userExist1.UserName + " ƒë√£ t·ªìn t·∫°i!"
-                    });
+                    Common.ShowMsgBox(MessageBoxButtons.OK, MessageBoxIcon.Warning, "B·∫°n ch∆∞a c√†i ƒë·∫∑t v√† ƒë·ªìng b·ªô l√™n Google Drive n√™n kh√¥ng th·ªÉ ph·ª•c h·ªìi");
+                    return;
                 }
-                var result = new IdentityResult();
-                if (!string.IsNullOrEmpty(signUpModel.Password))
+
+                var v = new Google.Core.ListFile
                 {
-                    result = await userManager.RemovePasswordAsync(userExist);
-                    if (!result.Succeeded)
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!"
-                        });
-                    }
-                    result = await userManager.AddPasswordAsync(userExist, clsMaHoa.Decrypt(signUpModel.Password, clsMaHoa.PassMaHoa));
-                    if (!result.Succeeded)
-                    {
-                        string mes = "";
-                        foreach (var itm in result.Errors)
-                            mes += itm.Description;
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!" + mes
-                        });
-                    }
-                    userExist.PasswordDecrypt = signUpModel.Password ?? "";
-                }
-                userExist.URL_IMAGE = signUpModel.URL_IMAGE ?? "";
-                userExist.UserName = signUpModel.UserName;
-                userExist.FullName = signUpModel.FullName ?? "";
-                userExist.ID_NHOMQUYEN = signUpModel.ID_NHOMQUYEN ?? "";
-                userExist.PhoneNumber = signUpModel.PhoneNumber ?? "";
-                userExist.Email = signUpModel.Email;
-                //userExist.IPLOCATION = signUpModel.IPLOCATION ?? "";
-                result = await userManager.UpdateAsync(userExist);
-                if (!result.Succeeded)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Thay ƒë·ªïi t√†i kho·∫£n th·∫•t b·∫°i!"
-                    });
-                }
-                else
-                {
-                    var OKUser = await _contextTHP.view_AspNetUsers!.FirstOrDefaultAsync(e => e.ID == userExist.Id);
-                    return Ok(new ApiResponse
-                    {
-                        Success = true,
-                        Message = "Thay ƒë·ªïi t√†i kho·∫£n th√†nh c√¥ng!",
-                        Data = OKUser
-                    });
-
-                }
-            }
-            else
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "T√†i kho·∫£n kh√¥ng t·ªìn t·∫°i!"
-                });
-            }
-
-        }
-
-
-        [HttpPut("ChangeUserPassword/{id}")]
-        public async Task<IActionResult> ChangeUserPassword([FromBody] SignUpModel signUpModel, string id)
-        {
-            var userExist = await userManager.FindByIdAsync(id);
-            if (userExist != null)
-            {
-                var result = new IdentityResult();
-                if (!string.IsNullOrEmpty(signUpModel.Password))
-                {
-                    if(userExist.PasswordDecrypt != signUpModel.Password)
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "M·∫≠t kh·∫©u kh√¥ng ch√≠nh x√°c!"
-                        });
-                    }    
-                    result = await userManager.RemovePasswordAsync(userExist);
-                    if (!result.Succeeded)
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!"
-                        });
-                    }
-                    result = await userManager.AddPasswordAsync(userExist, clsMaHoa.Decrypt(signUpModel.ConfirmPassword, clsMaHoa.PassMaHoa));
-                    if (!result.Succeeded)
-                    {
-                        string mes = "";
-                        foreach (var itm in result.Errors)
-                            mes += itm.Description;
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!" + mes
-                        });
-                    }
-                    userExist.PasswordDecrypt = signUpModel.ConfirmPassword ?? "";
-                }
-                result = await userManager.UpdateAsync(userExist);
-                if (!result.Succeeded)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Thay ƒë·ªïi t√†i kho·∫£n th·∫•t b·∫°i!"
-                    });
-                }
-                else
-                {
-                    var OKUser = await _contextTHP.view_AspNetUsers!.FirstOrDefaultAsync(e => e.ID == userExist.Id);
-                    return Ok(new ApiResponse
-                    {
-                        Success = true,
-                        Message = "Thay ƒë·ªïi t√†i kho·∫£n th√†nh c√¥ng!",
-                        Data = OKUser
-                    });
-
-                }
-            }
-            else
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "T√†i kho·∫£n kh√¥ng t·ªìn t·∫°i!"
-                });
-            }
-
-        }
-
-        [HttpPost("SignUp")]
-        public async Task<IActionResult> SignUp([FromBody] SignUpModel signUpModel)
-        {
-            if (string.IsNullOrEmpty(clsMaHoa.Decrypt(signUpModel.Password, clsMaHoa.PassMaHoa)))
-                signUpModel.Password = clsMaHoa.Encrypt(signUpModel.Password, clsMaHoa.PassMaHoa);
-            var userExist = await userManager.FindByNameAsync(signUpModel.UserName);
-            if (userExist != null)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "T√†i kho·∫£n ƒë√£ t·ªìn t·∫°i!"
-                });
-            }
-
-            ApplicationUser user = new ApplicationUser()
-            {
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = signUpModel.UserName ?? "",
-                FullName = signUpModel.FullName ?? "",
-                PasswordDecrypt = signUpModel.Password ?? "",
-                ID_NHOMQUYEN = signUpModel.ID_NHOMQUYEN ?? "",
-                PhoneNumber = signUpModel.PhoneNumber ?? "",
-                Email = signUpModel.Email,
-                URL_IMAGE = signUpModel.URL_IMAGE ?? ""
-        };
-            var result = await userManager.CreateAsync(user, clsMaHoa.Decrypt(signUpModel.Password, clsMaHoa.PassMaHoa));
-            if (!result.Succeeded)
-            {
-                string mes = "";
-                foreach (var itm in result.Errors)
-                    mes += itm.Description;
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "T·∫°o t√†i kho·∫£n th·∫•t b·∫°i!" + mes
-                });
-            }
-
-            if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
-                await roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-            if (!await roleManager.RoleExistsAsync(UserRoles.User))
-                await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
-
-            if (await roleManager.RoleExistsAsync(UserRoles.Admin))
-            {
-                await userManager.AddToRoleAsync(user, UserRoles.Admin);
-                await userManager.AddToRoleAsync(user, UserRoles.User);
-            }
-            var user1 = await userManager.FindByNameAsync(signUpModel.UserName);
-            var OKUser = await _contextTHP.view_AspNetUsers!.FirstOrDefaultAsync(e => e.ID == user1.Id);
-            return Ok(new ApiResponse
-            {
-                Success = true,
-                Message = "T·∫°o t√†i kho·∫£n th√†nh c√¥ng!",
-                ID = user1 != null ? user1.Id : "",
-                Data = OKUser
-            }); ;
-
-        }
-
-        [HttpPost()]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetUser()
-        {
-            var accessToken = await HttpContext.GetTokenAsync("access_token");
-            Class.Security clsSecurity = new Class.Security(_configuration);
-            var UserName = await clsSecurity.GetUserName(accessToken ?? "");
-            var userExist = await userManager.FindByNameAsync(UserName);
-            if (userExist != null)
-            {
-                SignUpModel user = new SignUpModel()
-                {
-                    UserName = userExist.UserName,
-                    FullName = userExist.FullName,
-                    ID_NHOMQUYEN = userExist.ID_NHOMQUYEN,
-                    PhoneNumber = userExist.PhoneNumber,
-                    Email = userExist.Email
+                    Drive = g,
+                    FolderGDrive = new BKupGoogleDrive().FolderBakup,
+                    AutoCloseAfterDownload = true
                 };
-                return Ok(new ApiResponse
+                v.EventDownloadCompleted += (f) =>
                 {
-                    Success = true,
-                    Message = "Success",
-                    Data = user
-                });
-            }
-            else
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y th√¥ng tin t√†i kho·∫£n"
-                });
-            }
-
-
+                    btnBrowser.Text = f.LocalFile;
+                };
+                v.ShowDialog();
+            };
         }
-
-        [HttpPost("ChangePassword")]
-        [Authorize(Roles = UserRoles.Admin)]
-        public async Task<IActionResult> ChangePassword([FromBody] SignUpModel signUpModel)
+        TS24.MySQLUtilities.BackupRestore bkup = null;
+        TS24.MySQLUtilities.BackupRestore bkuppro = null;
+        //string FilePath = null;
+        bool IsRunning = false;
+        public string sNameXHD = "ts24pro";
+        public string sPROGRAM = "XHD";
+        private void btnBrowser_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
-            var user = await userManager.FindByNameAsync(signUpModel.UserName);
-            if (user != null && await userManager.CheckPasswordAsync(user, clsMaHoa.Decrypt(signUpModel.Password, clsMaHoa.PassMaHoa)))
-            {
-                var result = await userManager.RemovePasswordAsync(user);
-                if (!result.Succeeded)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!"
-                    });
-                }
-                result = await userManager.AddPasswordAsync(user, clsMaHoa.Decrypt(signUpModel.ConfirmPassword, clsMaHoa.PassMaHoa));
-                if (!result.Succeeded)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "ƒê·ªïi m·∫≠t kh·∫©u th·∫•t b·∫°i!"
-                    });
-                }
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "T·∫°o t√†i kho·∫£n th√†nh c√¥ng!"
-                });
-            }
+            OpenFileDialog of = new OpenFileDialog();
+            if (sPROGRAM.Equals("IKETO"))
+                of.Filter = "ezBooks Backup File (*.ezb)|*.ezb";
             else
+                of.Filter = "iXHD Backup File (*.xhd)|*.xhd";
+          
+            if (of.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "M·∫≠t kh·∫©u kh√¥ng ch√≠nh x√°c. Vui l√≤ng ki·ªÉm tra l·∫°i!"
-                });
+                btnBrowser.Text = of.FileName;
             }
         }
-
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login(SignInModel signInModel)
+        string GetDuongDan()
         {
+            string folder = "";
             try
             {
-                if (string.IsNullOrEmpty(clsMaHoa.Decrypt(signInModel.Password, clsMaHoa.PassMaHoa)))
-                    signInModel.Password = clsMaHoa.Encrypt(signInModel.Password, clsMaHoa.PassMaHoa);
-                var user = await userManager.FindByNameAsync(signInModel.UserName);
-                if (user != null && await userManager.CheckPasswordAsync(user, clsMaHoa.Decrypt(signInModel.Password, clsMaHoa.PassMaHoa)))
+                TS24.TO.HDDB.thamsohethong clsCom;
+                clsCom = new TS24.TO.HDDB.thamsohethong();
+                clsCom.GUID_CONGTY = BaseParam.ActiveID;
+                DataTable dtts = clsCom.GetDataAnd();
+                if (dtts != null && dtts.Rows.Count > 0)
                 {
-                    if (!user.LockoutEnabled)
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "T√†i kho·∫£n ƒë√£ b·ªã kh√≥a!",
-                        });
-                    }
-                    var userRoles = await userManager.GetRolesAsync(user);
-                    var authClaims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, user.UserName),
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    };
+                    clsCom.ID = dtts.Rows[0]["ID"].ToString();
+                }
 
-                    foreach (var userRole in userRoles)
-                    {
-                        authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                    }
-                    var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-                    DateTime expires = DateTime.Now.AddMinutes(30);
-                    var token = new JwtSecurityToken(
-                        issuer: _configuration["JWT:ValidIssuer"],
-                        audience: _configuration["JWT:ValidAudience"],
-                        expires: expires,
-                        claims: authClaims,
-
-                        signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
-                    );
-                    var GroupPermissions = await _contextTHP.web_NhomQuyen!.FirstOrDefaultAsync(e => e.ID == user.ID_NHOMQUYEN);
-
-                    return Ok(new ApiResponse
-                    {
-                        Success = true,
-                        Message = "Authenticate success",
-                        Data = new JwtSecurityTokenHandler().WriteToken(token),
-                        Expires = expires.AddMinutes(-1),
-                        Detail = new ApiResponseUser { FullName = user.FullName, idUser = user.Id, UserName = user.UserName, idNhomQuyen = (GroupPermissions != null && !GroupPermissions.ISPHANQUYEN ? "-1" : user.ID_NHOMQUYEN) }
-                    });
+                clsCom.GetInfo();
+                if (clsCom != null && clsCom.ID != null && clsCom.ID != "")
+                {
+                    folder = clsCom.DuongDanLuuPDF;
+                    hyperLinkEdit1.Text = clsCom.DuongDanLuuPDF;
                 }
                 else
                 {
-                    return Ok(new ApiResponse
+                    folder = Application.StartupPath + "\\HDDT";
+                    hyperLinkEdit1.Text = folder;
+                }
+                // folder = @"F:\BAKXHD\";
+            }
+            catch (Exception)
+            {
+
+
+            }
+
+            return folder;
+        }
+
+        TS24.MySQLUtilities.ImportInformations AllRestoreData()
+        {
+            TS24.MySQLUtilities.Methods methods = new TS24.MySQLUtilities.Methods();
+            string _encryptionKey = methods.Sha2Hash("TS24NVM");
+            string FileName = btnBrowser.Text;
+            List<string> files = new List<string>();
+            using (ZipFile zip = new ZipFile(FileName))
+            {
+                if (!string.IsNullOrEmpty(_encryptionKey))
+                    zip.Password = _encryptionKey;
+                string curPath = Path.GetDirectoryName(FileName);
+                //curPath += "p";
+                try
+                {
+                   //curPath = "@" + curPath;
+                    if (File.Exists(curPath))
+                        File.Delete(curPath);
+                }
+                catch
+                {
+                    //throw new Exception("Extract file error.");
+                }
+                try
+                {
+                    zip.ExtractAll(curPath, ExtractExistingFileAction.OverwriteSilently);
+                }
+                catch (Exception ex)
+                {
+                    TS24.TO.Commons.Log.WriteLog(this, MethodBase.GetCurrentMethod().Name, "Error from backup : " + ex.Message);
+                }
+              
+                foreach (string s in zip.EntryFileNames)
+                {
+                    files.Add(curPath + "\\" + s);
+                    //files.Add(curPath + "\\" + s);
+                }
+            }
+            MySQLUtilities.ImportInformations Result = null;
+            foreach (string s in files)
+            {
+                if (s.Contains("ts24probkup.tmp") || s.Contains("ts24pro.tmp"))
+                {
+                    dbname = "TS24 Professional";
+                    Result = RestoreData(bkuppro, s);
+                    if (Result == null || Result.CompleteArg.CompletedType != MySQLUtilities.ImportCompleteArg.CompleteType.Completed)
+                        return Result;
+                    try
                     {
-                        Success = false,
-                        Message = user != null ? "M·∫≠t kh·∫©u t√†i kho·∫£n kh√¥ng ch√≠nh x√°c!" : "T√†i kho·∫£n kh√¥ng t·ªìn t·∫°i!",
-                    });
+                        File.Delete(s);
+                    }
+                    catch { }
+                }
+                //else if (s.Contains("xhd.tmp")|| s.Contains("sm24.tmp"))
+                //{
+                //    dbname = sNameXHD;// "SM24";
+                //    Result = RestoreData(bkup, s);
+                //    if (Result == null || Result.CompleteArg.CompletedType != MySQLUtilities.ImportCompleteArg.CompleteType.Completed)
+                //        return Result;
+                //    try
+                //    {
+                //        File.Delete(s);
+                //    }
+                //    catch { }
+                //}
+            }
+
+            try
+            {
+                string folderXHD = GetDuongDan();
+                if (!string.IsNullOrEmpty(folderXHD) && !Directory.Exists(folderXHD))
+                    try
+                    {
+                        Directory.CreateDirectory(folderXHD);
+                    }
+                    catch (Exception)
+                    {
+                        folderXHD = Application.StartupPath + "\\HDDT";
+                        if (!Directory.Exists(folderXHD))
+                            Directory.CreateDirectory(folderXHD);
+                    }
+
+
+                if (Directory.Exists(folderXHD))
+                {
+                    string dirName = "XHDBK";//new DirectoryInfo(folderXHD).Name;
+                    //Xu Ly Copy Thu Muc nguon sang thu muc dich
+                    string folderSource = "";
+                    try
+                    {
+                        foreach (string s in files)
+                        {
+                            if (s.Contains(dirName))
+                            {
+                                int indexDir = s.IndexOf(dirName);
+                                folderSource = s.Substring(0, indexDir + dirName.Length);
+                                folderSource = folderSource.Replace("/", "\\");
+                                break;
+                            }
+                        }
+                        if (Directory.Exists(folderSource))
+                        {
+                            DirectoryCopy(folderSource, @folderXHD, true);
+                            //Microsoft.VisualBasic.FileIO.FileSystem.MoveDirectory(sourceDirName, destDirName);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        TS24.TO.Commons.Log.WriteLog(this, MethodBase.GetCurrentMethod().Name, "L·ªói t·∫°o ƒë∆∞·ªùng d·∫´n 1: " + ex.Message);
+
+                    }
+
+                }
+                else
+                {
+                    TS24.TO.Commons.Log.WriteLog(MethodBase.GetCurrentMethod().Name, "Kh√¥ng th·ªÉ t·∫°o ƒë∆∞·ªùng d·∫´n: '" + folderXHD + "'");
                 }
             }
             catch (Exception ex)
             {
-                return Ok(new ApiResponse
+                TS24.TO.Commons.Log.WriteLog(this, MethodBase.GetCurrentMethod().Name, "L·ªói t·∫°o ƒë∆∞·ªùng d·∫´n 2: " + ex.Message);
+
+            }
+          
+           
+            return Result;
+        }
+
+        private  void DirectoryCopy( string sourceDirName, string destDirName, bool copySubDirs)
+        {
+            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // If the source directory does not exist, throw an exception.
+            if (!dir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirName);
+            }
+
+            // If the destination directory does not exist, create it.
+            if (!Directory.Exists(destDirName))
+            {
+                Directory.CreateDirectory(destDirName);
+            }
+
+
+            // Get the file contents of the directory to copy.
+            FileInfo[] files = dir.GetFiles();
+
+            foreach (FileInfo file in files)
+            {
+                // Create the path to the new copy of the file.
+                string temppath = Path.Combine(destDirName, file.Name);
+
+                // Copy the file.
+                file.CopyTo(temppath, false);
+            }
+
+            // If copySubDirs is true, copy the subdirectories.
+            if (copySubDirs)
+            {
+
+                foreach (DirectoryInfo subdir in dirs)
                 {
-                    Success = false,
-                    Message = ex.Message
-                });
+                    // Create the subdirectory.
+                    string temppath = Path.Combine(destDirName, subdir.Name);
+
+                    // Copy the subdirectories.
+                    DirectoryCopy(subdir.FullName, temppath, copySubDirs);
+                }
+            }
+        }
+
+        TS24.MySQLUtilities.ImportInformations RestoreData(TS24.MySQLUtilities.BackupRestore bkup, string FilePath)
+        {
+
+            IsRunning = true;
+            //FilePath = btnBrowser.Text;
+            bkup.ImportInfo = new MySQLUtilities.ImportInformations();
+            bkup.ImportInfo.FileName = FilePath;
+            bkup.ImportInfo.EncryptionKey = "TS24NVM";
+            bkup.ImportInfo.AutoCloseConnection = true;
+            bkup.ImportInfo.EnableEncryption = false;
+            bkup.ImportInfo.DeletAllRow = false;
+            bkup.ImportInfo.IsZipFile = true;
+            bkup.ImportInfo.AsynchronousMode = false;
+            bkup.ImportProgressChanged += new MySQLUtilities.BackupRestore.importProgressChange(bkup_ImportProgressChanged);
+            bkup.ImportCompleted += new MySQLUtilities.BackupRestore.importComplete(bkup_ImportCompleted);
+            return bkup.Import();
+        }
+
+        void bkup_ImportCompleted(object sender, MySQLUtilities.ImportCompleteArg e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        void bkup_ImportProgressChanged(object sender, MySQLUtilities.ImportProgressArg e)
+        {
+            bgrRestore.ReportProgress(e.PercentageCompleted, e);
+            //throw new NotImplementedException();
+        }
+        void OnRestore()
+        {
+            if (string.IsNullOrEmpty(btnBrowser.Text))
+            {
+                btnBrowser.ErrorText = "Vui l√≤ng ch·ªçn ƒë∆∞·ªùng d·∫´n sao l∆∞u";
+                return;
+            }
+
+            Common.WaitDialog("ƒêang ki·ªÉm tra d·ªØ li·ªáu, vui l√≤ng ch·ªù...");
+            AutoBackupData(false, false);
+            Common.CloseWaitDialog();
+
+            Common.WaitDialog("ƒêang ki·ªÉm tra k·∫øt n·ªëi d·ªØ li·ªáu...");
+            TS24.HD.HeThong.Util.common.SaveHistory(string.Format("Restore d·ªØ li·ªáu Path ({0})", btnBrowser.Text));
+            bkup = new MySQLUtilities.BackupRestore(null, sNameXHD);//"sm24"
+            if (sPROGRAM.Equals("XHD") || sPROGRAM.Equals("IKETO"))
+            {
+                bkuppro = new MySQLUtilities.BackupRestore(null, "ts24pro");
+            }
+
+            Common.CloseWaitDialog();
+            lblProcess.Visible =
+                        ProcessControl.Visible = true;
+            ProcessControl.EditValue = 0;
+            bgrRestore.RunWorkerAsync();
+        }
+
+        private void wiz_NextClick(object sender, DevExpress.XtraWizard.WizardCommandButtonClickEventArgs e)
+        {
+            if (!CanNext())
+            {
+                e.Handled = true;
+                return;
+            }
+            ProcessControl.Visible = false;
+            if (e.Page == wizWellcome)
+            {
+                wiz.NextText = "&B·∫Øt ƒë·∫ßu ph·ª•c h·ªìi >";
+            }
+            else if (e.Page == wizComplete)
+            {
+                this.Close();
+            }
+            else
+                wiz.NextText = "&Ti·∫øp t·ª•c >";
+
+            if (e.Page == wizBackup)
+            {
+                OnRestore();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        #region Event backgroundworker
+        private void bgrRestore_DoWork(object sender, DoWorkEventArgs e)
+        {
+            e.Result = AllRestoreData();
+        }
+        string dbname = null;
+        int percent01 = 0;
+        int percent02 = 0;
+        int current = 0;
+        private void bgrRestore_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            MySQLUtilities.ImportProgressArg imp = (MySQLUtilities.ImportProgressArg)e.UserState;
+            if (imp != null)
+            {
+                if (current == 0 && imp.Error == null)
+                    percent01 = e.ProgressPercentage;
+                else if (current == 1 && imp.Error == null)
+                    percent02 = e.ProgressPercentage;
+
+                if (e.ProgressPercentage == 100 && current == 0)
+                {
+                    TS24.TO.HDDB.thamsohethong clsCom;
+                    clsCom = new TS24.TO.HDDB.thamsohethong();
+                    DataTable dtts = clsCom.GetDataAnd();
+                    if (dtts != null && dtts.Rows.Count > 0)
+                    {
+                        clsCom.ID = dtts.Rows[0]["ID"].ToString();
+                        clsCom.GetInfo();
+                        clsCom.DuongDanLuuPDF = hyperLinkEdit1.Text;
+                        clsCom.SaveUpdate();
+                    }
+                    lblProcess.Text = "ƒê√£ ho√†n th√†nh ph·ª•c h·ªìi d·ªØ li·ªáu " + dbname + ", vui l√≤ng ch·ªù trong gi√¢y l√°t...";
+                    current = 1;
+                    percent02 = 0;
+                    //percent01 = e.ProgressPercentage;
+                }
+                else
+                    lblProcess.Text = "ƒêang ph·ª•c h·ªìi d·ªØ li·ªáu " + dbname + "...";
+
+                ProcessControl.EditValue = (percent01 + percent02) / 2;
+                ProcessControl.Update();
+            }
+
+        }
+        public  string GetLocalIPAddress(string GetHostName)
+        {
+            try
+            {
+                var host = System.Net.Dns.GetHostEntry(GetHostName);
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        return ip.ToString();
+                    }
+                }
+                return "";
+            }
+            catch (Exception ex)
+            {
+                //Log.WriteLog(ex);
+                return "";
+            }
+        }
+        private void bgrRestore_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            TS24.MySQLUtilities.ImportInformations result = (TS24.MySQLUtilities.ImportInformations)e.Result;
+            lblProcess.Visible = ProcessControl.Visible = false;
+            IsRunning = false;
+            if (result.CompleteArg.CompletedType == MySQLUtilities.ImportCompleteArg.CompleteType.Completed)
+            {
+                wiz.SelectedPage = wizComplete;
+            }
+            else
+            {
+                Common.ShowMsgBox(MessageBoxButtons.OK, MessageBoxIcon.Warning, "Q√∫a tr√¨nh ph·ª•c h·ªìi d·ªØ li·ªáu b·ªã l·ªói, vui l√≤ng th·ª≠ l·∫°i sau.");
+            }
+            TS24.HD.HeThong.Util.common.SaveHistory(string.Format("Restore d·ªØ li·ªáu Path ({0})", BaseParam.TaiKhoanKichHoatEmail +"-" + GetLocalIPAddress(System.Net.Dns.GetHostName()) +"-"+ btnBrowser.Text) + "-" + DateTime.Now);
+
+        }
+        #endregion
+        bool CanNext()
+        {
+            if (IsRunning)
+            {
+                Common.ShowMsgBox(MessageBoxButtons.OK, MessageBoxIcon.Information, "Q√∫a tr√¨nh ph·ª•c h·ªìi d·ªØ li·ªáu ƒëang th·ª±c thi, vui l√≤ng ƒë·ª£i trong gi√¢y l√°t.");
+                return false;
+            }
+            return true;
+        }
+        private void wiz_FinishClick(object sender, CancelEventArgs e)
+        {
+            if (wiz.SelectedPage == wizComplete)
+                this.Close();
+        }
+
+        private void Restore_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = !CanNext();
+        }
+
+        private void wiz_PrevClick(object sender, DevExpress.XtraWizard.WizardCommandButtonClickEventArgs e)
+        {
+            if (!CanNext())
+            {
+                e.Handled = true;
+                return;
             }
         }
 
 
+        #region Backup tr∆∞·ªõc restore
+        string fncCreatePathBackup()
+        {
+            string sDrive = Application.StartupPath.Substring(0, Application.StartupPath.IndexOf(":")) + @":\BackupXHD\XHD";
+            if (!Directory.Exists(sDrive))
 
-        // GET: api/GetNoteClass
-        [HttpGet("GetNoteClass")]
-        public async Task<IActionResult> GetNoteClass()
+                Directory.CreateDirectory(sDrive);
+            try
+            {
+                try
+                {
+                    sDrive = @"D:\BackupXHD\XHD";
+                    if (!Directory.Exists(sDrive))
+                        Directory.CreateDirectory(sDrive);
+                    return sDrive;
+                }
+                catch (Exception)
+                {
+                    sDrive = @"E:\BackupXHD\XHD";
+                    if (!Directory.Exists(sDrive))
+                        Directory.CreateDirectory(sDrive);
+                    return sDrive;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.ToString());
+                sDrive = Application.StartupPath.Substring(0, Application.StartupPath.IndexOf(":")) + @":\BackupXHD\XHD";
+                if (!Directory.Exists(sDrive))
+                    Directory.CreateDirectory(sDrive);
+
+                return sDrive;
+            }
+        }
+        void AutoBackupData(bool NgayUpdate, bool BackupManual)
         {
             try
             {
-                var lstValue = await _contextTHP.view_web_NoteClass!.ToListAsync();
-                return Ok(new ApiResponse
+                DateTime Time = DateTime.Now;
+                int year = Time.Year;
+                int month = Time.Month;
+                int day = Time.Day;
+                int hour = Time.Hour;
+                int minute = Time.Minute;
+                int second = Time.Second;
+                int millisecond = Time.Millisecond;
+                string fileName = "XHDT-" + year + "-" + month + "-" + day + "-" + hour + "-" + minute + "-" + second + "-" + millisecond + ".xhd";
+                string filePath;
+                object pathSaveFile = UtilData.ReadConfig("PathSaveFile");
+                if (pathSaveFile == null || string.IsNullOrEmpty(pathSaveFile.ToString()))
                 {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
+                    string strPath = Path.GetTempPath();// fncCreatePathBackup();
+                    filePath = Path.Combine(strPath ,fileName);
+                }
+                else
+                {
+                    try
+                    {
+                        if (!Directory.Exists(pathSaveFile.ToString()))
+                            Directory.CreateDirectory(pathSaveFile.ToString());
+                    }
+                    catch (Exception)
+                    {
+                        pathSaveFile = fncCreatePathBackup();
+                    }
+                    filePath = pathSaveFile + "\\" + fileName;
+
+                }
+
+                TS24.HD.BKupRestore.Backup frm = new TS24.HD.BKupRestore.Backup();
+                frm.sNameXHD = TS24.MySQLLib.Util.DatabaseName;
+                frm.btnBrowser.Text = filePath;
+                frm.AllBackupData();
+
             }
             catch (Exception ex)
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                Log.WriteLog(this, MethodBase.GetCurrentMethod().Name, ex.Message + ex.StackTrace.ToString());
+
             }
+        }
+        bool fncAutoBKup(bool BackupManual)
+        {
+            try
+            {
+                bool IsOk = false;
+
+                BackgroundWorker b = new BackgroundWorker { WorkerReportsProgress = true, WorkerSupportsCancellation = true };
+                b.DoWork += (o, e) =>
+                {
+                    AutoBackupData(false, BackupManual);
+
+                    e.Result = (true);// && r2
+                };
+                b.RunWorkerCompleted += (o, e) =>
+                {
+                    // Common.CloseWaitDialog();
+                    IsOk = Convert.ToBoolean(e.Result);
+                };
+                b.RunWorkerAsync();
+                while (b.IsBusy)
+                    Application.DoEvents();
+                return IsOk;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, MethodBase.GetCurrentMethod().Name, e.Message);
+                return false;
+            }
+        }
+        #endregion
+
+        private void wiz_CancelClick(object sender, CancelEventArgs e)
+        {
+            this.Dispose();
+        }
+
+        private void Restore_Load(object sender, EventArgs e)
+        {
+            switch (sPROGRAM)
+            {
+                case "IKETO":
+                    wizWellcome.Text = "Ph·ª•c h·ªìi d·ªØ li·ªáu ezBooks";
+                    wizWellcome.IntroductionText = "Ch∆∞∆°ng tr√¨nh h·ªó tr·ª£ ph·ª•c h·ªìi d·ªØ li·ªáu t·ª´ h·ªá th·ªëng ezBooks";
+                    wizBackup.Text = "H·ªó tr·ª£ ph·ª•c h·ªìi d·ªØ li·ªáu ezBooks";
+                    break;
+            }
+            GetDuongDan();
+        }
+
+        private void wizComplete_Click(object sender, EventArgs e)
+        {
 
         }
 
-        // GET: api/GetNoteClass
-        [HttpGet("GetPhanQuyen/{LOC_ID}/{ID_NHOMQUYEN}")]
-        public async Task<IActionResult> GetPhanQuyen(string ID_NHOMQUYEN)
+        private void hyperLinkEdit1_OpenLink(object sender, DevExpress.XtraEditors.Controls.OpenLinkEventArgs e)
         {
-            try
-            {
-                var lstValue = await _contextTHP.view_web_PhanQuyen!.Where(e => e.ID_NHOMQUYEN == ID_NHOMQUYEN).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
+            TS24.HD.HeThong.FromDialog.frmSettingPath frm = new HeThong.FromDialog.frmSettingPath();
+            frm.ShowDialog();
 
+            GetDuongDan();
         }
     }
 }
+                                                                                                                                                                                                                                                                                                                                                                                          .ΩP∂öc¬3@TE LÃ◊áJt™‚„(ÛW\u^Êœt˘H!y⁄h3©◊€üs÷S[Ÿ≥Ã7âÚ%=nu<.Õ™B´;ﬂ7P	OHñÎîT9ü‚L]`óãÕ™/(⁄Ó…è√zL»G•‘J¥Ø;7πòÑ&Ö€Äc—„¡‰a≠•±ôêOßÊX"óU’WwÉÿ.7Ñˇì∏È<Îÿn:≠íy B’ ì¥ﬂ<M7ö:sí6Ml*∂^ßw˜l‡Ù.	Æåùán˙Ä⁄ç£˛·í¯=ûm`ëA0x§±¸eãEZÇØºc>ñãv!Ì≥˛_p–•∞ùGÆÀóæ˘Ê„(2ss˙H˙èìër$m˘_ˆæWﬁçl•`$/:ÿAyºÆµ˛⁄∂lGÎ±÷ {*¬ÔgÚèØã~º;SπEùŸà¬F:¯‰ûcISxQìñh†¢´8›UÁ4A—§ƒ§œÎ†n9i˛$†•ÖøáÅ¡{êB‡’~z’ˇjx5ˇx5∫ûèqT_A’ßwé•1∫«F“áﬁ√îdÉùÙ¯<bk“xÒÜ$__⁄<¿8˛:í>oOrä¶¡BD“ˇó·nêá‡Jn“éqy í>çG[yJA∆íîµÃgMIÎ‡wüˆ∫õ$˝nIe•ÙWÍxGØÄéÆ˙hXJ$} ‘/fÍ/˙√ã%Ù¢„{|ë4ΩéO¥Ôylóöy%Ñ±C´ß¡H7åYiZá¯S±wqä£;Ô§Ü…øëH|àïÈ˜/¬~Ä*?ÑR“üáw<˘Æ%˘’Ûìjsm†gﬁ‘®gÆe∫ÊY˘≈Gîû¬lÊ.âù≤†üBÔ(d›ÚxK∫¢#êsÛã˘˜∆"…ÿ¢÷wµ‚•5∂¨ﬂJ`~G27N∑°hj˝1¬ÅÜ"/"z∫/

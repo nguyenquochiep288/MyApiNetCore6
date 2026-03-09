@@ -1,34 +1,30 @@
-﻿{
-  "$schema": "https://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:4144",
-      "sslPort": 44304
-    }
-  },
-  "profiles": {
-    "MyApiNetCore6": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:81;http://localhost:5014",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
-        //"Development"
-      }
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "dotnetRunMessages": true,
-      "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:81;http://localhost:5014",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
-      }
-    }
-  }
-}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace TS24.SM24.Danhmuc.DB
+{
+    public partial class dm_thuesuat : IDBBase
+    {
+        public dm_thuesuat()
+            : base()
+        {
+            TableName = "dm_thuesuat";            
+        }
+         public override int OnSave(Devart.Data.MySql.MySqlTransaction trans = null)
+        {
+            if (!string.IsNullOrEmpty(BaseParamDM.ActiveID))
+            {
+                this.GUID_CONGTY = BaseParamDM.ActiveID;
+                this.NGAYTHUCHIEN = DateTime.Now;
+                this.NGUOITHUCHIEN = BaseParamDM.TenDangNhap;
+            }
+            return base.OnSave<dm_thuesuat>(trans);
+        }   
+	 
+        public string GUID { set; get; }
+        public string MA { set; get; }
+        public string DIENGIAI { set; get; }
+        public double THUESUAT { set; get; }
+        public st

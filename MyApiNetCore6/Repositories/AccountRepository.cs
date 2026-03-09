@@ -1,63 +1,45 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using MyApiNetCore6.Data;
-using MyApiNetCore6.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
-namespace MyApiNetCore6.Repositories
-{
-    public class AccountRepository : IAccountRepository
-    {
-        private readonly UserManager<ApplicationUser> userManager;
-        private readonly SignInManager<ApplicationUser> signInManager;
-        private readonly IConfiguration configuration;
-
-        public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
-        {
-            this.userManager = userManager;
-            this.signInManager = signInManager;
-            this.configuration = configuration;
-        }
-
-        public async Task<string> SignInAsync(SignInModel model)
-        {
-            var result = await signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
-
-            if (!result.Succeeded)
-            {
-                return string.Empty;
-            }
-
-            var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.UserData, model.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]));
-
-            var token = new JwtSecurityToken(
-                issuer: configuration["JWT:ValidIssuer"],
-                audience: configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddMinutes(20),
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
-            );
-            
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public async Task<IdentityResult> SignUpAsync(SignUpModel model)
-        {
-            var user = new ApplicationUser
-            {
-                FullName = (model != null && model.FullName != null ? model.FullName : ""),
-                UserName = (model != null ? model.UserName : "")
-            };
-
-            return await userManager.CreateAsync(user, model != null && model.Password != null ? model.Password : "");
-        }
-    }
-}
+            this.usChart4.Location = new System.Drawing.Point(606, 267);
+            this.usChart4.lstGhiChu = null;
+            this.usChart4.lstNameColX = null;
+            this.usChart4.lstTypeChart = null;
+            this.usChart4.lstvalueColY = null;
+            this.usChart4.Margin = new System.Windows.Forms.Padding(1, 2, 1, 1);
+            this.usChart4.Name = "usChart4";
+            this.usChart4.NameColX = null;
+            this.usChart4.numLine = 0;
+            this.usChart4.PaletteName = null;
+            this.usChart4.Size = new System.Drawing.Size(602, 261);
+            this.usChart4.TabIndex = 0;
+            this.usChart4.TitleChart = null;
+            this.usChart4.ValueColY = null;
+            // 
+            // usChart_HDMV1
+            // 
+            this.usChart_HDMV1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.usChart_HDMV1.ghichu = null;
+            this.usChart_HDMV1.Location = new System.Drawing.Point(1, 2);
+            this.usChart_HDMV1.lstGhiChu = null;
+            this.usChart_HDMV1.lstNameColX = null;
+            this.usChart_HDMV1.lstTypeChart = null;
+            this.usChart_HDMV1.lstvalueColY = null;
+            this.usChart_HDMV1.Margin = new System.Windows.Forms.Padding(1, 2, 1, 1);
+            this.usChart_HDMV1.Name = "usChart_HDMV1";
+            this.usChart_HDMV1.NameColX = null;
+            this.usChart_HDMV1.numLine = 0;
+            this.usChart_HDMV1.PaletteName = null;
+            this.usChart_HDMV1.Size = new System.Drawing.Size(602, 261);
+            this.usChart_HDMV1.TabIndex = 2;
+            this.usChart_HDMV1.TitleChart = null;
+            this.usChart_HDMV1.ValueColY = null;
+            // 
+            // fSummaryAll_HDMV
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1209, 795);
+            this.Controls.Add(this.xtraScrollableControl1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.Name = "fSummaryAll_HDMV";
+            this.Text = "Biểu đồ hóa đơn mua vào";
+            this.FormClosing += new System.Windows.Fo

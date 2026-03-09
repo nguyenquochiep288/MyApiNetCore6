@@ -1,1973 +1,3121 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using DatabaseTHP;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Options;
-using MyApiNetCore6.Data;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
-using DatabaseTHP.Class;
-using System.Linq.Dynamic.Core;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using NuGet.Packaging;
-using System.Configuration;
-using DatabaseTHP.StoredProcedure.Parameter;
-using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
+using DevExpress.XtraEditors;
+//using Microsoft.Office.Interop;
+using System.Globalization;
 using System.Reflection;
-using static DatabaseTHP.Class.API;
+using TS24.TO.Commons;
+using System.Data.OleDb;
+using System.IO;
+using SmartXLS;
+//using TS24.TO.BaseMethod;
+using System.Threading;
+//using TS24.SM24.BaseMethod;
 
-namespace MyApiNetCore6.Controllers
+
+namespace TS24.SM24.ImportExport
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class DepositController : ControllerBase
+    public partial class frmImport : DevExpress.XtraEditors.XtraForm
     {
-        
-        private readonly dbTrangHiepPhatContext _context;
-        private readonly IConfiguration _configuration;
-        public DepositController(dbTrangHiepPhatContext context, IConfiguration configuration)
+        public bool bolHienThiXoaDuLieu = true;
+        public enum TypeImport
         {
-            _context = context;
-            _context = context;
-            _configuration = configuration;
+            None,
+            Muavao,
+            Muavaokhonghoadon,
+            Banra,
+            DMKhachHang,
+            DMBanan,
+            DMBoPhan,
+            DMBoPhanKhauHao,
+            DMChiPhi,
+            DMDvt,
+            DMPtn,
+            DMPtx,
+            DMHangHoa,
+            DMHangHoaKho,
+            DMNguyenVatLieuKho,
+            DMHangHoaDonGia,
+            DMKho,
+            DMCuaHangSM24,
+            DMCuaHangVTA,
+            DMTramYTe,
+            DmVoucher,
+            DMLoaiHH,
+            DMLoaiKH,
+            DMLoaiTS,
+            DMLoaiTheKH,
+            DMKhuVuc,
+            DMNhanVien,
+            DMTaiKhoan,
+            DMTaiKhoanNganHang,
+            DMThueSuat,
+            DMTienTe,
+            DMTscd,
+            PhieuThu,
+            PhieuChi,
+            ct_tonghop,
+            ct_gbn,
+            ct_gbc,
+            ct_phieuthu,
+            ct_phieuchi,
+            kt_thanhtoandonhang,
+            kt_thanhtoantragop,
+            solieudauky,
+            PhieuDeNghiMuaHang,
+            DonMuaHang,
+            PhieuNhap,
+            DonDatHang,
+            PhieuBaoGia,
+            PhieuXuat,
+            dm_biendongvat,
+            ChiTietHangHoa,
+            importPhieuxuat,
+            Khuyenmai,
+            ChiTietHangHoa02,
+            CongNoTaiKhoan,
+            CongNoTaiKhoanDoiTuong,
+            CongNoPhaiThuTheoChungTu,
+            CongNoPhaiTraTheoChungTu,
+            DMHinhThucThanhToan,
+            ChiTietHangHoa03,
+            DanhSachChungTuKhauTruThueTNCN,
+            ChiTietHangHoaMTT,
+            ChiTietHangHoaDacTrung
         }
-        [HttpGet("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetDeposit(string LOC_ID)
+        void fncDMHangHoaKho(ref DataTable dtSource, DataTable dtData)
         {
             try
             {
-
-                var lstValue = await _context.ct_PhieuDatHang!.Where(e => e.LOC_ID == LOC_ID).ToListAsync();
-                return Ok(new ApiResponse
+                int j = 0;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[j++].ColumnName = "STT";
+                dtData.Columns[j++].ColumnName = "GUID_KHO";
+                dtData.Columns[j++].ColumnName = "MAVACH";
+                dtData.Columns[j++].ColumnName = "MA";
+                dtData.Columns[j++].ColumnName = "TEN";
+                dtData.Columns[j++].ColumnName = "ID_LOAIHH";
+                dtData.Columns[j++].ColumnName = "SOLUONGDAUKY";
+                dtData.Columns[j++].ColumnName = "THANHTIENDAUKY";
+                dtData.Columns[j++].ColumnName = "THUESUAT";
+                dtData.Columns[j++].ColumnName = "DGVON";
+                dtData.Columns[j++].ColumnName = "DGBAN";
+                dtData.Columns[j++].ColumnName = "GUID_TKKHO";
+                dtData.Columns[j++].ColumnName = "GUID_TKCHIPHI";
+                dtData.Columns[j++].ColumnName = "GUID_TKDOANHTHU";
+                dtData.Columns[j++].ColumnName = "XUATXU";
+                dtData.Columns[j++].ColumnName = "SOLUONGCONLAI";
+                //dtData.Columns.Add("LOAIKH");
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
                 {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["GUID_KHO"].ToString().Equals("") || dr["GUID_KHO"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
             }
-            catch (Exception ex)
+            catch
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
             }
-
         }
 
-        // GET: api/Input
-        [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetInput(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
+        void DMNguyenVatLieuKho(ref DataTable dtSource, DataTable dtData)
         {
             try
             {
-                var lstValue = await _context.ct_PhieuDatHang!.Where(e => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch).OrderBy(e => e.MAPHIEU).ToListAsync();
-                return Ok(new ApiResponse
+                int j = 0;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[j++].ColumnName = "STT";
+                dtData.Columns[j++].ColumnName = "GUID_KHO";
+                dtData.Columns[j++].ColumnName = "MAVACH";
+                dtData.Columns[j++].ColumnName = "MA";
+                dtData.Columns[j++].ColumnName = "TEN";
+                dtData.Columns[j++].ColumnName = "ID_LOAIHH";
+                dtData.Columns[j++].ColumnName = "SOLUONGDAUKY";
+                dtData.Columns[j++].ColumnName = "THANHTIENDAUKY";
+                dtData.Columns[j++].ColumnName = "THUESUAT";
+                dtData.Columns[j++].ColumnName = "DGVON";
+                dtData.Columns[j++].ColumnName = "DGBAN";
+                dtData.Columns[j++].ColumnName = "GUID_TKKHO";
+                dtData.Columns[j++].ColumnName = "GUID_TKCHIPHI";
+                dtData.Columns[j++].ColumnName = "GUID_TKDOANHTHU";
+                dtData.Columns[j++].ColumnName = "XUATXU";
+                dtData.Columns[j++].ColumnName = "SOLUONGCONLAI";
+                //dtData.Columns.Add("LOAIKH");
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
                 {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["GUID_KHO"].ToString().Equals("") || dr["GUID_KHO"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
             }
-            catch (Exception ex)
+            catch
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
             }
         }
-
-        // GET: api/Deposit
-        [HttpGet("{LOC_ID}/{ID_KHO}/{FROMDATE}/{TODATE}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetDeposit(string LOC_ID, string ID_KHO, DateTime FROMDATE, DateTime TODATE, int Type, string KeyWhere = "", string ValuesSearch = "")
+        public struct Result
         {
-            try
+            public enum State
             {
-                var lstValue = await _context.ct_PhieuDatHang!.Where(e => e.LOC_ID == LOC_ID && e.NGAYLAP.Date >= FROMDATE.Date && e.NGAYLAP.Date <= TODATE.Date).Where(KeyWhere, ValuesSearch).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
+                Total,
+                Executing,
+                Commit,
+                Failed
             }
-            catch (Exception ex)
+            int iIndexDel;
+            State fState;
+            string sError;
+            System.Data.DataTable dtSource;
+            public Result(string sErr, System.Data.DataTable dtS, State fS, int iIndex)
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                sError = sErr;
+                dtSource = dtS;
+                fState = fS;
+                iIndexDel = iIndex;
             }
-        }
-
-
-        //GET: api/Deposit/5
-        [HttpGet("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetDeposit(string LOC_ID, string ID)
-        {
-            try
+            public bool Delete
             {
-                var Deposit = await _context.ct_PhieuDatHang!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-
-                if (Deposit == null)
+                get
                 {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                v_ct_PhieuDatHang ct_PhieuDatHang = new v_ct_PhieuDatHang();
-                if (Deposit != null)
-                {
-                    string strDeposit = JsonConvert.SerializeObject(Deposit);
-                    ct_PhieuDatHang = JsonConvert.DeserializeObject<v_ct_PhieuDatHang>(strDeposit) ?? new v_ct_PhieuDatHang();
-                }
-
-                ct_PhieuDatHang.lstct_PhieuDatHang_ChiTiet = new List<v_ct_PhieuDatHang_ChiTiet>();
-                SP_Parameter SP_Parameter = new SP_Parameter();
-                SP_Parameter.ID_PHIEUDATHANG = ID;
-                ExecuteStoredProc ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                var actionResult = await ExecuteStoredProc1.Sp_Get_DanhSachPhieuDatHang_ChiTiet(SP_Parameter);
-                var okResult = actionResult as OkObjectResult;
-                if (okResult != null)
-                {
-                    var ApiResponse = okResult.Value as ApiResponse;
-                    if (ApiResponse != null)
-                    {
-                        if (ApiResponse.Data != null)
-                        {
-                            var lst_ChiTiet = ApiResponse.Data as List<v_ct_PhieuDatHang_ChiTiet>;
-                            if (lst_ChiTiet != null)
-                            {
-                                ct_PhieuDatHang.lstct_PhieuDatHang_ChiTiet.AddRange(lst_ChiTiet);
-                            }
-                        }
-
-                    }
-                }
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ct_PhieuDatHang
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-
-        }
-
-        // PUT: api/Deposit/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutDeposit(string LOC_ID, [FromBody] List<Product_Detail> lstProduct_Detail)
-        {
-            try
-            {
-                return await Get_ChuongTrinhKhuyenMai(lstProduct_Detail, LOC_ID);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        private static readonly Queue<v_ct_PhieuDatHang> requestQueue = new Queue<v_ct_PhieuDatHang>();
-        private static bool isProcessing = false;
-        // PUT: api/Deposit/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutDeposit(string LOC_ID, string ID, [FromBody] v_ct_PhieuDatHang Deposit)
-        {
-            try
-            {
-                if (!DepositExistsID(Deposit.LOC_ID, Deposit.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + Deposit.LOC_ID + "-" + Deposit.ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(Deposit.ID_PHIEUXUAT))
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "Phiếu đặt hàng " + Deposit.MAPHIEU + " đã được tạo phiếu xuất!",
-                            Data = ""
-                        });
-                    }
-                }
-
-
-                string StrHetSoLuong = "";
-                using var transaction = _context.Database.BeginTransaction();
-                {
-                    //Deposit.TONGTIENTINHTHUE = 0;
-                    var lstPhieuNhap_ChiTiet = await _context.ct_PhieuDatHang_ChiTiet!.Where(e => e.LOC_ID == Deposit.LOC_ID && e.ID_PHIEUDATHANG == Deposit.ID).ToListAsync();
-                    if (lstPhieuNhap_ChiTiet != null)
-                    {
-                        foreach (ct_PhieuDatHang_ChiTiet itm in lstPhieuNhap_ChiTiet)
-                        {
-                            var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO);
-                            if (objdm_HangHoa_Kho != null)
-                            {
-                                itm.TONGSOLUONG = itm.TYLE_QD * itm.SOLUONG;
-                                objdm_HangHoa_Kho.QTY += itm.TONGSOLUONG;
-                                _context.Entry(objdm_HangHoa_Kho).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                            }
-                            else
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = "Không tìm thấy sản phẩm kho!" + itm.ID_HANGHOAKHO,
-                                    Data = ""
-                                });
-                            }
-                            var chkPhieuNhap_ChiTiet = Deposit.lstct_PhieuDatHang_ChiTiet.Where(e => e.ID == itm.ID).FirstOrDefault();
-                            if (chkPhieuNhap_ChiTiet != null)
-                            {
-                                chkPhieuNhap_ChiTiet.ISEDIT = true;
-                                chkPhieuNhap_ChiTiet.ID_PHIEUDATHANG = Deposit.ID;
-                                ct_PhieuDatHang_ChiTiet newct_PhieuDatHang_ChiTiet = new ct_PhieuDatHang_ChiTiet();
-                                newct_PhieuDatHang_ChiTiet = ConvertobjectToct_PhieuDatHang_ChiTiet<v_ct_PhieuDatHang_ChiTiet>(chkPhieuNhap_ChiTiet, itm);
-                                newct_PhieuDatHang_ChiTiet.TONGSOLUONG = newct_PhieuDatHang_ChiTiet.TYLE_QD * newct_PhieuDatHang_ChiTiet.SOLUONG;
-                                _context.Entry(newct_PhieuDatHang_ChiTiet).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                            }
-                            else
-                            {
-                                _context.ct_PhieuDatHang_ChiTiet!.Remove(itm);
-                            }
-                        }
-                    }
-
-                    if (Deposit.lstct_PhieuDatHang_ChiTiet != null)
-                    {
-
-                        foreach (v_ct_PhieuDatHang_ChiTiet itm in Deposit.lstct_PhieuDatHang_ChiTiet)
-                        {
-                            itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
-                            itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
-                            itm.ID_PHIEUDATHANG = Deposit.ID;
-                            var objdm_HangHoa_Kho = _context.dm_HangHoa_Kho!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Deposit.ID_KHO);
-                            if (objdm_HangHoa_Kho != null)
-                            {
-                                var objdm_HangHoa = _context.view_dm_HangHoa!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOA);
-                                itm.TONGSOLUONG = itm.TYLE_QD * itm.SOLUONG;
-                                if (objdm_HangHoa_Kho.QTY >= itm.TONGSOLUONG)
-                                {
-                                    //if (objdm_HangHoa != null)
-                                    //{
-                                    //    Deposit.TONGTIENTINHTHUE += (itm.TONGTIENGIAMGIA + (itm.ISKHUYENMAI ? ((objdm_HangHoa.ID_DVT == itm.ID_DVT ? objdm_HangHoa.GIA01 : objdm_HangHoa.GIA01_QD) * itm.SOLUONG) : 0) * objdm_HangHoa.MUCTHUE) / 100 ;
-                                    //}
-                                    objdm_HangHoa_Kho.QTY -= itm.TONGSOLUONG;
-                                    _context.Entry(objdm_HangHoa_Kho).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                                }
-                                else
-                                {
-
-                                    string Strsoluong = "";
-                                    if (objdm_HangHoa != null && itm.TYLE_QD >= 1)
-                                    {
-                                        int soluong = 0;
-                                        if (itm.TYLE_QD > 1)
-                                        {
-                                            soluong = Convert.ToInt32(objdm_HangHoa_Kho.QTY) / Convert.ToInt32(itm.TYLE_QD);
-                                            if (soluong > 0)
-                                                Strsoluong = soluong.ToString("N0") + " " + objdm_HangHoa.NAME_DVT;
-
-                                            if (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD) > 0)
-                                            {
-                                                if (!string.IsNullOrEmpty(Strsoluong))
-                                                    Strsoluong += (" " + (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD)).ToString("N0") + " " + objdm_HangHoa.NAME_DVT_QD) + Environment.NewLine;
-                                                else
-                                                    Strsoluong += (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD)).ToString("N0") + " " + objdm_HangHoa.NAME_DVT_QD;
-                                            }
-                                            StrHetSoLuong += "Sản phẩm " + itm.NAME + " không đủ tồn kho!" + Strsoluong + Environment.NewLine;
-                                        }
-                                        else
-                                        {
-                                            Strsoluong = objdm_HangHoa_Kho.QTY.ToString("N0") + " " + objdm_HangHoa.NAME_DVT;
-                                            StrHetSoLuong += "Sản phẩm " + itm.NAME + " không đủ tồn kho!" + Strsoluong + Environment.NewLine;
-                                        }
-                                    }
-
-
-                                }
-                            }
-                            else
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = "Không tìm thấy sản phẩm kho!" + itm.ID_HANGHOAKHO,
-                                    Data = ""
-                                });
-                            }
-                            if (!itm.ISEDIT)
-                            {
-                                _context.ct_PhieuDatHang_ChiTiet!.Add(itm);
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(StrHetSoLuong))
-                        {
-                            return Ok(new ApiResponse
-                            {
-                                Success = false,
-                                Message = StrHetSoLuong,
-                                Data = ""
-                            });
-                        }
-                        Deposit.TONGTHANHTIEN = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.THANHTIEN), 0);
-                        Deposit.TONGTIENGIAMGIA = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGTIENGIAMGIA), 0);
-                        Deposit.TONGTIENVAT = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGTIENVAT), 0);
-                        Deposit.TONGTIEN = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGCONG), 0);
-                    }
-                    _context.Entry(Deposit).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
-                }
-                transaction.Commit();
-
-                v_ct_PhieuDatHang ct_PhieuDatHang = new v_ct_PhieuDatHang();
-                ct_PhieuDatHang.lstct_PhieuDatHang_ChiTiet = new List<v_ct_PhieuDatHang_ChiTiet>();
-                SP_Parameter SP_Parameter = new SP_Parameter();
-                SP_Parameter.ID_PHIEUNHAP = Deposit.ID;
-                ExecuteStoredProc ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                var actionResult = await ExecuteStoredProc1.Sp_Get_DanhSachPhieuNhap(SP_Parameter);
-                var okResult = actionResult as OkObjectResult;
-                if (okResult != null)
-                {
-                    var ApiResponse = okResult.Value as ApiResponse;
-                    if (ApiResponse != null)
-                    {
-                        if (ApiResponse.Data != null)
-                        {
-                            var lstPhieuDatHang = ApiResponse.Data as List<v_ct_PhieuDatHang>;
-                            if (lstPhieuDatHang != null && lstPhieuDatHang.Count() > 0)
-                            {
-                                ct_PhieuDatHang = lstPhieuDatHang.FirstOrDefault() ?? new v_ct_PhieuDatHang();
-                            }
-
-                        }
-
-                    }
-                }
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ct_PhieuDatHang
-                });
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-            finally
-            {
-                AuditLogController auditLog = new AuditLogController(_context, _configuration); 
-                auditLog.DeleteRequest(strTable);
-            }
-        }
-        private string strTable = "ct_PhieuDatHang";
-        // POST: api/Deposit
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<ct_PhieuDatHang>> PostDeposit([FromBody] v_ct_PhieuDatHang Deposit)
-        {
-            try
-            {
-                if (DepositExistsID(Deposit.LOC_ID, Deposit.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Đã tồn tại" + Deposit.LOC_ID + "-" + Deposit.ID + " trong dữ liệu!",
-                        Data = "",
-                        CheckValue = true
-                    });
-                }
-
-                var objdm_NhanVien = await _context.dm_NhanVien!.FirstOrDefaultAsync(e => e.LOC_ID == Deposit.LOC_ID && e.ID_TAIKHOAN == Deposit.ID_NHANVIEN);
-                if (objdm_NhanVien != null)
-                {
-                    var objPhieuNhap = await _context.ct_PhieuDatHang!.FirstOrDefaultAsync(e => e.LOC_ID == Deposit.LOC_ID && e.MAPHIEU == Deposit.MAPHIEU);
-                    if (objPhieuNhap != null)
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "Đã tồn tại" + Deposit.LOC_ID + "-" + Deposit.MAPHIEU + " trong dữ liệu!",
-                            Data = "",
-                            CheckValue = true
-                        });
-                    }
-
-                    using var transaction = _context.Database.BeginTransaction();
-                    {
-
-                        if (Deposit.lstct_PhieuDatHang_ChiTiet != null)
-                        {
-                            string StrHetSoLuong = "";
-                            foreach (var itm in Deposit.lstct_PhieuDatHang_ChiTiet)
-                            {
-                                itm.THANHTIEN = itm.SOLUONG * itm.DONGIA - itm.TONGTIENGIAMGIA;
-                                itm.TONGCONG = itm.THANHTIEN + itm.TONGTIENVAT;
-                                var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO && e.ID_KHO == Deposit.ID_KHO);
-                                if (objdm_HangHoa_Kho != null)
-                                {
-                                    var objdm_HangHoa = _context.view_dm_HangHoa!.FirstOrDefault(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOA);
-                                    itm.TONGSOLUONG = itm.SOLUONG * itm.TYLE_QD;
-                                    if (objdm_HangHoa_Kho.QTY >= itm.TONGSOLUONG)
-                                    {
-                                        itm.GHICHU = objdm_HangHoa_Kho.QTY.ToString() + ";";
-
-                                        //if (itm.ISKHUYENMAI && objdm_HangHoa != null)
-                                        //{
-                                        //    Deposit.TONGTIENTINHTHUE += (itm.TONGTIENGIAMGIA + (itm.ISKHUYENMAI ? ((objdm_HangHoa.ID_DVT == itm.ID_DVT ? objdm_HangHoa.GIA01 : objdm_HangHoa.GIA01_QD) * itm.SOLUONG) : 0) * objdm_HangHoa.MUCTHUE) / 100;
-                                        //}
-                                        objdm_HangHoa_Kho.QTY -= itm.TONGSOLUONG;
-                                        itm.GHICHU += (objdm_HangHoa_Kho.QTY.ToString() + ";");
-
-                                        _context.Entry(objdm_HangHoa_Kho).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                                    }
-                                    else
-                                    {
-
-                                        string Strsoluong = "";
-                                        if (objdm_HangHoa != null && itm.TYLE_QD >= 1)
-                                        {
-                                            int soluong = 0;
-                                            if (itm.TYLE_QD > 1)
-                                            {
-                                                soluong = Convert.ToInt32(objdm_HangHoa_Kho.QTY) / Convert.ToInt32(itm.TYLE_QD);
-                                                if (soluong > 0)
-                                                    Strsoluong = soluong.ToString("N0") + " " + objdm_HangHoa.NAME_DVT;
-
-                                                if (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD) > 0)
-                                                {
-                                                    if (!string.IsNullOrEmpty(Strsoluong))
-                                                        Strsoluong += (" " + (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD)).ToString("N0") + " " + objdm_HangHoa.NAME_DVT_QD) + Environment.NewLine;
-                                                    else
-                                                        Strsoluong += (objdm_HangHoa_Kho.QTY - (soluong * itm.TYLE_QD)).ToString("N0") + " " + objdm_HangHoa.NAME_DVT_QD;
-                                                }
-                                                StrHetSoLuong += "Sản phẩm " + itm.NAME + " không đủ tồn kho!" + Strsoluong + Environment.NewLine;
-                                            }
-                                            else
-                                            {
-                                                Strsoluong = objdm_HangHoa_Kho.QTY.ToString("N0") + " " + objdm_HangHoa.NAME_DVT;
-                                                StrHetSoLuong += "Sản phẩm " + itm.NAME + " không đủ tồn kho!" + Strsoluong + Environment.NewLine;
-                                            }
-                                        }
-
-
-                                    }
-
-                                }
-                                else
-                                {
-                                    return Ok(new ApiResponse
-                                    {
-                                        Success = false,
-                                        Message = "Không tìm thấy sản phẩm kho!" + itm.ID_HANGHOAKHO,
-                                        Data = ""
-                                    });
-                                }
-                                var objct_PhieuDatHang_ChiTiet = await _context.ct_PhieuDatHang_ChiTiet!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID);
-                                if (objct_PhieuDatHang_ChiTiet != null)
-                                    itm.ID = Guid.NewGuid().ToString();
-
-                                itm.LOC_ID = Deposit.LOC_ID;
-                                itm.ID_PHIEUDATHANG = Deposit.ID;
-                                _context.ct_PhieuDatHang_ChiTiet!.Add(itm);
-                            }
-
-                            if (!string.IsNullOrEmpty(StrHetSoLuong))
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = StrHetSoLuong,
-                                    Data = ""
-                                });
-                            }
-                            Deposit.TONGTHANHTIEN = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.THANHTIEN),0);
-                            Deposit.TONGTIENGIAMGIA = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGTIENGIAMGIA),0);
-                            Deposit.TONGTIENVAT = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGTIENVAT),0);
-                            Deposit.TONGTIEN = Math.Round(Deposit.lstct_PhieuDatHang_ChiTiet.Sum(s => s.TONGCONG),0);
-                        }
-                        _context.ct_PhieuDatHang!.Add(Deposit);
-                        AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
-                    }
-                    transaction.Commit();
-
-                    v_ct_PhieuDatHang ct_PhieuDatHang = new v_ct_PhieuDatHang();
-                    ct_PhieuDatHang.lstct_PhieuDatHang_ChiTiet = new List<v_ct_PhieuDatHang_ChiTiet>();
-                    SP_Parameter SP_Parameter = new SP_Parameter();
-                    SP_Parameter.ID_PHIEUNHAP = Deposit.ID;
-                    ExecuteStoredProc ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                    var actionResult = await ExecuteStoredProc1.Sp_Get_DanhSachPhieuNhap(SP_Parameter);
-                    var okResult = actionResult as OkObjectResult;
-                    if (okResult != null)
-                    {
-                        var ApiResponse = okResult.Value as ApiResponse;
-                        if (ApiResponse != null)
-                        {
-
-                            if (ApiResponse.Data != null)
-                            {
-                                var lstPhieuDatHang = ApiResponse.Data as List<v_ct_PhieuDatHang>;
-                                if (lstPhieuDatHang != null && lstPhieuDatHang.Count() > 0)
-                                {
-                                    ct_PhieuDatHang = lstPhieuDatHang.FirstOrDefault() ?? new v_ct_PhieuDatHang();
-                                }
-                            }
-                        }
-                    }
-                    return Ok(new ApiResponse
-                    {
-                        Success = true,
-                        Message = "Success",
-                        Data = ct_PhieuDatHang
-                    });
-                }
-                else
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Tài khoản chưa được gắn với nhân viên trong dữ liệu!",
-                        Data = ""
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-            finally
-            {
-                AuditLogController auditLog = new AuditLogController(_context, _configuration); 
-                auditLog.DeleteRequest(strTable);
-            }
-        }
-
-
-        // POST: api/Deposit
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PostDeposit(string LOC_ID, [FromBody] List<Product_Detail> lstProduct_Detail)
-        {
-            try
-            {
-                return await Get_ChuongTrinhKhuyenMai(lstProduct_Detail, LOC_ID);
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // POST: api/Deposit
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("PostCreateOutput")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<ct_PhieuDatHang>> PostDeposit([FromBody] List<Deposit> lstDeposit)
-        {
-            try
-            {
-                string LOC_ID = "";
-                string ID_KHO = "";
-                string ID_NGUOITAO = "";
-                DateTime NGAYLAP = new DateTime();
-                NGAYLAP = DateTime.Now.Date;
-                if (lstDeposit != null && lstDeposit.Count > 0)
-                {
-                    Deposit Deposit = lstDeposit.FirstOrDefault() ?? new Deposit();
-                    LOC_ID = Deposit != null ? Deposit.LOC_ID : "";
-                    ID_NGUOITAO = Deposit != null ? Deposit.ID_NGUOITAO : "";
-                    NGAYLAP = Deposit != null ? Deposit.NGAYLAP : DateTime.Now.Date;
-                }
-                else
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy dữ liệu!",
-                        Data = ""
-                    });
-                }
-                List<ct_PhieuDatHang_ChiTiet> lstPhieuDatHang_ChiTiet = new List<ct_PhieuDatHang_ChiTiet>();
-                Dictionary<string, string> lstPhieuDatHang = new Dictionary<string, string>();
-                using var transaction = _context.Database.BeginTransaction();
-                {
-                    var Max_ID = _context.ct_PhieuXuat!.Where(e => e.LOC_ID == LOC_ID && e.NGAYLAP.Date == NGAYLAP.Date).Select(e => e.SOPHIEU).DefaultIfEmpty().Max();
-                    foreach (Deposit itm in lstDeposit)
-                    {
-                        var PhieuDatHang = await _context.ct_PhieuDatHang!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID);
-                        if (PhieuDatHang == null)
-                        {
-                            return Ok(new ApiResponse
-                            {
-                                Success = false,
-                                Message = "Không tìm thấy " + LOC_ID + "-" + itm.ID + " dữ liệu!",
-                                Data = ""
-                            });
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(PhieuDatHang.ID_PHIEUXUAT))
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = "Phiếu đặt hàng " + PhieuDatHang.MAPHIEU + " đã được tạo phiếu xuất!",
-                                    Data = ""
-                                });
-                            }
-                            if (!string.IsNullOrEmpty(ID_KHO) && ID_KHO != PhieuDatHang.ID_KHO)
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = "Phiếu đặt hàng " + PhieuDatHang.MAPHIEU + " khác kho với các phiếu khác!",
-                                    Data = ""
-                                });
-                            }
-                        }
-
-
-                        ID_KHO = PhieuDatHang.ID_KHO;
-                        lstPhieuDatHang.Add(PhieuDatHang.ID, PhieuDatHang.ID_KHACHHANG);
-
-                        var lstChiTietPhieuDatHang_CT = await _context.ct_PhieuDatHang_ChiTiet!.Where(e => e.LOC_ID == itm.LOC_ID && e.ID_PHIEUDATHANG == itm.ID).ToArrayAsync();
-                        if (lstChiTietPhieuDatHang_CT == null || lstChiTietPhieuDatHang_CT.Count() == 0)
-                        {
-                            return Ok(new ApiResponse
-                            {
-                                Success = false,
-                                Message = "Không tìm thấy chi tiết phiếu đặt hàng " + LOC_ID + "-" + itm.ID + " dữ liệu!",
-                                Data = ""
-                            });
-                        }
-                        lstPhieuDatHang_ChiTiet.AddRange(lstChiTietPhieuDatHang_CT);
-
-                    }
-                    var dm_LoaiPhieuXuat = await _context.dm_LoaiPhieuXuat!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.MA == API.XHKH);
-
-                    foreach (var itm in lstPhieuDatHang.Select(e => e.Value).GroupBy(e => e.ToString()))
-                    {
-                        var lstPhieuDatHang_KH = lstPhieuDatHang.Where(e => e.Value == itm.Key.ToString()).Select(e => e.Key);
-                        var lstPhieuDatHang_ChiTiet_KH = lstPhieuDatHang_ChiTiet.Where(e => lstPhieuDatHang_KH.Contains(e.ID_PHIEUDATHANG)).ToList();
-                        ct_PhieuXuat newct_PhieuXuat = new ct_PhieuXuat();
-                        Max_ID += 1;
-                        newct_PhieuXuat.ID = Guid.NewGuid().ToString();
-                        newct_PhieuXuat.LOC_ID = LOC_ID;
-                        newct_PhieuXuat.ID_LOAIPHIEUXUAT = (dm_LoaiPhieuXuat != null ? dm_LoaiPhieuXuat.ID : "");
-                        newct_PhieuXuat.NGAYLAP = NGAYLAP;
-                        newct_PhieuXuat.SOPHIEU = Max_ID;
-                        
-                       
-                        newct_PhieuXuat.ID_KHACHHANG = itm.Key;
-                        newct_PhieuXuat.ID_KHO = ID_KHO;
-                        newct_PhieuXuat.TONGTIENGIAMGIA = Math.Round(lstPhieuDatHang_ChiTiet_KH.Sum(s => s.TONGTIENGIAMGIA), 0);
-                        newct_PhieuXuat.TONGTHANHTIEN = Math.Round(lstPhieuDatHang_ChiTiet_KH.Sum(s => s.THANHTIEN), 0);
-                        newct_PhieuXuat.TONGTIENVAT = Math.Round(lstPhieuDatHang_ChiTiet_KH.Sum(s => s.TONGTIENVAT), 0);
-                        newct_PhieuXuat.TONGTIEN = Math.Round(lstPhieuDatHang_ChiTiet_KH.Sum(s => s.TONGCONG), 0);
-                        newct_PhieuXuat.ID_NGUOITAO = ID_NGUOITAO;
-                        newct_PhieuXuat.THOIGIANTHEM = DateTime.Now;
-                        newct_PhieuXuat.ISKHUYENMAI = true;
-                        newct_PhieuXuat.ISPHIEUDIEUHANG = true;
-                        lstPhieuDatHang_ChiTiet_KH = (from s in lstPhieuDatHang_ChiTiet_KH
-                                                      orderby s.ID_PHIEUDATHANG, s.STT, s.ISKHUYENMAI
-                                                      select s).ToList();
-                        int STT = 0;
-                        string ID_PHIEUDATHANG = "";
-                        int STT_PHIEUDATHANG = 0;
-                        foreach (var ct in lstPhieuDatHang_ChiTiet_KH)
-                        {
-                            ct_PhieuXuat_ChiTiet newct_PhieuXuat_CT = new ct_PhieuXuat_ChiTiet();
-                            newct_PhieuXuat_CT = ConvertobjectToct_PhieuXuat_ChiTiet(ct, newct_PhieuXuat_CT);
-                            newct_PhieuXuat_CT.ID_PHIEUXUAT = newct_PhieuXuat.ID;
-                            newct_PhieuXuat_CT.ID_PHIEUDIEUHANG_CHITIET = ct.ID;
-                            if (string.IsNullOrEmpty(ID_PHIEUDATHANG) || (ct.ID_PHIEUDATHANG != ID_PHIEUDATHANG) || (ct.ID_PHIEUDATHANG == ID_PHIEUDATHANG && ct.STT != STT_PHIEUDATHANG))
-                            {
-                                STT += 1;
-                                STT_PHIEUDATHANG = ct.STT;
-                                ID_PHIEUDATHANG = ct.ID_PHIEUDATHANG;
-                            }
-                            newct_PhieuXuat_CT.STT = STT;
-                            _context.ct_PhieuXuat_ChiTiet!.Add(newct_PhieuXuat_CT);
-                        }
-
-                        foreach (var value in lstPhieuDatHang_KH)
-                        {
-                            var PhieuDatHang = await _context.ct_PhieuDatHang!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == value);
-                            if (PhieuDatHang != null)
-                            {
-                                newct_PhieuXuat.GHICHU = (string.IsNullOrEmpty(newct_PhieuXuat.GHICHU) ? "" : newct_PhieuXuat.GHICHU + ",") + PhieuDatHang.MAPHIEU;
-                                PhieuDatHang.ID_PHIEUXUAT = newct_PhieuXuat.ID;
-                                //newct_PhieuXuat.TONGTIENTINHTHUE = PhieuDatHang.TONGTIENTINHTHUE;
-                                _context.Entry(PhieuDatHang).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                            }
-                        }
-
-                        bool bolCheckMA = false;
-                        while (!bolCheckMA)
-                        {
-                            newct_PhieuXuat.MAPHIEU = API.GetMaPhieu(API.ct_PhieuXuat, newct_PhieuXuat.NGAYLAP, newct_PhieuXuat.SOPHIEU);
-                            var check = _context.ct_PhieuXuat!.Where(e => e.LOC_ID == LOC_ID && e.MAPHIEU == newct_PhieuXuat.MAPHIEU).FirstOrDefault();
-                            if(check != null)
-                            {
-                                Max_ID += 1;
-                                newct_PhieuXuat.SOPHIEU = Max_ID;
-                            }    
-                            else
-                            {
-                                bolCheckMA = true;
-                            }    
-                        }
-                        _context.ct_PhieuXuat!.Add(newct_PhieuXuat);
-                    }
-
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
-                }
-                transaction.Commit();
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        private static ct_PhieuXuat_ChiTiet ConvertobjectToct_PhieuXuat_ChiTiet<T>(T objectFrom, ct_PhieuXuat_ChiTiet objectTo)
-        {
-            if (objectFrom != null)
-            {
-                var properties = objectFrom.GetType().GetProperties();
-                foreach (PropertyInfo itmPropertyInfo in properties)
-                {
-                    if (itmPropertyInfo != null)
-                    {
-                        var val = itmPropertyInfo.GetValue(objectFrom);
-                        if (val != null)
-                        {
-                            var piShared = objectTo.GetType().GetProperty(itmPropertyInfo.Name);
-                            if (piShared != null)
-                                piShared.SetValue(objectTo, val);
-                        }
-                    }
-                }
-            }
-
-            return objectTo;
-        }
-
-        private static ct_PhieuDatHang_ChiTiet ConvertobjectToct_PhieuDatHang_ChiTiet<T>(T objectFrom, ct_PhieuDatHang_ChiTiet objectTo)
-        {
-            if (objectFrom != null)
-            {
-                var properties = objectFrom.GetType().GetProperties();
-                foreach (PropertyInfo itmPropertyInfo in properties)
-                {
-                    if (itmPropertyInfo != null)
-                    {
-                        var val = itmPropertyInfo.GetValue(objectFrom);
-                        if (val != null)
-                        {
-                            var piShared = objectTo.GetType().GetProperty(itmPropertyInfo.Name);
-                            if (piShared != null)
-                                piShared.SetValue(objectTo, val);
-                        }
-                    }
-                }
-            }
-
-            return objectTo;
-        }
-        // DELETE: api/Deposit/5
-        [HttpDelete("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> DeleteDeposit(string LOC_ID, string ID)
-        {
-            try
-            {
-                var Deposit = await _context.ct_PhieuDatHang!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-                if (Deposit == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(Deposit.ID_PHIEUXUAT))
-                    {
-                        return Ok(new ApiResponse
-                        {
-                            Success = false,
-                            Message = "Phiếu đặt hàng " + Deposit.MAPHIEU + " đã được tạo phiếu xuất!",
-                            Data = ""
-                        });
-                    }
-                }
-
-                using var transaction = _context.Database.BeginTransaction();
-                {
-                    var lstPhieuNhap_ChiTiet = await _context.ct_PhieuDatHang_ChiTiet!.Where(e => e.LOC_ID == Deposit.LOC_ID && e.ID_PHIEUDATHANG == Deposit.ID).ToListAsync();
-                    if (lstPhieuNhap_ChiTiet != null)
-                    {
-                        foreach (ct_PhieuDatHang_ChiTiet itm in lstPhieuNhap_ChiTiet)
-                        {
-                            var objdm_HangHoa_Kho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_HANGHOAKHO);
-                            if (objdm_HangHoa_Kho != null)
-                            {
-                                itm.TONGSOLUONG = itm.TYLE_QD * itm.SOLUONG;
-                                objdm_HangHoa_Kho.QTY += itm.TONGSOLUONG;
-                                _context.Entry(objdm_HangHoa_Kho).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                            }
-                            else
-                            {
-                                return Ok(new ApiResponse
-                                {
-                                    Success = false,
-                                    Message = "Không tìm thấy sản phẩm kho!" + itm.ID_HANGHOAKHO,
-                                    Data = ""
-                                });
-                            }
-                            _context.ct_PhieuDatHang_ChiTiet!.Remove(itm);
-                        }
-                    }
-
-                    _context.ct_PhieuDatHang!.Remove(Deposit);
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog(); await _context.SaveChangesAsync();
-                }
-                transaction.Commit();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        private bool DepositExistsID(string LOC_ID, string ID)
-        {
-            //bool bolCheckMA = false;
-            //while (!bolCheckMA)
-            //{
-            //    using var transaction = _context.Database.BeginTransaction();
-            //    {
-            //        var check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
-            //        if (check != null)
-            //        {
-            //            if (check.THOIGIAN < DateTime.Now.AddSeconds(-5))
-            //            {
-            //                _context.AspNetRequest!.Remove(check);
-            //                _context.SaveChanges();
-            //            }
-            //        }
-            //        else
-            //        {
-            //            AspNetRequest newAspNetRequest = new AspNetRequest();
-            //            newAspNetRequest.ID = ID;
-            //            newAspNetRequest.NAME = strTable;
-            //            newAspNetRequest.THOIGIAN = DateTime.Now;
-            //            newAspNetRequest.LOC_ID = LOC_ID;
-            //            _context.AspNetRequest!.Add(newAspNetRequest);
-            //            AuditLogController auditLog = new AuditLogController(_context, _configuration); auditLog.InserAuditLog();
-            //            _context.SaveChanges();
-            //            check = _context.AspNetRequest!.Where(e => e.LOC_ID == LOC_ID && e.NAME == strTable).OrderByDescending(e => e.THOIGIAN).FirstOrDefault();
-            //            if (check != null && check.ID == ID)
-            //            {
-            //                bolCheckMA = true;
-            //            }
-            //        }
-            //    }
-            //    transaction.Commit();
-            //}
-            return _context.ct_PhieuDatHang!.Any(e => e.LOC_ID == LOC_ID && e.ID == ID);
-        }
-
-        #region Chương trình khuyến mãi
-        private async Task<IActionResult> Get_ChuongTrinhKhuyenMai(List<Product_Detail> lstProduct_Detail, string LOC_ID)
-        {
-            try
-            {
-
-                List<v_dm_ChuongTrinhKhuyenMai> lstdm_ChuongTrinhKhuyenMai = new List<v_dm_ChuongTrinhKhuyenMai>();
-                SP_Parameter SP_Parameter = new SP_Parameter();
-                SP_Parameter.LOC_ID = LOC_ID;
-                SP_Parameter.TUNGAY = DateTime.Now.Date;
-                SP_Parameter.DENNGAY = DateTime.Now.Date;
-                ExecuteStoredProc ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                var actionResult = await ExecuteStoredProc1.Sp_Get_ChuongTrinhKhuyenMai(SP_Parameter);
-                var okResult = actionResult as OkObjectResult;
-                if (okResult != null)
-                {
-                    var ApiResponse = okResult.Value as ApiResponse;
-                    if (ApiResponse != null)
-                    {
-                        if (ApiResponse.Data != null)
-                        {
-                            var lst_ChiTiet = ApiResponse.Data as List<v_dm_ChuongTrinhKhuyenMai>;
-                            if (lst_ChiTiet != null)
-                            {
-                                lstdm_ChuongTrinhKhuyenMai.AddRange(lst_ChiTiet);
-                            }
-                        }
-                    }
-                }
-
-                var lstKhuyenMai = lstProduct_Detail.Where(e => e.ISKHUYENMAI == true).ToList();
-                if (lstKhuyenMai != null && lstKhuyenMai.Count() > 0)
-                {
-                    foreach (var itm in lstKhuyenMai)
-                    {
-                        lstProduct_Detail.Remove(itm);
-                    }
-                }
-
-                var lstKhuyenMai1 = lstProduct_Detail.Where(e => !string.IsNullOrEmpty(e.ID_KHUYENMAI));
-                if (lstKhuyenMai1 != null && lstKhuyenMai1.Count() > 0)
-                {
-                    foreach (var itm in lstKhuyenMai1)
-                    {
-                        dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                        if (!string.IsNullOrEmpty(itm.ID_THUESUAT))
-                            clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == itm.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                        itm.CHIETKHAU = 0;
-                        itm.TYPE = "CHIETKHAU";
-                        API.TinhTong(itm, "", lstProduct_Detail, clsdm_ThueSuat);
-
-                        itm.TONGTIENGIAMGIA = 0;
-                        itm.TYPE = "TONGTIENGIAMGIA";
-                        API.TinhTong(itm, "", lstProduct_Detail, clsdm_ThueSuat);
-                        itm.ISDALAYKHUYENMAI = false;
-                        itm.ID_KHUYENMAI = "";
-                    }
-                }
-                double SOTIENTHUE_KM = 0;
-                List<string> lstDanhSachDaLayKhuyenMai = new List<string>();
-                List<Product_Detail> lstProduct_Detail_Tam = new List<Product_Detail>();
-
-                foreach (v_dm_ChuongTrinhKhuyenMai itm in lstdm_ChuongTrinhKhuyenMai)
-                {
-                    if (itm.MA.StartsWith("48"))
-                    {
-                        //string s = "";
-                    }
-                    bool bolConSoLuong = false;
-                    string input = itm.MA;
-                    int lastIndex = input.LastIndexOf('_');
-
-                    if (lastIndex != -1) // Kiểm tra xem có dấu gạch nào không
-                    {
-                        string result = input.Substring(0, lastIndex);
-                        if (lstDanhSachDaLayKhuyenMai.Where(e => e.StartsWith(result)).Count() > 0)
-                        {
-                            if (lstProduct_Detail_Tam.Where(s => (s.SOLUONG - s.SOLUONGDALAY_KM) > 0).Count() > 0)
-                                bolConSoLuong = true;
-                            else
-                                continue;
-                        }
-                        else
-                        {
-                            lstDanhSachDaLayKhuyenMai = new List<string>();
-                            lstProduct_Detail_Tam = lstProduct_Detail.ToList();
-                            bolConSoLuong = true;
-                        }
-                    }
+                    if (iIndexDel == 1)
+                        return true;
                     else
-                    {
-                        lstDanhSachDaLayKhuyenMai = new List<string>();
-                        lstProduct_Detail_Tam = lstProduct_Detail.ToList();
-                    }
-                    //string MA = itm.MA.Substring(0, itm.MA.Length - 1);
-
-
-                    int intCoLayKhuyenMai = 0;
-                    var lstChuongTrinhKhuyenMai_YeuCau = await _context.dm_ChuongTrinhKhuyenMai_YeuCau!.Where(e => e.LOC_ID == LOC_ID && e.ID_CHUONGTRINHKHUYENMAI == itm.ID).ToListAsync();
-
-                    if (itm.IS_YEUCAUCHITIET)
-                    {
-                        #region Chương trình khuyến mãi theo số lượng chi tiết
-                        if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                        {
-                            int PhanNguyen = 0;
-                            bool bolThoatWhile = false;
-                            List<Product_Detail> lstSelectProduct_Detail = new List<Product_Detail>();
-                            List<Product_Detail> lstSelectProduct_Detail_HT = new List<Product_Detail>();
-                            List<Product_Detail> lstSelectProduct_Detail_Old = new List<Product_Detail>();
-                            while (bolThoatWhile != true)
-                            {
-                                PhanNguyen += 1;
-                                foreach (var ChiTiet in lstChuongTrinhKhuyenMai_YeuCau)
-                                {
-                                    var getlst = lstProduct_Detail.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == ChiTiet.ID_HANGHOA && ChiTiet.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == ChiTiet.ID_HANGHOA && ChiTiet.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == ChiTiet.ID_DVT).ToList();
-                                    var CTKM_YC = getlst.Sum(e => (ChiTiet.SOLUONG > 0 ? e.SOLUONG : e.THANHTIEN));
-                                    if (CTKM_YC >= ((ChiTiet.SOLUONG > 0 ? ChiTiet.SOLUONG : ChiTiet.SOTIEN) * PhanNguyen))
-                                    {
-                                        if (PhanNguyen == 1)
-                                            lstSelectProduct_Detail_HT.AddRange(getlst);
-
-                                        if (itm.IS_YEUCAUCHITIET && ChiTiet.SOLUONG == 0 && ChiTiet.SOTIEN == 0)
-                                        {
-                                            bolThoatWhile = true;
-                                            PhanNguyen = 0;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        PhanNguyen -= 1;
-                                        bolThoatWhile = true;
-                                        lstSelectProduct_Detail = lstSelectProduct_Detail_Old.ToList();
-                                    }
-                                }
-                                if (!itm.ISTINHLUYTUYEN)
-                                    bolThoatWhile = true;
-
-                                if (!bolThoatWhile)
-                                {
-                                    lstSelectProduct_Detail_Old = lstSelectProduct_Detail_HT.ToList();
-                                }
-                                else
-                                {
-                                    lstSelectProduct_Detail = lstSelectProduct_Detail_HT.ToList();
-                                }
-
-                            }
-                            if (PhanNguyen > 0)
-                            {
-                                foreach (var ChiTiet in lstChuongTrinhKhuyenMai_YeuCau)
-                                {
-                                    double TONGTIENGIAMGIA = 0;
-                                    var getlst = lstProduct_Detail.Where(e => ((e.ID_HANGHOA == ChiTiet.ID_HANGHOA && ChiTiet.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == ChiTiet.ID_HANGHOA && ChiTiet.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == ChiTiet.ID_DVT).ToList();
-                                    foreach (var ChiTietHoaDon in getlst)
-                                    {
-                                        dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                        if (!string.IsNullOrEmpty(ChiTietHoaDon.ID_THUESUAT))
-                                            clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTietHoaDon.LOC_ID && e.ID == ChiTietHoaDon.ID_THUESUAT) ?? new dm_ThueSuat();
-                                        if (ChiTietHoaDon.CHIETKHAU < ChiTiet.CHIETKHAU)
-                                        {
-                                            TONGTIENGIAMGIA = (ChiTietHoaDon.SOLUONG * ChiTietHoaDon.DONGIA) * ChiTiet.CHIETKHAU / 100;
-                                            if (TONGTIENGIAMGIA > ChiTietHoaDon.TONGTIENGIAMGIA)
-                                            {
-                                                ChiTietHoaDon.CHIETKHAU = ChiTiet.CHIETKHAU;
-                                                ChiTietHoaDon.TYPE = "CHIETKHAU";
-                                                API.TinhTong(ChiTietHoaDon, "", lstProduct_Detail, clsdm_ThueSuat);
-                                            }
-                                        }
-                                        TONGTIENGIAMGIA = ChiTiet.TIENGIAM * (itm.ISTINHLUYTUYEN ? PhanNguyen : 1);
-                                        if (ChiTietHoaDon.TONGTIENGIAMGIA < TONGTIENGIAMGIA)
-                                        {
-                                            ChiTietHoaDon.TONGTIENGIAMGIA = TONGTIENGIAMGIA;
-                                            ChiTietHoaDon.TYPE = "TONGTIENGIAMGIA";
-                                            API.TinhTong(ChiTietHoaDon, "", lstProduct_Detail, clsdm_ThueSuat);
-                                        }
-
-
-                                        ChiTietHoaDon.ISDALAYKHUYENMAI = false;
-                                        ChiTietHoaDon.ID_KHUYENMAI = ChiTiet.ID_CHUONGTRINHKHUYENMAI;
-
-                                        var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ChiTietHoaDon.ID_HANGHOA);
-                                        if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                            SOTIENTHUE_KM += (ChiTietHoaDon.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                    }
-                                    intCoLayKhuyenMai += 1;
-                                }
-                            }
-
-
-                            var lstdm_ChuongTrinhKhuyenMai_Tang = await _context.dm_ChuongTrinhKhuyenMai_Tang!.Where(e => e.LOC_ID == LOC_ID && e.ID_CHUONGTRINHKHUYENMAI == itm.ID).ToListAsync();
-
-                            #region Khuyến mãi tặng hàng hóa
-                            if (PhanNguyen > 0 && lstdm_ChuongTrinhKhuyenMai_Tang != null && lstdm_ChuongTrinhKhuyenMai_Tang.Count > 0)
-                            {
-                                var ID_KHO = lstProduct_Detail.Select(e => e.ID_KHO).FirstOrDefault();
-
-                                if (lstdm_ChuongTrinhKhuyenMai_Tang != null)
-                                {
-                                    foreach (var CTKM_Tang in lstdm_ChuongTrinhKhuyenMai_Tang)
-                                    {
-                                        var HangHoaKho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID_HANGHOA == CTKM_Tang.ID_HANGHOA && e.ID_KHO == ID_KHO);
-                                        var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == CTKM_Tang.ID_HANGHOA);
-                                        if (HangHoaKho != null && HangHoa != null)
-                                        {
-                                            Product_Detail newProduct_Detail = new Product_Detail();
-                                            newProduct_Detail.STT = lstSelectProduct_Detail.Max(e => e.STT);
-                                            newProduct_Detail.ID = Guid.NewGuid().ToString();
-                                            newProduct_Detail.NAME = HangHoa.NAME;
-                                            newProduct_Detail.MA = HangHoa.MA;
-                                            newProduct_Detail.ID_HANGHOA = CTKM_Tang.ID_HANGHOA;
-                                            newProduct_Detail.ID_HANGHOAKHO = HangHoaKho.ID;
-                                            newProduct_Detail.DONGIA = 0;
-                                            newProduct_Detail.ID_DVT = CTKM_Tang.ID_DVT;
-                                            newProduct_Detail.SOLUONG = PhanNguyen * CTKM_Tang.SOLUONG;
-                                            newProduct_Detail.CHIETKHAU = 0;
-                                            newProduct_Detail.TONGTIENGIAMGIA = 0;
-                                            newProduct_Detail.THANHTIEN = 0;
-                                            newProduct_Detail.THUESUAT = 0;
-                                            newProduct_Detail.TONGTIENVAT = 0;
-                                            newProduct_Detail.TONGCONG = 0;
-                                            if (CTKM_Tang.SOTIEN > 0)
-                                            {
-                                                newProduct_Detail.TONGTIENGIAMGIA = CTKM_Tang.SOTIEN * PhanNguyen;
-                                                newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                                if (!string.IsNullOrEmpty(HangHoa.ID_THUESUAT))
-                                                    clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == HangHoa.LOC_ID && e.ID == HangHoa.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                                                API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                                    SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * HangHoa.MUCTHUE / 100);
-                                            }
-                                            newProduct_Detail.ID_KHO = ID_KHO;
-                                            //newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                            newProduct_Detail.ISKHUYENMAI = true;
-                                            newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                            if (HangHoa != null && HangHoa.ID_DVT == newProduct_Detail.ID_DVT)
-                                            {
-                                                newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT;
-                                                if (!string.IsNullOrEmpty(HangHoa.ID_DVT_QD))
-                                                {
-                                                    newProduct_Detail.TYLE_QD = HangHoa.TYLE_QD;
-                                                }
-                                                else
-                                                {
-                                                    if (HangHoa.LOAIHANGHOA == ((int)API.LoaiSanPham.KhongQuanLyTonKho).ToString())
-                                                        newProduct_Detail.TYLE_QD = 0;
-                                                    else
-                                                        newProduct_Detail.TYLE_QD = 1;
-                                                }
-                                                if (newProduct_Detail.SOLUONG != 0)
-                                                {
-                                                    if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (newProduct_Detail.SOLUONG * newProduct_Detail.TYLE_QD * HangHoa.GIA01 * HangHoa.MUCTHUE / 100);
-                                                }
-                                            }
-                                            else if (HangHoa != null && HangHoa.ID_DVT_QD == newProduct_Detail.ID_DVT)
-                                            {
-                                                if (!string.IsNullOrEmpty(HangHoa.ID_DVT_QD))
-                                                {
-                                                    newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT_QD;
-                                                    newProduct_Detail.TYLE_QD = 1;
-                                                }
-                                                if (newProduct_Detail.SOLUONG != 0)
-                                                {
-                                                    if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (newProduct_Detail.SOLUONG * newProduct_Detail.TYLE_QD * HangHoa.GIA01_QD * HangHoa.MUCTHUE / 100);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                return Ok(new ApiResponse
-                                                {
-                                                    Success = false,
-                                                    Message = "Không tìm thấy thông tin sản phẩm với đơn vị tính " + newProduct_Detail.ID_DVT + " Kiểm tra CTKM" + itm.NAME,
-                                                    Data = null
-                                                });
-
-                                            }
-                                            newProduct_Detail.TONGSOLUONG = newProduct_Detail.TYLE_QD * newProduct_Detail.SOLUONG;
-
-
-                                            #region Sản phẩm tặng là Combo
-                                            if (HangHoa != null && HangHoa.LOAIHANGHOA == ((int)API.LoaiSanPham.Combo).ToString())
-                                            {
-                                                newProduct_Detail.ID_KHUYENMAI = newProduct_Detail.ID_HANGHOA;
-                                                SP_Parameter objParameter = new SP_Parameter();
-                                                objParameter.LOC_ID = itm.LOC_ID;
-                                                objParameter.ID_KHO = newProduct_Detail.ID_KHO;
-                                                objParameter.ID_COMBO = newProduct_Detail.ID_HANGHOA;
-                                                ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                                                actionResult = await ExecuteStoredProc1.Sp_Get_DanhSachSanPhamKho_Combo(objParameter);
-                                                okResult = actionResult as OkObjectResult;
-                                                if (okResult != null)
-                                                {
-                                                    var ApiResponse = okResult.Value as ApiResponse;
-                                                    if (ApiResponse != null)
-                                                    {
-                                                        if (ApiResponse.Data != null)
-                                                        {
-                                                            var lst_ChiTiet = ApiResponse.Data as List<Product_Detail>;
-                                                            if (lst_ChiTiet != null)
-                                                            {
-                                                                foreach (var ChiTiet in lst_ChiTiet)
-                                                                {
-                                                                    ChiTiet.STT = newProduct_Detail.STT;
-                                                                    ChiTiet.ID = Guid.NewGuid().ToString();
-                                                                    ChiTiet.ID_DVT = ChiTiet.ID_DVT_COMBO;
-                                                                    ChiTiet.SOLUONG = newProduct_Detail.SOLUONG * ChiTiet.QTY_COMBO;
-                                                                    ChiTiet.TYLE_QD = ChiTiet.TYLE_QD_COMBO;
-                                                                    ChiTiet.TONGSOLUONG = newProduct_Detail.SOLUONG * ChiTiet.QTY_TOTAL_COMBO;
-                                                                    ChiTiet.DONGIA = 0;
-                                                                    ChiTiet.CHIETKHAU = 0;
-                                                                    ChiTiet.TONGTIENGIAMGIA = 0;
-                                                                    ChiTiet.THANHTIEN = 0;
-                                                                    ChiTiet.THUESUAT = 0;
-                                                                    ChiTiet.TONGTIENVAT = 0;
-                                                                    ChiTiet.TONGCONG = 0;
-                                                                    ChiTiet.ISKHUYENMAI = true;
-                                                                    ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                                    ChiTiet.ISCOMBO = true;
-                                                                    ChiTiet.ID_COMBO = newProduct_Detail.ID_HANGHOA;
-                                                                    lstProduct_Detail.Add(ChiTiet);
-                                                                }
-
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            #endregion
-
-                                            lstProduct_Detail.Add(newProduct_Detail);
-                                        }
-                                    }
-                                    intCoLayKhuyenMai += 1;
-                                }
-                            }
-                            #endregion
-
-                            #region Chiết khấu tiền, giảm tiền
-                            //bool bolTinhThue = false;
-                            if (PhanNguyen > 0 && (itm.CHIETKHAU > 0 || itm.TIENGIAM > 0))
-                            {
-                                lstSelectProduct_Detail = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI).ToList();
-                                Dictionary<string, int> lstCTKM_YC = new Dictionary<string, int>();
-                                if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                                {
-                                    foreach (var CTKM_YC in lstChuongTrinhKhuyenMai_YeuCau)
-                                    {
-                                        lstCTKM_YC.Add(CTKM_YC.ID_HANGHOA, CTKM_YC.HINHTHUC);
-                                        //var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == CTKM_YC.LOC_ID && ((e.ID == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)));
-                                        //if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                        //    bolTinhThue = true;
-                                    }
-
-                                }
-
-                                if (lstSelectProduct_Detail != null && lstSelectProduct_Detail.Count > 0)
-                                {
-                                    double SumTien = 0;
-                                    double SumSoLuong = 0;
-                                    if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                                    {
-                                        SumTien = lstSelectProduct_Detail.Where(e => !e.ISDALAYKHUYENMAI && lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0).Sum(s => Convert.ToDouble(s.THANHTIEN));
-                                        if (!string.IsNullOrEmpty(itm.ID_DVT_DATKM))
-                                            SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISDALAYKHUYENMAI && (lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0) && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.SOLUONG));
-                                    }
-                                    else
-                                    {
-                                        SumTien = lstSelectProduct_Detail.Where(e => !e.ISDALAYKHUYENMAI && !e.ISKHUYENMAI).Sum(s => Convert.ToDouble(s.TONGCONG));
-                                        if (!string.IsNullOrEmpty(itm.ID_DVT_DATKM))
-                                            SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISDALAYKHUYENMAI && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.TONGSOLUONG));
-                                    }
-                                    if (((itm.SOLUONG_DATKM != 0 || itm.SOLUONG_DATKM_DEN != 0) && SumSoLuong != 0 && itm.SOLUONG_DATKM <= SumSoLuong && (itm.SOLUONG_DATKM_DEN == 0 || itm.SOLUONG_DATKM_DEN >= SumSoLuong)) || ((itm.TONGTIEN_DATKM != 0 || itm.TONGTIEN_DATKM_DEN != 0) && SumTien != 0 && itm.TONGTIEN_DATKM <= SumTien && (itm.TONGTIEN_DATKM_DEN == 0 || itm.TONGTIEN_DATKM_DEN >= SumTien)))
-                                    {
-                                        if (!itm.ISTONGHOADON)
-                                        {
-                                            foreach (var ChiTiet in lstSelectProduct_Detail)
-                                            {
-                                                dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                                if (!string.IsNullOrEmpty(ChiTiet.ID_THUESUAT))
-                                                    clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                                                if (itm.CHIETKHAU > 0)
-                                                {
-                                                    ChiTiet.CHIETKHAU = itm.CHIETKHAU;
-                                                    ChiTiet.TYPE = "CHIETKHAU";
-                                                    API.TinhTong(ChiTiet, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                    //ChiTiet.ISDALAYKHUYENMAI = true;
-                                                    ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                    var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_HANGHOA);
-                                                    if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (ChiTiet.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-
-                                                }
-                                                else if (itm.TIENGIAM > 0)
-                                                {
-                                                    ChiTiet.TONGTIENGIAMGIA = itm.TIENGIAM;
-                                                    ChiTiet.TYPE = "TONGTIENGIAMGIA";
-                                                    API.TinhTong(ChiTiet, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                    //ChiTiet.ISDALAYKHUYENMAI = true;
-                                                    ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                    var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_HANGHOA);
-                                                    if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (ChiTiet.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            var ID_KHO = lstProduct_Detail.Select(e => e.ID_KHO).FirstOrDefault();
-                                            var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.MA == API.GTBH);
-                                            if (HangHoa != null)
-                                            {
-                                                var HangHoaKho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID_HANGHOA == HangHoa.ID && e.ID_KHO == ID_KHO);
-                                                if (HangHoaKho != null)
-                                                {
-                                                    Product_Detail newProduct_Detail = new Product_Detail();
-                                                    newProduct_Detail.STT = lstSelectProduct_Detail.Max(e => e.STT);
-                                                    newProduct_Detail.ID = Guid.NewGuid().ToString();
-                                                    newProduct_Detail.NAME = HangHoa.NAME;
-                                                    newProduct_Detail.MA = HangHoa.MA;
-                                                    newProduct_Detail.ID_HANGHOA = HangHoaKho.ID_HANGHOA;
-                                                    newProduct_Detail.ID_HANGHOAKHO = HangHoaKho.ID;
-                                                    newProduct_Detail.DONGIA = 0;
-                                                    newProduct_Detail.ID_DVT = HangHoa.ID_DVT;
-                                                    newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT;
-                                                    newProduct_Detail.SOLUONG = 0;
-                                                    dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                                    if (!string.IsNullOrEmpty(HangHoa.ID_THUESUAT))
-                                                        clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == HangHoa.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                                                    if (itm.CHIETKHAU > 0)
-                                                    {
-                                                        newProduct_Detail.CHIETKHAU = itm.CHIETKHAU;
-                                                        newProduct_Detail.TONGTIENGIAMGIA = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI).Sum(e => e.THANHTIEN) * newProduct_Detail.CHIETKHAU / 100;
-                                                        newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                        API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                        newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                        newProduct_Detail.SOLUONGDALAYKHUYENMAI = newProduct_Detail.TONGSOLUONG;
-                                                        newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                        foreach (var s in lstSelectProduct_Detail)
-                                                        {
-                                                            var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && (e.ID == s.ID || e.ID_NHOMHANGHOA == s.ID));
-                                                            if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                            {
-                                                                SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    else if (itm.TIENGIAM > 0)
-                                                    {
-                                                        newProduct_Detail.TONGTIENGIAMGIA = itm.TIENGIAM * PhanNguyen;
-                                                        newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                        API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                        newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                        newProduct_Detail.SOLUONGDALAYKHUYENMAI = newProduct_Detail.TONGSOLUONG;
-                                                        newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                        foreach (var s in lstSelectProduct_Detail)
-                                                        {
-                                                            var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && (e.ID == s.ID || e.ID_NHOMHANGHOA == s.ID));
-                                                            if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                            {
-                                                                SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    newProduct_Detail.ID_KHO = ID_KHO;
-                                                    newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                    newProduct_Detail.ISKHUYENMAI = true;
-                                                    newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                    lstProduct_Detail.Add(newProduct_Detail);
-
-                                                    foreach (var ChiTiet in lstSelectProduct_Detail)
-                                                    {
-                                                        ChiTiet.ISDALAYKHUYENMAI = true;
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        //foreach (var ChiTiet in lstSelectProduct_Detail)
-                                        //{
-                                        //    ChiTiet.ISDALAYKHUYENMAI = true;
-                                        //}
-                                        intCoLayKhuyenMai += 1;
-                                    }
-                                }
-
-
-
-                            }
-                            #endregion
-                        }
-                        #endregion
-                    }
-                    else
-                    {
-                        #region Chương trình khuyến mãi tổng
-                        List<Product_Detail> lstSelectProduct_Detail = new List<Product_Detail>();
-                        Dictionary<string, int> lstCTKM_YC = new Dictionary<string, int>();
-                        double MUCTHUE = 0;
-                        int PhanNguyen = 0;
-                        bool bolBatBuoc = false;
-                        if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                        {
-                            bool isOk = true;
-                            foreach (var CTKM_YC in lstChuongTrinhKhuyenMai_YeuCau)
-                            {
-                                lstCTKM_YC.Add(CTKM_YC.ID_HANGHOA, CTKM_YC.HINHTHUC);
-                                var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && (e.ID == CTKM_YC.ID_HANGHOA || e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA));
-                                if (MUCTHUE == 0 && objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                {
-                                    MUCTHUE = objHangHoa.MUCTHUE;
-                                }
-                                if (CTKM_YC.ISBATBUOC)
-                                {
-                                    double SumSoLuong = 0;
-                                    if (bolConSoLuong)
-                                        SumSoLuong = lstProduct_Detail_Tam.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT).Sum(s => Convert.ToDouble(s.SOLUONG - s.SOLUONGDALAY_KM));
-                                    else
-                                        SumSoLuong = lstProduct_Detail.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT).Sum(s => Convert.ToDouble(s.SOLUONG));
-                                    if (SumSoLuong < CTKM_YC.SOLUONG_BATBUOC)
-                                    {
-                                        isOk = false;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!isOk)
-                                continue;
-
-                            if (itm.ISTINHLUYTUYEN)
-                            {
-                                bool bolThoatwhile = false;
-                                var lstbatBuoc = lstChuongTrinhKhuyenMai_YeuCau.Where(e => e.ISBATBUOC);
-                                if (lstbatBuoc != null && lstbatBuoc.Count() > 0)
-                                {
-                                    while (bolThoatwhile != true)
-                                    {
-                                        PhanNguyen += 1;
-                                        foreach (var CTKM_YC in lstbatBuoc)
-                                        {
-                                            double SumSoLuong = 0;
-                                            if (bolConSoLuong)
-                                                SumSoLuong = lstProduct_Detail_Tam.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT).Sum(s => Convert.ToDouble(s.SOLUONG - s.SOLUONGDALAY_KM));
-                                            else
-                                                SumSoLuong = lstProduct_Detail.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT).Sum(s => Convert.ToDouble(s.SOLUONG));
-                                            if (SumSoLuong < CTKM_YC.SOLUONG_BATBUOC * PhanNguyen)
-                                            {
-                                                PhanNguyen -= 1;
-                                                bolThoatwhile = true;
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                bolBatBuoc = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            List<Product_Detail>? Tam = null;
-                            if (bolConSoLuong)
-                                Tam = lstProduct_Detail_Tam.Where(e => !string.IsNullOrEmpty(e.ID_HANGHOA) && !string.IsNullOrEmpty(e.ID_NHOMHANGHOA) && !e.ISKHUYENMAI && (e.SOLUONG - e.SOLUONGDALAY_KM > 0)).ToList();
-                            else
-                                Tam = lstProduct_Detail.Where(e => !string.IsNullOrEmpty(e.ID_HANGHOA) && !string.IsNullOrEmpty(e.ID_NHOMHANGHOA) && !e.ISKHUYENMAI).ToList();
-                            if (Tam != null)
-                                lstSelectProduct_Detail = Tam.Where(e => lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0).ToList();
-                        }
-                        else
-                        {
-                            if (bolConSoLuong)
-                                lstSelectProduct_Detail = lstProduct_Detail.Where(e => !e.ISKHUYENMAI && (e.SOLUONG - e.SOLUONGDALAY_KM > 0)).ToList();
-                            else
-                                lstSelectProduct_Detail = lstProduct_Detail.Where(e => !e.ISKHUYENMAI).ToList();
-                        }
-
-                        if (lstSelectProduct_Detail != null && lstSelectProduct_Detail.Count > 0)
-                        {
-                            double SumTien = 0;
-                            double SumSoLuong = 0;
-                            if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                            {
-                                SumTien = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI && lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0).Sum(s => Convert.ToDouble(s.THANHTIEN));
-                                if (!string.IsNullOrEmpty(itm.ID_DVT_DATKM))
-                                {
-                                    if (bolConSoLuong)
-                                        SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI && (lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0) && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.SOLUONG - s.SOLUONGDALAY_KM));
-                                    else
-                                        SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI && (lstCTKM_YC.Count(s => s.Key.Contains(e.ID_HANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.SanPham) > 0 || lstCTKM_YC.Count(s => s.Key.Contains(e.ID_NHOMHANGHOA) && s.Value == (int)API.HinhThucKhuyenMai.NhomSanPham) > 0) && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.SOLUONG));
-                                }
-                            }
-                            else
-                            {
-                                SumTien = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI).Sum(s => Convert.ToDouble(s.TONGCONG));
-                                if (!string.IsNullOrEmpty(itm.ID_DVT_DATKM))
-                                {
-                                    if (bolConSoLuong)
-                                        SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.SOLUONG - s.SOLUONGDALAY_KM));
-                                    else
-                                        SumSoLuong = lstSelectProduct_Detail.Where(e => !e.ISKHUYENMAI && e.ID_DVT == itm.ID_DVT_DATKM).Sum(s => Convert.ToDouble(s.SOLUONG));
-                                }
-                            }
-
-
-                            if (((itm.SOLUONG_DATKM != 0 || itm.SOLUONG_DATKM_DEN != 0) && SumSoLuong != 0 && itm.SOLUONG_DATKM <= SumSoLuong && (itm.SOLUONG_DATKM_DEN == 0 || itm.SOLUONG_DATKM_DEN >= SumSoLuong)) || ((itm.TONGTIEN_DATKM != 0 || itm.TONGTIEN_DATKM != 0) && SumTien != 0 && itm.TONGTIEN_DATKM <= SumTien && (itm.TONGTIEN_DATKM_DEN == 0 || itm.TONGTIEN_DATKM_DEN >= SumTien)))
-                            {
-                                var lstdm_ChuongTrinhKhuyenMai_Tang = await _context.dm_ChuongTrinhKhuyenMai_Tang!.Where(e => e.LOC_ID == itm.LOC_ID && e.ID_CHUONGTRINHKHUYENMAI == itm.ID).ToListAsync();
-
-                                #region Khuyến mãi tặng hàng hóa
-                                if (lstdm_ChuongTrinhKhuyenMai_Tang != null && lstdm_ChuongTrinhKhuyenMai_Tang.Count > 0)
-                                {
-                                    var ID_KHO = lstProduct_Detail.Select(e => e.ID_KHO).FirstOrDefault();
-                                    if (lstdm_ChuongTrinhKhuyenMai_Tang != null)
-                                    {
-                                        int SLKM_SL = (itm.SOLUONG_DATKM_DEN != 0 ? (Convert.ToInt32(SumSoLuong) / Convert.ToInt32(itm.SOLUONG_DATKM_DEN)) : (itm.SOLUONG_DATKM != 0 ? Convert.ToInt32(SumSoLuong) / Convert.ToInt32(itm.SOLUONG_DATKM) : 0));
-                                        int SLKM_TIEN = (itm.TONGTIEN_DATKM_DEN != 0 ? (Convert.ToInt32(SumTien) / Convert.ToInt32(itm.TONGTIEN_DATKM_DEN)) : (itm.TONGTIEN_DATKM != 0 ? Convert.ToInt32(SumTien) / Convert.ToInt32(itm.TONGTIEN_DATKM) : 0));
-
-                                        if (bolBatBuoc)
-                                            SLKM_SL = (SLKM_SL > PhanNguyen ? PhanNguyen : SLKM_SL);
-
-                                        foreach (var CTKM_Tang in lstdm_ChuongTrinhKhuyenMai_Tang)
-                                        {
-                                            var HangHoaKho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID_HANGHOA == CTKM_Tang.ID_HANGHOA && e.ID_KHO == ID_KHO);
-                                            var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == CTKM_Tang.ID_HANGHOA);
-                                            if (HangHoaKho != null && HangHoa != null)
-                                            {
-                                                Product_Detail newProduct_Detail = new Product_Detail();
-                                                newProduct_Detail.STT = lstSelectProduct_Detail.Max(e => e.STT);
-                                                newProduct_Detail.ID = Guid.NewGuid().ToString();
-                                                newProduct_Detail.NAME = HangHoa.NAME;
-                                                newProduct_Detail.MA = HangHoa.MA;
-                                                newProduct_Detail.ID_HANGHOA = CTKM_Tang.ID_HANGHOA;
-                                                newProduct_Detail.ID_HANGHOAKHO = HangHoaKho.ID;
-                                                newProduct_Detail.DONGIA = 0;
-                                                newProduct_Detail.ID_DVT = CTKM_Tang.ID_DVT;
-                                                if (SLKM_SL > SLKM_TIEN)
-                                                    newProduct_Detail.SOLUONG = (itm.ISTINHLUYTUYEN ? SLKM_SL : 1) * CTKM_Tang.SOLUONG;
-                                                else
-                                                    newProduct_Detail.SOLUONG = (itm.ISTINHLUYTUYEN ? SLKM_TIEN : 1) * CTKM_Tang.SOLUONG;
-
-                                                newProduct_Detail.CHIETKHAU = 0;
-                                                newProduct_Detail.TONGTIENGIAMGIA = 0;
-                                                newProduct_Detail.THANHTIEN = 0;
-                                                newProduct_Detail.THUESUAT = 0;
-                                                newProduct_Detail.TONGTIENVAT = 0;
-                                                newProduct_Detail.TONGCONG = 0;
-                                                if (CTKM_Tang.SOTIEN > 0)
-                                                {
-                                                    newProduct_Detail.TONGTIENGIAMGIA = CTKM_Tang.SOTIEN;
-                                                    newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                    dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                                    if (!string.IsNullOrEmpty(HangHoa.ID_THUESUAT))
-                                                        clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == HangHoa.LOC_ID && e.ID == HangHoa.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                                                    API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                    if (MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * MUCTHUE / 100);
-                                                }
-                                                newProduct_Detail.ID_KHO = ID_KHO;
-                                                newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                newProduct_Detail.ISKHUYENMAI = true;
-                                                newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                if (HangHoa != null && HangHoa.ID_DVT == newProduct_Detail.ID_DVT)
-                                                {
-                                                    newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT;
-                                                    if (!string.IsNullOrEmpty(HangHoa.ID_DVT_QD))
-                                                    {
-                                                        newProduct_Detail.TYLE_QD = HangHoa.TYLE_QD;
-                                                    }
-                                                    else
-                                                    {
-                                                        if (HangHoa.LOAIHANGHOA == ((int)API.LoaiSanPham.KhongQuanLyTonKho).ToString())
-                                                            newProduct_Detail.TYLE_QD = 0;
-                                                        else
-                                                            newProduct_Detail.TYLE_QD = 1;
-
-                                                    }
-                                                    if (newProduct_Detail.SOLUONG != 0)
-                                                    {
-                                                        if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                                            SOTIENTHUE_KM += (newProduct_Detail.SOLUONG * HangHoa.GIA01 * HangHoa.MUCTHUE / 100);
-                                                    }
-                                                }
-                                                else if (HangHoa != null && HangHoa.ID_DVT_QD == newProduct_Detail.ID_DVT)
-                                                {
-                                                    if (!string.IsNullOrEmpty(HangHoa.ID_DVT_QD))
-                                                    {
-                                                        newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT_QD;
-                                                        newProduct_Detail.TYLE_QD = 1;
-                                                    }
-                                                    if (newProduct_Detail.SOLUONG != 0)
-                                                    {
-                                                        if (HangHoa != null && HangHoa.MUCTHUE != 0)
-                                                            SOTIENTHUE_KM += (newProduct_Detail.SOLUONG * newProduct_Detail.TYLE_QD * HangHoa.GIA01_QD * HangHoa.MUCTHUE / 100);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    return Ok(new ApiResponse
-                                                    {
-                                                        Success = false,
-                                                        Message = "Không tìm thấy thông tin sản phẩm với đơn vị tính " + newProduct_Detail.ID_DVT + " Kiểm tra CTKM" + itm.NAME,
-                                                        Data = null
-                                                    });
-
-                                                }
-                                                newProduct_Detail.TONGSOLUONG = newProduct_Detail.TYLE_QD * newProduct_Detail.SOLUONG;
-
-                                                #region Sản phẩm tặng là Combo
-                                                if (HangHoa != null && HangHoa.LOAIHANGHOA == ((int)API.LoaiSanPham.Combo).ToString())
-                                                {
-                                                    newProduct_Detail.ID_KHUYENMAI = newProduct_Detail.ID_HANGHOA;
-                                                    SP_Parameter objParameter = new SP_Parameter();
-                                                    objParameter.LOC_ID = itm.LOC_ID;
-                                                    objParameter.ID_KHO = newProduct_Detail.ID_KHO;
-                                                    objParameter.ID_COMBO = newProduct_Detail.ID_HANGHOA;
-                                                    ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
-                                                    actionResult = await ExecuteStoredProc1.Sp_Get_DanhSachSanPhamKho_Combo(objParameter);
-                                                    okResult = actionResult as OkObjectResult;
-                                                    if (okResult != null)
-                                                    {
-                                                        var ApiResponse = okResult.Value as ApiResponse;
-                                                        if (ApiResponse != null)
-                                                        {
-                                                            if (ApiResponse.Data != null)
-                                                            {
-                                                                var lst_ChiTiet = ApiResponse.Data as List<Product_Detail>;
-                                                                if (lst_ChiTiet != null)
-                                                                {
-                                                                    foreach (var ChiTiet in lst_ChiTiet)
-                                                                    {
-                                                                        ChiTiet.STT = newProduct_Detail.STT;
-                                                                        ChiTiet.ID = Guid.NewGuid().ToString();
-                                                                        ChiTiet.ID_DVT = ChiTiet.ID_DVT_COMBO;
-                                                                        ChiTiet.SOLUONG = newProduct_Detail.SOLUONG * ChiTiet.QTY_COMBO;
-                                                                        ChiTiet.TYLE_QD = ChiTiet.TYLE_QD_COMBO;
-                                                                        ChiTiet.TONGSOLUONG = newProduct_Detail.SOLUONG * ChiTiet.QTY_TOTAL_COMBO;
-                                                                        ChiTiet.DONGIA = 0;
-                                                                        ChiTiet.CHIETKHAU = 0;
-                                                                        ChiTiet.TONGTIENGIAMGIA = 0;
-                                                                        ChiTiet.THANHTIEN = 0;
-                                                                        ChiTiet.THUESUAT = 0;
-                                                                        ChiTiet.TONGTIENVAT = 0;
-                                                                        ChiTiet.TONGCONG = 0;
-                                                                        ChiTiet.ISKHUYENMAI = true;
-                                                                        ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                                        ChiTiet.ISCOMBO = true;
-                                                                        ChiTiet.ID_COMBO = newProduct_Detail.ID_HANGHOA;
-                                                                        lstProduct_Detail.Add(ChiTiet);
-                                                                    }
-
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                #endregion
-
-                                                //if (SLKM_SL > SLKM_TIEN)
-                                                //{
-                                                //    var SoLuongBang = lstProduct_Detail.Where(s => lstSelectProduct_Detail.Where(e => e.ID == s.ID).Count() > 0 && s.SOLUONG == SLKM_SL * itm.SOLUONG_DATKM).FirstOrDefault();
-                                                //    if (SoLuongBang != null)
-                                                //    {
-                                                //        SoLuongBang.SOLUONGDALAYKHUYENMAI = SoLuongBang.SOLUONG;
-                                                //        SoLuongBang.ISDALAYKHUYENMAI = true;
-                                                //        SoLuongBang.ID_KHUYENMAI = itm.ID;
-                                                //    }
-                                                //    else
-                                                //    {
-                                                //        double SoLuongConLai = SumSoLuong;
-                                                //        foreach (var chitiet in lstProduct_Detail.Where(s => lstSelectProduct_Detail.Where(e => e.ID == s.ID).Count() > 0))
-                                                //        {
-                                                //            if (chitiet.SOLUONG >= SoLuongConLai)
-                                                //            {
-                                                //                chitiet.SOLUONGDALAYKHUYENMAI = chitiet.SOLUONG;
-                                                //                chitiet.ISDALAYKHUYENMAI = true;
-                                                //                chitiet.ID_KHUYENMAI = itm.ID;
-                                                //                SoLuongConLai -= chitiet.SOLUONG;
-                                                //            }
-                                                //        }
-                                                //    }
-                                                //}
-                                                lstProduct_Detail.Add(newProduct_Detail);
-                                            }
-                                        }
-
-                                        if (lstChuongTrinhKhuyenMai_YeuCau != null && lstChuongTrinhKhuyenMai_YeuCau.Count > 0)
-                                        {
-                                            double SoLuongYeuCau = (itm.SOLUONG_DATKM_DEN != 0 ? itm.SOLUONG_DATKM_DEN : itm.SOLUONG_DATKM) * (itm.ISTINHLUYTUYEN ? SLKM_SL : 1);
-                                            foreach (var CTKM_YC in lstChuongTrinhKhuyenMai_YeuCau.OrderByDescending(e => e.ISBATBUOC))
-                                            {
-                                                //var SumSoLuong_Tam = lstProduct_Detail_Tam.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT).Sum(s => Convert.ToDouble(s.SOLUONG - s.SOLUONGDALAY_KM));
-                                                foreach (var ChiTiet in lstProduct_Detail_Tam.Where(e => (!itm.ISTONGHOADON || (itm.ISTONGHOADON && !e.ISDALAYKHUYENMAI)) && ((e.ID_HANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.SanPham) || (e.ID_NHOMHANGHOA == CTKM_YC.ID_HANGHOA && CTKM_YC.HINHTHUC == (int)API.HinhThucKhuyenMai.NhomSanPham)) && e.ID_DVT == CTKM_YC.ID_DVT && (e.SOLUONG - e.SOLUONGDALAY_KM > 0)).ToList())
-                                                {
-                                                    if (SoLuongYeuCau == 0) break;
-                                                    if (SoLuongYeuCau - ((ChiTiet.SOLUONG - ChiTiet.SOLUONGDALAY_KM)) > 0)
-                                                    {
-                                                        ChiTiet.SOLUONGDALAY_KM += ((ChiTiet.SOLUONG - ChiTiet.SOLUONGDALAY_KM));
-                                                        SoLuongYeuCau -= ((ChiTiet.SOLUONGDALAY_KM));
-                                                    }
-                                                    else
-                                                    {
-                                                        ChiTiet.SOLUONGDALAY_KM += (SoLuongYeuCau);
-                                                        SoLuongYeuCau = 0;
-                                                    }
-                                                }
-                                            }
-                                        }
-
-
-                                        intCoLayKhuyenMai += 1;
-                                    }
-                                }
-                                #endregion
-
-                                #region Chiết khấu tiền, giảm tiền
-                                if (itm.CHIETKHAU > 0 || itm.TIENGIAM > 0)
-                                {
-                                    if (!itm.ISTONGHOADON)
-                                    {
-                                        foreach (var ChiTiet in lstProduct_Detail.Where(s => lstSelectProduct_Detail.Where(e => e.ID == s.ID).Count() > 0))
-                                        {
-                                            double SLKM_SL = (itm.SOLUONG_DATKM_DEN != 0 ? (ChiTiet.SOLUONG / itm.SOLUONG_DATKM_DEN) : (itm.SOLUONG_DATKM != 0 ? (ChiTiet.SOLUONG) / (itm.SOLUONG_DATKM) : 0));
-                                            dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                            if (!string.IsNullOrEmpty(ChiTiet.ID_THUESUAT))
-                                                clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_THUESUAT) ?? new dm_ThueSuat();// GetDetail<v_v_dm_ThueSuat>(LOC_ID + "/" + Product_Detail.ID_THUESUAT, API.dm_ThueSuat);
-                                            if (itm.CHIETKHAU > 0)
-                                            {
-                                                ChiTiet.CHIETKHAU = itm.CHIETKHAU;
-                                                ChiTiet.TYPE = "CHIETKHAU";
-                                                API.TinhTong(ChiTiet, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                //ChiTiet.ISDALAYKHUYENMAI = true;
-                                                ChiTiet.SOLUONGDALAYKHUYENMAI = ChiTiet.TONGSOLUONG;
-                                                ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_HANGHOA);
-                                                if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                    SOTIENTHUE_KM += (ChiTiet.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                            }
-                                            else if (itm.TIENGIAM > 0)
-                                            {
-                                                ChiTiet.TONGTIENGIAMGIA = itm.TIENGIAM * (itm.ISTINHLUYTUYEN ? SLKM_SL : 1);
-                                                ChiTiet.TYPE = "TONGTIENGIAMGIA";
-                                                API.TinhTong(ChiTiet, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                //ChiTiet.ISDALAYKHUYENMAI = true;
-                                                ChiTiet.SOLUONGDALAYKHUYENMAI = ChiTiet.TONGSOLUONG;
-                                                ChiTiet.ID_KHUYENMAI = itm.ID;
-                                                var objHangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == ChiTiet.LOC_ID && e.ID == ChiTiet.ID_HANGHOA);
-                                                if (objHangHoa != null && objHangHoa.MUCTHUE != 0)
-                                                    SOTIENTHUE_KM += (ChiTiet.TONGTIENGIAMGIA * objHangHoa.MUCTHUE / 100);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        var ID_KHO = lstProduct_Detail.Select(e => e.ID_KHO).FirstOrDefault();
-                                        var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.MA == API.GTBH);
-                                        if (HangHoa != null)
-                                        {
-                                            var HangHoaKho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID_HANGHOA == HangHoa.ID && e.ID_KHO == ID_KHO);
-                                            if (HangHoaKho != null)
-                                            {
-                                                Product_Detail newProduct_Detail = new Product_Detail();
-                                                newProduct_Detail.STT = lstSelectProduct_Detail.Max(e => e.STT) + 1;
-                                                newProduct_Detail.ID = Guid.NewGuid().ToString();
-                                                newProduct_Detail.NAME = HangHoa.NAME;
-                                                newProduct_Detail.MA = HangHoa.MA;
-                                                newProduct_Detail.ID_HANGHOA = HangHoaKho.ID_HANGHOA;
-                                                newProduct_Detail.ID_HANGHOAKHO = HangHoaKho.ID;
-                                                newProduct_Detail.DONGIA = 0;
-                                                newProduct_Detail.ID_DVT = HangHoa.ID_DVT;
-                                                newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT;
-                                                newProduct_Detail.SOLUONG = 0;
-                                                dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                                                if (!string.IsNullOrEmpty(HangHoa.ID_THUESUAT))
-                                                    clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == itm.LOC_ID && e.ID == HangHoa.ID_THUESUAT) ?? new dm_ThueSuat();
-                                                if (itm.CHIETKHAU > 0)
-                                                {
-                                                    newProduct_Detail.CHIETKHAU = itm.CHIETKHAU;
-                                                    newProduct_Detail.TONGTIENGIAMGIA = SumTien * newProduct_Detail.CHIETKHAU / 100;
-                                                    newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                    API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                    newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                    newProduct_Detail.SOLUONGDALAYKHUYENMAI = newProduct_Detail.TONGSOLUONG;
-                                                    newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                    if (MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * MUCTHUE / 100);
-
-                                                }
-                                                else if (itm.TIENGIAM > 0)
-                                                {
-                                                    newProduct_Detail.TONGTIENGIAMGIA = itm.TIENGIAM * (itm.ISTINHLUYTUYEN ? PhanNguyen : 1);
-                                                    newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                                                    API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                                                    newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                    newProduct_Detail.SOLUONGDALAYKHUYENMAI = newProduct_Detail.TONGSOLUONG;
-                                                    newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                    if (MUCTHUE != 0)
-                                                        SOTIENTHUE_KM += (newProduct_Detail.TONGTIENGIAMGIA * MUCTHUE / 100);
-                                                }
-                                                newProduct_Detail.ID_KHO = ID_KHO;
-                                                newProduct_Detail.ISDALAYKHUYENMAI = true;
-                                                newProduct_Detail.ISKHUYENMAI = true;
-                                                newProduct_Detail.ID_KHUYENMAI = itm.ID;
-                                                lstProduct_Detail.Add(newProduct_Detail);
-                                                foreach (var ChiTiet in lstProduct_Detail)
-                                                {
-                                                    ChiTiet.ISDALAYKHUYENMAI = true;
-                                                }
-                                            }
-
-                                        }
-                                    }
-
-                                    intCoLayKhuyenMai += 1;
-                                }
-                                #endregion
-                            }
-                        }
-
-                        #endregion
-                        //if (itm.ISTONGHOADON)
-                        //    break;
-                    }
-
-                    if (intCoLayKhuyenMai > 0)
-                    {
-                        lstDanhSachDaLayKhuyenMai.Add(itm.MA);
-                    }
+                        return false;
                 }
-
-                #region Thêm tính thuế khuyến mãi
-                if (SOTIENTHUE_KM != 0)
-                {
-                    var ID_KHO = lstProduct_Detail.Select(e => e.ID_KHO).FirstOrDefault();
-                    var HangHoa = await _context.view_dm_HangHoa!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.MA == API.TINHTHUE_KM);
-                    if (HangHoa != null)
-                    {
-                        var HangHoaKho = await _context.dm_HangHoa_Kho!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID_HANGHOA == HangHoa.ID);
-                        if (HangHoaKho != null)
-                        {
-                            Product_Detail newProduct_Detail = new Product_Detail();
-                            newProduct_Detail.STT = lstProduct_Detail.Max(e => e.STT);
-                            newProduct_Detail.ID = Guid.NewGuid().ToString();
-                            newProduct_Detail.NAME = HangHoa.NAME;
-                            newProduct_Detail.MA = HangHoa.MA;
-                            newProduct_Detail.ID_HANGHOA = HangHoaKho.ID_HANGHOA;
-                            newProduct_Detail.ID_HANGHOAKHO = HangHoaKho.ID;
-                            newProduct_Detail.DONGIA = 0;
-                            newProduct_Detail.ID_DVT = HangHoa.ID_DVT;
-                            newProduct_Detail.NAME_DVT = HangHoa.NAME_DVT;
-                            newProduct_Detail.SOLUONG = 0;
-                            dm_ThueSuat clsdm_ThueSuat = new dm_ThueSuat();
-                            if (!string.IsNullOrEmpty(HangHoa.ID_THUESUAT))
-                                clsdm_ThueSuat = await _context.dm_ThueSuat!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == HangHoa.ID_THUESUAT) ?? new dm_ThueSuat();
-
-                            newProduct_Detail.TONGTIENGIAMGIA = -1 * Math.Ceiling(SOTIENTHUE_KM);
-                            newProduct_Detail.TYPE = "TONGTIENGIAMGIA";
-                            API.TinhTong(newProduct_Detail, "", lstProduct_Detail, clsdm_ThueSuat);
-                            newProduct_Detail.ISKHUYENMAI = true;
-                            newProduct_Detail.GHICHU = "";
-                            lstProduct_Detail.Add(newProduct_Detail);
-                        }
-                    }
-                }
-                #endregion
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = (from x in lstProduct_Detail
-                            orderby x.STT ascending, x.ISKHUYENMAI ascending
-                            select x)
-                });
             }
-            catch (Exception ex)
+            public string Error
             {
-                return Ok(new ApiResponse
+                get { return sError; }
+                set { sError = value; }
+            }
+            public State ProState
+            {
+                get { return fState; }
+                set { fState = value; }
+            }
+            public DataTable DataSource
+            {
+                get { return dtSource; }
+                set { dtSource = value; }
+            }
+        }
+
+        #region Define variable
+        DateTimeFormatInfo dateinfo = new DateTimeFormatInfo();
+        DateTimeFormatInfo dateinfommyyyy = new DateTimeFormatInfo();
+        //bool canClose = true;
+        #endregion
+
+        #region Delegate and constructor
+        public delegate void EventResult(Result e);
+        public EventResult ResEvent;
+
+        public frmImport()
+        {
+            InitializeComponent();
+            dateinfo.ShortDatePattern = "dd/MM/yyyy";
+            dateinfo.DateSeparator = "/";
+            dateinfommyyyy.ShortDatePattern = "MM/yyyy";
+            dateinfommyyyy.DateSeparator = "/";
+           // string cty_info_dinhdang = TS24.SM24.BaseMethod.BaseParam.strDinhDang;
+        }
+
+        TypeImport tImport = TypeImport.None;
+
+        public TypeImport Import
+        {
+            get { return tImport; }
+            set { tImport = value; }
+        }
+        #endregion
+
+        #region Event form
+        private void ImportExport_Load(object sender, EventArgs e)
+        {
+            //tImport = TypeImport.KK05;
+            if(!bolHienThiXoaDuLieu)
+                radChange.Properties.Items.RemoveAt(1);
+        }
+         
+        private void btnDone_Click(object sender, EventArgs e)
+        {
+            if (!bgrWorker.IsBusy)
+                bgrWorker.RunWorkerAsync();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            if (!bgrWorker.IsBusy)
+                bgrWorker.CancelAsync();
+            this.DialogResult = DialogResult.Abort;
+        }
+
+        private void btnbrowse_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Excel Workbook |*.xls;*.xlsx";
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                txtbrowse.Text = ofd.FileName;
+                btnDone.Enabled = true;
+            }
+            ofd.Dispose();
+        }
+        #endregion
+
+        DataTable fncReadOledb(string sPathRoot)
+        {
+            CultureInfo cr = Application.CurrentCulture;
+            try
+            {
+                Application.CurrentCulture = new CultureInfo("en-US");
+                FileInfo f = new FileInfo(sPathRoot);
+                FileStream sf = f.OpenRead();
+
+                WorkBook m_book = new WorkBook();
+                if (f.Extension.ToUpper() == ".XLS")
+                    m_book.read(sf);
+                else
+                    m_book.readXLSX(sf);
+
+                sf.Close();
+                m_book.Sheet = 0;
+                DataTable dtSource = m_book.ExportDataTable();
+                if (dtSource != null && dtSource.Rows.Count > 0)
+                    dtSource.Rows.RemoveAt(0);
+                Application.CurrentCulture = cr;
+                return dtSource;
+            }
+            catch (Exception e)
+            {
+                Application.CurrentCulture = cr;
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.Message);
+                return null;
+            }
+        }
+
+        #region Process import data
+        object doProcess()
+        {
+            try
+            {
+                Result res = new Result();
+                if (tImport == TypeImport.None)
                 {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = lstProduct_Detail
-                });
+                    res = new Result(null, null, Result.State.Failed, radChange.SelectedIndex);
+                    return res;
+                }
+                string sPathRoot = txtbrowse.Text;
+                DataTable dtSource = null;
+                DataTable dtCopy = new DataTable();
+                dtCopy = fncReadOledb(sPathRoot);
+                dtSource = dtCopy;
+                if (dtSource != null)
+                {
+                    return fncSetSource(dtSource);
+                }
+
+                else
+                    res = new Result(null, null, Result.State.Failed, radChange.SelectedIndex);
+                return res;
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.Message);
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Event backgroundworker
+        private void bgrWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            //canClose = false;
+            e.Result = doProcess();
+        }
+
+        private void bgrWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            if (!bgrWorker.CancellationPending)
+            {
+                if (e.UserState == null)
+                    return;
+                switch ((Result.State)e.UserState)
+                {
+                    case Result.State.Total:
+                        fncSetMaxPgr(e.ProgressPercentage);
+                        break;
+
+                    case Result.State.Executing:
+                        fncUpdateProcess(e.ProgressPercentage);
+                        break;
+
+                    case Result.State.Failed:
+                        fncShowError("EIM01");
+                        break;
+                    case Result.State.Commit:
+
+                        break;
+                }
+            }
+
+        }
+
+        private void bgrWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //canClose = true;
+            if (e.Cancelled)
+            {
+                this.DialogResult = DialogResult.Abort;
+                return;
+            }
+            if (e.Result == null)
+            {
+                Result resError = new Result("Sai format", null, Result.State.Failed, -1);
+                if (ResEvent != null)
+                {
+                    ResEvent(resError);
+                    this.DialogResult = DialogResult.OK;
+                }
+                this.DialogResult = DialogResult.OK;
+                return;
+            }
+            Result res = (Result)e.Result;
+            if (ResEvent != null)
+            {
+                ResEvent(res);
+                this.DialogResult = DialogResult.OK;
+            }
+        }
+        private void frmImport_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (bgrWorker.IsBusy)
+            {
+                bgrWorker.CancelAsync();
             }
         }
         #endregion
 
+        #region Read oledb
+        DataTable fncReadOledb(string sPathRoot, int startrow, int startcol)
+        {
+            try
+            {
+                WorkBook m_book = new WorkBook();
+                m_book.read(sPathRoot);
+                DataTable dtSource = m_book.ExportDataTable(startrow, startcol, m_book.LastRow, m_book.LastCol);
+                if (dtSource.Rows.Count > 0)
+                    dtSource.Rows.RemoveAt(0);
+                return dtSource;
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.Message);
+                fncShowError("EIM03");
+                return null;
+            }
+        }
+        #endregion
 
+        #region Set data for source
+        object fncSetSource(DataTable dtData)
+        {
+            Result res = new Result();
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                {
+                    res = new Result(null, null, Result.State.Failed, radChange.SelectedIndex);
+                    return null;
+                }
+                DataTable dtSource = null;
+                switch (tImport)
+                {
+                    case TypeImport.Muavao:
+                        fncMuavao(ref dtSource, dtData);
+                        break;
+                    case TypeImport.Muavaokhonghoadon:
+                        fncMuavaokhonghoadon(ref dtSource, dtData);
+                        break;
+                    case TypeImport.Banra:
+                        fncBanra(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMKhachHang:
+                        fncDMKhachHang(ref dtSource, dtData);
+                        break;
+                    //long
+                    case TypeImport.DMBoPhan:
+                        fncDMBoPhan(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMBoPhanKhauHao:
+                        fncDMBoPhanKhauHao(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMChiPhi:
+                        fncDMChiPhi(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMBanan:
+                        fncDMBanan(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMDvt:
+                        fncDMDvt(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMHangHoa:
+                        fncDMHangHoa(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMHangHoaKho:
+                        fncDMHangHoaKho(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMNguyenVatLieuKho:
+                        DMNguyenVatLieuKho(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMHangHoaDonGia:
+                        fncDMHangHoaDonGia(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DmVoucher:
+                        fncDMVoucher(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMKho:
+                        fncDMKho(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMCuaHangSM24:
+                        fncDMCuaHangSM24(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMCuaHangVTA:
+                        fncDMCuaHangVTA(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMTramYTe:
+                        fncDMTramYTe(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMKhuVuc:
+                        fncDMKhuVuc(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMLoaiHH:
+                        fncDMLoaiHH(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMLoaiKH:
+                        fncDMLoaiKH(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMLoaiTheKH:
+                        fncDMLoaiTheKH(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMPtx:
+                        fncDMPtx(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMPtn:
+                        fncDMPtn(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMLoaiTS:
+                        fncDMLoaiTS(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMNhanVien:
+                        fncDMNhanVien(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMTaiKhoan:
+                        fncDMTaiKhoan(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMTaiKhoanNganHang:
+                        fncDMTaiKhoanNganHang(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMThueSuat:
+                        fncDMThueSuat(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMTienTe:
+                        fncDMTienTe(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DMTscd:
+                        fncDMTscd(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ct_phieuthu:
+                        fncct_phieuthu(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ct_phieuchi:
+                        fncct_phieuchi(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ct_gbc:
+                        fncct_gbc(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ct_gbn:
+                        fncct_gbn(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ct_tonghop:
+                        fncct_tonghop(ref dtSource, dtData);
+                        break;
+                    case TypeImport.kt_thanhtoandonhang:
+                        fncKtthanhtoandonhang(ref dtSource, dtData);
+                        break;
+                    case TypeImport.kt_thanhtoantragop:
+                        fncKtthanhtoantragop(ref dtSource, dtData);
+                        break;
+                    case TypeImport.solieudauky:
+                        fncSolieudauky(ref dtSource, dtData);
+                        break;
+                    //Mua Hang
+                    case TypeImport.PhieuDeNghiMuaHang:
+                        fncPhieuDeNghiMuaHang(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DonMuaHang:
+                        fncDonMuaHang(ref dtSource, dtData);
+                        break;
+                    case TypeImport.PhieuNhap:
+                        fncPhieuNhap(ref dtSource, dtData);
+                        break;
+                    //Ban Hang
+                    case TypeImport.DonDatHang:
+                        fncDonDatHang(ref dtSource, dtData);
+                        break;
+                    case TypeImport.PhieuBaoGia:
+                        fncPhieuBaoGia(ref dtSource, dtData);
+                        break;
+                    case TypeImport.PhieuXuat:
+                        fncPhieuXuat(ref dtSource, dtData);
+                        break;
+                    case TypeImport.dm_biendongvat:
+                        fncBienDongVAT(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ChiTietHangHoa:
+                        fncChiTietHangHoa(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ChiTietHangHoaMTT:
+                        fncChiTietHangHoaMTT(ref dtSource, dtData);
+                        break;
+                         
+                    case TypeImport.importPhieuxuat:
+                        fncImportPhieuXuat(ref dtSource, dtData);
+                        break;
+                    case TypeImport.Khuyenmai:
+                        fncImportKhuyenMai(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ChiTietHangHoa02:
+                        fncChiTietHangHoa02(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ChiTietHangHoa03:
+                        fncChiTietHangHoa03(ref dtSource, dtData);
+                        break;
+                    case TypeImport.CongNoTaiKhoan:
+                        fncCongNoTaiKhoan(ref dtSource, dtData);
+                        break;
+                    case TypeImport.CongNoTaiKhoanDoiTuong:
+                        fncCongNoTaiKhoanDoiTuong(ref dtSource, dtData);
+                        break;
+                    case TypeImport.CongNoPhaiThuTheoChungTu:
+                        fncCongNoPhaiThuTheoChungTu(ref dtSource, dtData);
+                        break;
+                    case TypeImport.CongNoPhaiTraTheoChungTu:
+                        fncCongNoPhaiTraTheoChungTu(ref dtSource, dtData);
+                        break;
+                    case TypeImport.DanhSachChungTuKhauTruThueTNCN:
+                        fncDanhSachChungTuKhauTruThueTNCN(ref dtSource, dtData);
+                        break;
+                    case TypeImport.ChiTietHangHoaDacTrung:
+                        fncChiTietHangHoaDacTrung(ref dtSource, dtData);
+                        break;
+                }
+                if (dtSource != null && dtSource.Rows.Count > 0)
+                    res = new Result(null, dtSource, Result.State.Commit, radChange.SelectedIndex);
+                else
+                    res = new Result(null, null, Result.State.Failed, radChange.SelectedIndex);
+                return res;
+
+
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.Message);
+                //fncShowError("EIM01");
+                res = new Result(null, null, Result.State.Failed, radChange.SelectedIndex);
+                return null;
+            }
+        }
+
+        void fncReturnEve(string sErr, DataTable dtS, Result.State state)
+        {
+            Result res = new Result(sErr, dtS, state, radChange.SelectedIndex);
+            if (ResEvent != null)
+                ResEvent(res);
+            if (state == Result.State.Commit)
+            {
+                this.DialogResult = DialogResult.OK;
+                //this.Close();
+            }
+        }
+
+        void fncUpdateProcess(int value)
+        {
+            pgrCtr.EditValue = value;
+            pgrCtr.Update();
+        }
+
+
+        void fncSetMaxPgr(int max)
+        {
+            pgrCtr.Properties.Maximum = max;
+        }
+
+        void fncShowError(string sID)
+        {
+            //string s = "EIM01";
+            Common.CallMsgBox(MessageBoxButtons.OK, sID);
+        }
+
+        #endregion
+
+        #region Detail function
+
+        void fncMuavao(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "SERINO";
+                dtData.Columns[1].ColumnName = "SOHD";
+                dtData.Columns[2].ColumnName = "NGAYPN";
+                dtData.Columns[3].ColumnName = "NGAYHD";
+                dtData.Columns[4].ColumnName = "MASOTHUEKH";
+                dtData.Columns[5].ColumnName = "TENKH";
+                dtData.Columns[6].ColumnName = "LYDONHAP";
+                dtData.Columns[7].ColumnName = "DS_CHUATHUE";
+                dtData.Columns[8].ColumnName = "THUESUAT";
+                dtData.Columns[9].ColumnName = "THUEGTGT";
+                dtData.Columns[10].ColumnName = "TONGTIEN";
+                dtData.Columns[11].ColumnName = "TK_NO";
+                dtData.Columns[12].ColumnName = "TK_CO";
+                dtData.Columns[13].ColumnName = "LOAIHD";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SERINO"].ToString().Equals("") || dr["SERINO"].ToString().Trim().Equals("")) &&
+                        (dr["SOHD"].ToString().Equals("") || dr["SOHD"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYPN"].ToString().Equals("") || dr["NGAYPN"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYHD"].ToString().Equals("") || dr["NGAYHD"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncMuavaokhonghoadon(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "NGAYPN";
+                dtData.Columns[1].ColumnName = "MASOTHUEKH";
+                dtData.Columns[2].ColumnName = "TENKH";
+                dtData.Columns[3].ColumnName = "LYDONHAP";
+                dtData.Columns[4].ColumnName = "DS_CHUATHUE";
+                dtData.Columns[5].ColumnName = "THUESUAT";
+                dtData.Columns[6].ColumnName = "THUEGTGT";
+                dtData.Columns[7].ColumnName = "TONGTIEN";
+                dtData.Columns[8].ColumnName = "TK_NO";
+                dtData.Columns[9].ColumnName = "TK_CO";
+                dtData.Columns[10].ColumnName = "LOAIHD";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["NGAYPN"].ToString().Equals("") || dr["NGAYPN"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncBanra(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "SERINO";
+                dtData.Columns[1].ColumnName = "SOHD";
+                dtData.Columns[2].ColumnName = "NGAYHD";
+                dtData.Columns[3].ColumnName = "MASOTHUEKH";
+                dtData.Columns[4].ColumnName = "TENKH";
+                dtData.Columns[5].ColumnName = "LYDOXUAT";
+                dtData.Columns[6].ColumnName = "DS_CHUATHUE";
+                dtData.Columns[7].ColumnName = "THUESUAT";
+                dtData.Columns[8].ColumnName = "THUEGTGT";
+                dtData.Columns[9].ColumnName = "TONGTIEN";
+                dtData.Columns[10].ColumnName = "TK_NO";
+                dtData.Columns[11].ColumnName = "TK_CO";
+                dtData.Columns[12].ColumnName = "LOAIHD";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SERINO"].ToString().Equals("") || dr["SERINO"].ToString().Trim().Equals("")) &&
+                        (dr["SOHD"].ToString().Equals("") || dr["SOHD"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYHD"].ToString().Equals("") || dr["NGAYHD"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMKhachHang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "GUID_LOAIKH";
+                dtData.Columns[i++].ColumnName = "MA";
+                dtData.Columns[i++].ColumnName = "TEN";
+                dtData.Columns[i++].ColumnName = "TENCONGTY";
+                dtData.Columns[i++].ColumnName = "MASOTHUEKH";
+                dtData.Columns[i++].ColumnName = "CCCDAN";
+                dtData.Columns[i++].ColumnName = "MDVQHNSACH";
+                dtData.Columns[i++].ColumnName = "TKNHAPHANPHOI";
+                dtData.Columns[i++].ColumnName = "TINHTRANGTAIKHOAN";
+                dtData.Columns[i++].ColumnName = "DIACHI";
+                dtData.Columns[i++].ColumnName = "DIACHIGIAOHANG";
+
+                dtData.Columns[i++].ColumnName = "DIACHIXHD";
+                dtData.Columns[i++].ColumnName = "DIENTHOAI";
+                dtData.Columns[i++].ColumnName = "DIENTHOAIDD";
+                dtData.Columns[i++].ColumnName = "EMAIL";
+                dtData.Columns[i++].ColumnName = "FAX";
+                dtData.Columns[i++].ColumnName = "NGAYTAO";
+                dtData.Columns[i++].ColumnName = "GUID_KHUVUC";
+                dtData.Columns[i++].ColumnName = "GUID_NGUOIQLY";
+                dtData.Columns[i++].ColumnName = "LOAIDONGIA";
+                dtData.Columns[i++].ColumnName = "SOTKNH";
+                dtData.Columns[i++].ColumnName = "TAINGANHANG";
+                dtData.Columns[i++].ColumnName = "GUID_THEKH";
+                dtData.Columns[i++].ColumnName = "SOTHEKH";
+                dtData.Columns[i++].ColumnName = "DIEMTICHLUY";
+                dtData.Columns[i++].ColumnName = "GIOITINH";
+                dtData.Columns[i++].ColumnName = "NGAYSINH";
+                dtData.Columns[i++].ColumnName = "KHTIEMNANG";
+                dtData.Columns[i++].ColumnName = "NHANTINNHAN";
+                dtData.Columns[i++].ColumnName = "LIENLAC";
+                dtData.Columns[i++].ColumnName = "GHICHU";
+
+                dtData.Columns[i++].ColumnName = "DOITUONGKH";
+                //dtData.Columns.Add("LOAIKH");
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(j);
+
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        //long
+        void fncDMNhanVien(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                bool stype = false, stypeNC = false;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "NGAYSINH";
+                dtData.Columns[3].ColumnName = "NOISINH";
+                dtData.Columns[4].ColumnName = "CMND";
+                dtData.Columns[5].ColumnName = "NGAYCAP";
+                dtData.Columns[6].ColumnName = "NOICAP";
+                dtData.Columns[7].ColumnName = "DIACHITT";
+                dtData.Columns[10].ColumnName = "EMAIL";
+                dtData.Columns[8].ColumnName = "DIACHILL";
+                dtData.Columns[9].ColumnName = "DIENTHOAI";
+                dtData.Columns[11].ColumnName = "ID_BOPHAN";
+                dtData.Columns[12].ColumnName = "CHUCVU";
+                dtData.Columns[13].ColumnName = "ID_LUONGCB";
+                //dtData.Columns.Add("LOAIKH");
+                dtData.AcceptChanges();
+                dtSource = dtData.Clone();
+                //foreach (DataColumn dc in dtSource.Columns)
+                //  dc.DataType = Type.GetType("System.String");
+                if (dtData.Columns["NGAYSINH"].DataType == Type.GetType("System.DateTime"))
+                    stype = true;
+                if (dtData.Columns["NGAYCAP"].DataType == Type.GetType("System.DateTime"))
+                    stypeNC = true;
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    else
+                    {
+                        //ngay sinh
+                        if (stype)
+                        {
+
+                            if (dr["NGAYSINH"] != DBNull.Value && dr["NGAYSINH"].ToString() != "")
+                                dr["NGAYSINH"] = Convert.ToDateTime(dr["NGAYSINH"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer = Common.ConvertDouble(dr["NGAYSINH"]);
+                            if (dmer > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYSINH"] = DateTime.FromOADate(dmer).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "dd/MM/yyyy";
+                                if (dr["NGAYSINH"] != DBNull.Value && dr["NGAYSINH"].ToString() != "")
+                                    dr["NGAYSINH"] = Convert.ToDateTime(dr["NGAYSINH"], dateinfo).ToString("dd/MM/yyyy");
+                            }
+                        }
+
+                        //ngay cap
+                        if (stypeNC)
+                        {
+
+                            if (dr["NGAYCAP"] != DBNull.Value && dr["NGAYCAP"].ToString() != "")
+                                dr["NGAYCAP"] = Convert.ToDateTime(dr["NGAYCAP"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer1 = Common.ConvertDouble(dr["NGAYCAP"]);
+                            if (dmer1 > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYCAP"] = DateTime.FromOADate(dmer1).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "MM/dd/yyyy";
+                                if (dr["NGAYCAP"] != DBNull.Value && dr["NGAYCAP"].ToString() != "")
+                                    dr["NGAYCAP"] = Convert.ToDateTime(dr["NGAYCAP"], dateinfo).ToString("dd/MM/yyyy");
+                            }
+                        }
+                    }
+                    dtSource.ImportRow(dr);
+                }
+
+                //dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMTscd(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "LOAITS";
+                dtData.Columns[3].ColumnName = "MATK";
+                dtData.Columns[4].ColumnName = "NGAYNHAP";
+                dtData.Columns[5].ColumnName = "NGUYENGIA";
+                dtData.Columns[6].ColumnName = "SOLUONG";
+                dtData.Columns[7].ColumnName = "TINHTRANGSD";
+                dtData.Columns[10].ColumnName = "TRIGIAKH";
+                dtData.Columns[8].ColumnName = "BOPHANSD";
+                dtData.Columns[9].ColumnName = "NHACC";
+                dtData.Columns[11].ColumnName = "GIATRICONLAI";
+                dtData.Columns[12].ColumnName = "THOIGIANSD";
+                dtData.Columns[13].ColumnName = "TYLEKH";
+                dtData.Columns[14].ColumnName = "TRICHKHTKCO";
+                dtData.Columns[15].ColumnName = "TRICHKHTKNO";
+                dtData.Columns[16].ColumnName = "NGAYSD";
+                dtData.Columns[17].ColumnName = "NGAYGIAM";
+                dtData.Columns[18].ColumnName = "LYDOGIAM";
+                dtData.Columns[19].ColumnName = "STTTSCD";
+                //dtData.Columns.Add("LOAIKH");
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMHangHoa(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "MAVACH";
+                dtData.Columns[i++].ColumnName = "MA";
+                dtData.Columns[i++].ColumnName = "TEN";
+                // dtData.Columns[i++].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[i++].ColumnName = "GUID_LOAIHH";
+                dtData.Columns[i++].ColumnName = "GUID_DVT";
+                dtData.Columns[i++].ColumnName = "THUESUAT";
+                dtData.Columns[i++].ColumnName = "DGVON";
+                dtData.Columns[i++].ColumnName = "DGBAN";
+                //dtData.Columns[i++].ColumnName = "DGBANC1";
+                //dtData.Columns[i++].ColumnName = "DGBANC2";
+                //dtData.Columns[i++].ColumnName = "DGBANC3";
+                //dtData.Columns[i++].ColumnName = "DGBANSI";
+                //dtData.Columns[i++].ColumnName = "DGBIA";
+                dtData.Columns[i++].ColumnName = "DINHMUCTON";
+                dtData.Columns[i++].ColumnName = "XUATXU";
+                dtData.Columns[i++].ColumnName = "HANSUDUNG";
+                //  dtData.Columns[i++].ColumnName = "HINHANH";
+                dtData.Columns[i++].ColumnName = "MOTA";
+                dtData.Columns[i++].ColumnName = "THOIGIANBAOHANH";
+                dtData.Columns[i++].ColumnName = "IMEI";
+                dtData.Columns[i++].ColumnName = "HANGCOBAOHANH";
+                dtData.Columns[i++].ColumnName = "HANGMUANGOAI";
+                dtData.Columns[i++].ColumnName = "CHOPHEPXUATAM";
+                dtData.Columns[i++].ColumnName = "KHONGDUNGKHO";
+                dtData.Columns[i++].ColumnName = "KHONGSUDUNG";
+                dtData.Columns[i++].ColumnName = "PATHHINHANH";
+                // dtData.Columns[i++].ColumnName = "COMBO";
+                //dtData.Columns.Add("LOAIKH");
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMHangHoaDonGia(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "MAHANGHOA";
+                dtData.Columns[i++].ColumnName = "DONGIA";
+                dtData.Columns[i++].ColumnName = "MADOITUONG";
+                dtData.Columns[i++].ColumnName = "DIEUKIEN";
+                dtData.Columns[i++].ColumnName = "LOAIDONGIA";
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if ((dr["MAHANGHOA"].ToString().Equals("") || dr["MAHANGHOA"].ToString().Trim().Equals(""))) //&&
+                        //  (dr["DONGIA"].ToString().Equals("") || dr["DONGIA"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMVoucher(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MAVACH";
+                dtData.Columns[2].ColumnName = "MA";
+                dtData.Columns[3].ColumnName = "TEN";
+                dtData.Columns[4].ColumnName = "GUID_LOAIHH";
+                dtData.Columns[5].ColumnName = "NGAYTAO";
+                dtData.Columns[6].ColumnName = "GUID_DVT";
+                dtData.Columns[7].ColumnName = "THUESUAT";
+                dtData.Columns[8].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[9].ColumnName = "DGVON";
+                dtData.Columns[10].ColumnName = "SERINO";
+                dtData.Columns[11].ColumnName = "COTHOIHAN";
+                dtData.Columns[12].ColumnName = "THOIGIANHETHAN";
+                dtData.Columns[13].ColumnName = "KHONGSUDUNG";
+                dtData.Columns[14].ColumnName = "HANGMUANGOAI";
+
+                //dtData.Columns.Add("LOAIKH");
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMBoPhan(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "ID_TAIKHOAN";
+                dtData.Columns[3].ColumnName = "ID_CHA";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMChiPhi(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "GHICHU";
+                dtData.Columns[3].ColumnName = "ID_TAIKHOAN";
+                dtData.Columns[4].ColumnName = "ID_LOAICP";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMTaiKhoan(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "MATKCHA";
+                dtData.Columns[3].ColumnName = "NAMAPDUNG";
+                dtData.Columns[4].ColumnName = "GHICHU";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMTaiKhoanNganHang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[1].ColumnName = "SOTK";
+                dtData.Columns[3].ColumnName = "LOAITIEN";
+                dtData.Columns[4].ColumnName = "KYHIEUCHUNGTU";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMDvt(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMPtn(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[3].ColumnName = "MACDINH";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMPtx(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[3].ColumnName = "MACDINH";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMKhuVuc(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMBanan(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                int j = 0;
+                dtData.AcceptChanges();
+                dtData.Columns[j++].ColumnName = "STT";
+                dtData.Columns[j++].ColumnName = "MA";
+                dtData.Columns[j++].ColumnName = "TEN";
+                dtData.Columns[j++].ColumnName = "GUID_CHA";
+                dtData.Columns[j++].ColumnName = "SOLUONGGHE";
+                dtData.Columns[j++].ColumnName = "TENMAYIN";
+                dtData.Columns[j++].ColumnName = "KHOGIAY";
+                dtData.Columns[j++].ColumnName = "ISBA";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMKho(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[3].ColumnName = "GUID_NGUOIQUANLY";
+                dtData.Columns[4].ColumnName = "NGUOILIENHE";
+                dtData.Columns[5].ColumnName = "DIACHI";
+                dtData.Columns[6].ColumnName = "DIENTHOAI";
+                dtData.Columns[7].ColumnName = "GUID_CHA";//danh muc cua hang
+                dtData.Columns[8].ColumnName = "MACDINH";
+                dtData.Columns[9].ColumnName = "GHICHU";
+                dtData.Columns[10].ColumnName = "TINHTRANG";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMCuaHangSM24(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                int a = 0;
+                dtData.AcceptChanges();
+
+                dtData.Columns[a++].ColumnName = "STT";
+                dtData.Columns[a++].ColumnName = "MA";
+                dtData.Columns[a++].ColumnName = "TEN";
+                dtData.Columns[a++].ColumnName = "MACDINH";
+                dtData.Columns[a++].ColumnName = "GUID_NGUOIQUANLY";
+                dtData.Columns[a++].ColumnName = "NGUOILIENHE";
+                dtData.Columns[a++].ColumnName = "DIACHI";
+                dtData.Columns[a++].ColumnName = "DIENTHOAI";
+                dtData.Columns[a++].ColumnName = "GHICHU";
+                dtData.Columns[a++].ColumnName = "TINHTRANG";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMTramYTe(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MASOTHUE";
+                dtData.Columns[2].ColumnName = "MA";
+                dtData.Columns[3].ColumnName = "TEN";
+                dtData.Columns[4].ColumnName = "GUID_NGUOIQUANLY";
+                dtData.Columns[5].ColumnName = "NGUOILIENHE";
+                dtData.Columns[6].ColumnName = "DIACHI";
+                dtData.Columns[7].ColumnName = "DIENTHOAI";
+                dtData.Columns[8].ColumnName = "GHICHU";
+
+                //dtData.Columns[9].ColumnName = "TINHTRANG";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    if (BaseParamIE.ActiveTax != dr["MASOTHUE"].ToString().Replace("-", "").ToString())
+                    {
+                        dtData.Rows.RemoveAt(i);
+                    }
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMCuaHangVTA(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MASOTHUE";
+                dtData.Columns[2].ColumnName = "MA";
+                dtData.Columns[3].ColumnName = "TEN";
+                //dtData.Columns[3].ColumnName = "MACDINH";
+                //dtData.Columns[4].ColumnName = "GUID_NGUOIQUANLY";
+                dtData.Columns[4].ColumnName = "NGUOILIENHE";
+                dtData.Columns[5].ColumnName = "DIACHI";
+                dtData.Columns[6].ColumnName = "DIENTHOAI";
+                dtData.Columns[7].ColumnName = "GHICHU";
+
+                //dtData.Columns[9].ColumnName = "TINHTRANG";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    if (BaseParamIE.ActiveTax != dr["MASOTHUE"].ToString().Replace("-", "").ToString())
+                    {
+                        dtData.Rows.RemoveAt(i);
+                    }
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+
+        void fncDMThueSuat(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                //dtData.Columns[0].ColumnName = "ID";
+                dtData.Columns[0].ColumnName = "THUESUAT";
+                dtData.Columns[1].ColumnName = "DIENGIAI";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["THUESUAT"].ToString().Equals("") || dr["THUESUAT"].ToString().Trim().Equals("")))
+
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMLoaiHH(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[3].ColumnName = "GUID_CHA";
+                dtData.Columns[4].ColumnName = "MOHINHSIEUTHI";
+                dtData.Columns[5].ColumnName = "MOHINHNHAHANG";
+                dtData.Columns[6].ColumnName = "KHONGSD";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMTienTe(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "TYGIA";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMLoaiKH(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "MA";
+                dtData.Columns[2].ColumnName = "TEN";
+                dtData.Columns[3].ColumnName = "GUID_CHA";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMLoaiTheKH(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "STT";
+                dtData.Columns[1].ColumnName = "LOAITHE";
+                dtData.Columns[2].ColumnName = "NGAYCAP";
+                dtData.Columns[3].ColumnName = "NGAYHETHAN";
+                dtData.Columns[4].ColumnName = "SODIEMCANTLUY";
+                dtData.Columns[5].ColumnName = "DONGTIEN";
+                dtData.Columns[6].ColumnName = "SOTIENDONG";
+                dtData.Columns[7].ColumnName = "TINHTRANGTHE";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["LOAITHE"].ToString().Equals("") || dr["LOAITHE"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMLoaiTS(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "MA";
+                dtData.Columns[1].ColumnName = "TEN";
+                dtData.Columns[2].ColumnName = "ID_CHA";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                        (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDMBoPhanKhauHao(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+
+                dtData.Columns[0].ColumnName = "TEN";
+                dtData.Columns[1].ColumnName = "ID_BOPHAN";
+                dtData.Columns[2].ColumnName = "GHICHU";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncKtthanhtoandonhang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "DOTTT";
+                dtData.Columns[1].ColumnName = "NGAYHENTT";
+                dtData.Columns[2].ColumnName = "SOTIENPHAITT";
+                dtData.Columns[3].ColumnName = "DATHANHTOAN";
+                dtData.Columns[4].ColumnName = "KYHIEUTT";
+                dtData.Columns[5].ColumnName = "SOCTTT";
+                dtData.Columns[6].ColumnName = "NGAYTT";
+                dtData.Columns[7].ColumnName = "NGUOITT";
+                dtData.Columns[8].ColumnName = "SOTIENTT";
+                dtData.Columns[9].ColumnName = "GHICHU";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["DOTTT"].ToString().Equals("") || dr["DOTTT"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYHENTT"].ToString().Equals("") || dr["NGAYHENTT"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncKtthanhtoantragop(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "DOTTT";
+                dtData.Columns[1].ColumnName = "NGAYHENTT";
+                dtData.Columns[2].ColumnName = "DUNODK";
+                dtData.Columns[3].ColumnName = "TRATIENGOC";
+                dtData.Columns[4].ColumnName = "TRATIENLAI";
+                dtData.Columns[5].ColumnName = "SOTIENPHAITT";
+                dtData.Columns[6].ColumnName = "DATHANHTOAN";
+                dtData.Columns[7].ColumnName = "KYHIEUTT";
+                dtData.Columns[8].ColumnName = "SOCTTT";
+                dtData.Columns[9].ColumnName = "NGAYTT";
+                dtData.Columns[10].ColumnName = "NGUOITT";
+                dtData.Columns[11].ColumnName = "SOTIENTT";
+                dtData.Columns[12].ColumnName = "GHICHU";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["DOTTT"].ToString().Equals("") || dr["DOTTT"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYHENTT"].ToString().Equals("") || dr["NGAYHENTT"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncSolieudauky(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "GUID_KHO";
+                dtData.Columns[1].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[2].ColumnName = "TENDVT";
+                dtData.Columns[3].ColumnName = "SOLUONG";
+                dtData.Columns[4].ColumnName = "DONGIA";
+                dtData.Columns[5].ColumnName = "THANHTIEN";
+                dtData.Columns[6].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[7].ColumnName = "KYHIEU";
+                dtData.Columns[8].ColumnName = "SOCT";
+                dtData.Columns[9].ColumnName = "NGAYCT";
+                dtData.Columns[10].ColumnName = "GHICHU";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncPhieuThu(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "SOCT";
+                dtData.Columns[1].ColumnName = "NGAYCT";
+                dtData.Columns[2].ColumnName = "DIENGIAI";
+                dtData.Columns[3].ColumnName = "MASOTHUEKH";
+                dtData.Columns[4].ColumnName = "TENKH";
+                dtData.Columns[5].ColumnName = "DIACHI";
+                dtData.Columns[6].ColumnName = "SOTIEN";
+                dtData.Columns[7].ColumnName = "TKNO";
+                dtData.Columns[8].ColumnName = "TKCO";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+
+                    if ((dr["SOCT"].ToString().Equals("") || dr["SOCT"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYCT"].ToString().Equals("") || dr["NGAYCT"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncPhieuChi(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "SOCT";
+                dtData.Columns[1].ColumnName = "NGAYCT";
+                dtData.Columns[2].ColumnName = "DIENGIAI";
+                dtData.Columns[3].ColumnName = "MASOTHUEKH";
+                dtData.Columns[4].ColumnName = "TENKH";
+                dtData.Columns[5].ColumnName = "DIACHI";
+                dtData.Columns[6].ColumnName = "SOTIEN";
+                dtData.Columns[7].ColumnName = "TKNO";
+                dtData.Columns[8].ColumnName = "TKCO";
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SOCT"].ToString().Equals("") || dr["SOCT"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYCT"].ToString().Equals("") || dr["NGAYCT"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    //dtSource.ImportRow(dr);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncct_tonghop(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "KYHIEU";
+                dtData.Columns[1].ColumnName = "SO";
+                dtData.Columns[2].ColumnName = "NGAY";
+                dtData.Columns[3].ColumnName = "DIENGIAI";
+                dtData.Columns[4].ColumnName = "TKNO";
+                dtData.Columns[5].ColumnName = "TKCO";
+                dtData.Columns[6].ColumnName = "SOTIEN";
+                dtData.Columns[7].ColumnName = "CHITIETNO";
+                dtData.Columns[8].ColumnName = "CHITIETCO";
+                dtData.Columns[9].ColumnName = "GHICHU";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SO"].ToString().Equals("") || dr["SO"].ToString().Trim().Equals("")) &&
+                        (dr["NGAY"].ToString().Equals("") || dr["NGAY"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    //dtSource.ImportRow(dr);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncct_gbc(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                bool stype = false;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "KYHIEU";
+                dtData.Columns[1].ColumnName = "SOUNC";
+                dtData.Columns[2].ColumnName = "NGAYLAP";
+                dtData.Columns[3].ColumnName = "BENNHAN";
+                dtData.Columns[4].ColumnName = "ID_TKNH";
+                dtData.Columns[5].ColumnName = "BENNHANNH";
+                //dtData.Columns[6].ColumnName = "LOAITIEN";
+                dtData.Columns[6].ColumnName = "SOLUONG";
+                dtData.Columns[7].ColumnName = "TYGIA";
+                dtData.Columns[8].ColumnName = "SOTIEN";
+                dtData.Columns[9].ColumnName = "DIENGIAI";
+                dtData.Columns[10].ColumnName = "ID_KHACHHANG";
+                dtData.Columns[11].ColumnName = "BENCHI";
+                dtData.Columns[12].ColumnName = "BENCHISOTK";
+                dtData.Columns[13].ColumnName = "BENCHINH";
+                dtData.Columns[14].ColumnName = "GHICHU";
+                dtData.AcceptChanges();
+                dtSource = dtData.Clone();
+                //foreach (DataColumn dc in dtSource.Columns)
+                //  dc.DataType = Type.GetType("System.String");
+                if (dtData.Columns["NGAYLAP"].DataType == Type.GetType("System.DateTime"))
+                    stype = true;
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SOUNC"].ToString().Equals("") || dr["SOUNC"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYLAP"].ToString().Equals("") || dr["NGAYLAP"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    //dtSource.ImportRow(dr);
+                    else
+                    {
+                        if (stype)
+                        {
+
+                            if (dr["NGAYLAP"] != DBNull.Value && dr["NGAYLAP"].ToString() != "")
+                                dr["NGAYLAP"] = Convert.ToDateTime(dr["NGAYLAP"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer = Common.ConvertDouble(dr["NGAYLAP"]);
+                            if (dmer > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYLAP"] = DateTime.FromOADate(dmer).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "dd/MM/yyyy";
+                                if (dr["NGAYLAP"] != DBNull.Value && dr["NGAYLAP"].ToString() != "")
+                                    try
+                                    {
+                                        dr["NGAYLAP"] = Convert.ToDateTime(dr["NGAYLAP"], dateinfo).ToString("dd/MM/yyyy");
+                                    }
+                                    catch
+                                    {
+                                        //dr["NGAYLAP"] = dr["NGAYLAP"];
+                                    }
+                            }
+                        }
+                        //dtSource.ImportRow(dr);
+                        dtData.AcceptChanges();
+                    }
+                }
+                dtSource = dtData.Copy();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog(ex);
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncct_gbn(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                bool stype = false;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                dtData.Columns[0].ColumnName = "KYHIEU";
+                dtData.Columns[1].ColumnName = "SOUNC";
+                dtData.Columns[2].ColumnName = "NGAYLAP";
+                dtData.Columns[3].ColumnName = "BENCHI";
+                dtData.Columns[4].ColumnName = "ID_TKNH";
+                dtData.Columns[5].ColumnName = "BENCHINH";
+                dtData.Columns[6].ColumnName = "SOLUONG";
+                dtData.Columns[7].ColumnName = "TYGIA";
+                dtData.Columns[8].ColumnName = "SOTIEN";
+                dtData.Columns[9].ColumnName = "DIENGIAI";
+                dtData.Columns[10].ColumnName = "BENNHAN";
+                dtData.Columns[11].ColumnName = "BENNHANSOTK";
+                dtData.Columns[12].ColumnName = "BENNHANNH";
+                dtData.Columns[13].ColumnName = "GHICHU";
+                dtData.AcceptChanges();
+                dtSource = dtData.Clone();
+                //foreach (DataColumn dc in dtSource.Columns)
+                //  dc.DataType = Type.GetType("System.String");
+                if (dtData.Columns["NGAYLAP"].DataType == Type.GetType("System.DateTime"))
+                    stype = true;
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SOUNC"].ToString().Equals("") || dr["SOUNC"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYLAP"].ToString().Equals("") || dr["NGAYLAP"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    //dtSource.ImportRow(dr);
+                    else
+                    {
+                        if (stype)
+                        {
+
+                            if (dr["NGAYLAP"] != DBNull.Value && dr["NGAYLAP"].ToString() != "")
+                                dr["NGAYLAP"] = Convert.ToDateTime(dr["NGAYLAP"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer = Common.ConvertDouble(dr["NGAYLAP"]);
+                            if (dmer > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYLAP"] = DateTime.FromOADate(dmer).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "dd/MM/yyyy";
+                                if (dr["NGAYLAP"] != DBNull.Value && dr["NGAYLAP"].ToString() != "")
+                                    dr["NGAYLAP"] = Convert.ToDateTime(dr["NGAYLAP"], dateinfo).ToString("dd/MM/yyyy");
+                            }
+                        }
+                        //dtSource.ImportRow(dr);
+                        dtData.AcceptChanges();
+
+                    }
+                }
+                dtSource = dtData.Copy();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog(ex);
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncct_phieuchi(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                bool stype = false;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+
+
+                dtData.Columns[0].ColumnName = "LOAITIEN";
+                dtData.Columns[1].ColumnName = "KYHIEU";
+                dtData.Columns[2].ColumnName = "SOPHIEUTC";
+                dtData.Columns[3].ColumnName = "NGAYTC";
+                dtData.Columns[4].ColumnName = "LYDO";
+                dtData.Columns[5].ColumnName = "CHUNGTUKEMTHEO";
+                dtData.Columns[6].ColumnName = "DOITUONGTC";
+                dtData.Columns[7].ColumnName = "DIACHI";
+                dtData.Columns[8].ColumnName = "SOLUONG";
+                dtData.Columns[9].ColumnName = "TYGIA";
+                dtData.Columns[10].ColumnName = "TONGTIEN";
+                dtData.AcceptChanges();
+                dtSource = dtData.Clone();
+                //foreach (DataColumn dc in dtSource.Columns)
+                //  dc.DataType = Type.GetType("System.String");
+                if (dtData.Columns["NGAYTC"].DataType == Type.GetType("System.DateTime"))
+                    stype = true;
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SOPHIEUTC"].ToString().Equals("") || dr["SOPHIEUTC"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYTC"].ToString().Equals("") || dr["NGAYTC"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    else
+                    {
+                        if (stype)
+                        {
+
+                            if (dr["NGAYTC"] != DBNull.Value && dr["NGAYTC"].ToString() != "")
+                                dr["NGAYTC"] = Convert.ToDateTime(dr["NGAYTC"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer = Common.ConvertDouble(dr["NGAYTC"]);
+                            if (dmer > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYTC"] = DateTime.FromOADate(dmer).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "dd/MM/yyyy";
+                                if (dr["NGAYTC"] != DBNull.Value && dr["NGAYTC"].ToString() != "")
+                                    dr["NGAYTC"] = Convert.ToDateTime(dr["NGAYTC"], dateinfo).ToString("dd/MM/yyyy");
+                            }
+                        }
+                        //dtSource.ImportRow(dr);
+                        dtData.AcceptChanges();
+                    }
+
+                }
+                dtSource = dtData.Copy();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog(ex);
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncct_phieuthu(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                bool stype = false;
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+
+                dtData.Columns[0].ColumnName = "LOAITIEN";
+                dtData.Columns[1].ColumnName = "KYHIEU";
+                dtData.Columns[2].ColumnName = "SOPHIEUTC";
+                dtData.Columns[3].ColumnName = "NGAYTC";
+                dtData.Columns[4].ColumnName = "LYDO";
+                dtData.Columns[5].ColumnName = "CHUNGTUKEMTHEO";
+                dtData.Columns[6].ColumnName = "DOITUONGTC";
+                dtData.Columns[7].ColumnName = "DIACHI";
+                dtData.Columns[8].ColumnName = "DIACHIXHD";
+                dtData.Columns[9].ColumnName = "SOLUONG";
+                dtData.Columns[10].ColumnName = "TYGIA";
+                dtData.Columns[11].ColumnName = "TONGTIEN";
+                dtData.AcceptChanges();
+                dtSource = dtData.Clone();
+                //foreach (DataColumn dc in dtSource.Columns)
+                //  dc.DataType = Type.GetType("System.String");
+
+                if (dtData.Columns["NGAYTC"].DataType == Type.GetType("System.DateTime"))
+                    stype = true;
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["SOPHIEUTC"].ToString().Equals("") || dr["SOPHIEUTC"].ToString().Trim().Equals("")) &&
+                        (dr["NGAYTC"].ToString().Equals("") || dr["NGAYTC"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                    else
+                    {
+                        if (stype)
+                        {
+
+                            if (dr["NGAYTC"] != DBNull.Value && dr["NGAYTC"].ToString() != "")
+                                dr["NGAYTC"] = Convert.ToDateTime(dr["NGAYTC"]).ToString("dd/MM/yyyy"); //DateTime.ParseExact(dr["NgayPhatHanh"].ToString(), "MM/dd/yyyy", dateinfo);// Convert.ToDateTime(dr["NgayPhatHanh"], dateinfo);
+                        }
+                        else
+                        {
+                            double dmer = Common.ConvertDouble(dr["NGAYTC"]);
+                            if (dmer > 0)
+                            {
+                                try
+                                {
+                                    dr["NGAYTC"] = DateTime.FromOADate(dmer).ToString("dd/MM/yyyy");
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                dateinfo.ShortDatePattern = "dd/MM/yyyy";
+                                if (dr["NGAYTC"] != DBNull.Value && dr["NGAYTC"].ToString() != "")
+                                    dr["NGAYTC"] = Convert.ToDateTime(dr["NGAYTC"], dateinfo).ToString("dd/MM/yyyy");
+                            }
+                        }
+                        //dtSource.ImportRow(dr);
+                        dtData.AcceptChanges();
+                    }
+
+                }
+                dtSource = dtData.Copy();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog(ex);
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncPhieuDeNghiMuaHang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONGYC";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUE";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncDonMuaHang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONGDM";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUEGTGT";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+                dtData.Columns[a++].ColumnName = "DADUYET";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals("")) 
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncPhieuNhap(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONGNHAN";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUEGTGT";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+       
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+
+        }
+        void fncDonDatHang(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUEGTGT";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncPhieuBaoGia(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUEGTGT";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncPhieuXuat(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "GUID_HANGHOA";
+                dtData.Columns[a++].ColumnName = "GUID_DVT";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUE";
+                dtData.Columns[a++].ColumnName = "TONGTIEN";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if (dr["GUID_HANGHOA"].ToString().Equals("") || dr["GUID_HANGHOA"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncImportPhieuXuat(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "KYHIEU";
+                dtData.Columns[a++].ColumnName = "SOCT";
+                dtData.Columns[a++].ColumnName = "NGAY";
+                dtData.Columns[a++].ColumnName = "TENNGUOINHAN";
+                dtData.Columns[a++].ColumnName = "TENKHACHHANG";
+                dtData.Columns[a++].ColumnName = "DIACHI";
+                dtData.Columns[a++].ColumnName = "MASOTHUE";
+                dtData.Columns[a++].ColumnName = "GUID_PTX";
+                dtData.Columns[a++].ColumnName = "GUID_KHODI";
+                dtData.Columns[a++].ColumnName = "GUID_KHODEN";
+                dtData.Columns[a++].ColumnName = "CHUNGTUKEMTHEO";
+                dtData.Columns[a++].ColumnName = "HINHTHUCTT";
+                dtData.Columns[a++].ColumnName = "HANTHANHTOAN";
+                dtData.Columns[a++].ColumnName = "NGAYGIAO";
+                dtData.Columns[a++].ColumnName = "GHICHU";
+                dtData.Columns[a++].ColumnName = "TENNNVBANHANG";
+
+                dtData.Columns[a++].ColumnName = "MAVACH";
+                dtData.Columns[a++].ColumnName = "TENHANGHOA";
+                dtData.Columns[a++].ColumnName = "MADVT";
+                dtData.Columns[a++].ColumnName = "SOLUONG";
+                dtData.Columns[a++].ColumnName = "DONGIA";
+                dtData.Columns[a++].ColumnName = "DGVON";
+
+                dtData.Columns[a++].ColumnName = "TYLECK";
+                dtData.Columns[a++].ColumnName = "TIENCK";
+                dtData.Columns[a++].ColumnName = "THUESUAT";
+                dtData.Columns[a++].ColumnName = "TIENTHUE";
+                dtData.Columns[a++].ColumnName = "THANHTIEN";
+                dtData.Columns[a++].ColumnName = "THANHTIENGVON";
+
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncImportKhuyenMai(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                fncSetMaxPgr(100);
+
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "MAKM";
+                dtData.Columns[a++].ColumnName = "TENSP";
+                dtData.Columns[a++].ColumnName = "TIEUDEKM";
+                dtData.Columns[a++].ColumnName = "MASOTHUE";
+                dtData.Columns[a++].ColumnName = "MATP";
+                dtData.Columns[a++].ColumnName = "THOIGIANBD";
+                dtData.Columns[a++].ColumnName = "THOIGIANKT";
+                dtData.Columns[a++].ColumnName = "NGAYAPDUNGBD";
+                dtData.Columns[a++].ColumnName = "NGAYAPDUNGKT";
+                dtData.Columns[a++].ColumnName = "GIAGOC";
+                dtData.Columns[a++].ColumnName = "SOTIEN";
+                dtData.Columns[a++].ColumnName = "LOAIGIAMGIA";
+                dtData.Columns[a++].ColumnName = "MOTA";
+                dtData.Columns[a++].ColumnName = "NOIDUNGNOIBAT";
+                dtData.Columns[a++].ColumnName = "QUIDINHDOITRA";
+                dtData.Columns[a++].ColumnName = "HINHANH";
+                dtData.Columns[a++].ColumnName = "TIEUDE";
+                dtData.Columns[a++].ColumnName = "TUKHOA";
+                dtData.Columns[a++].ColumnName = "TOMTATSEO";
+                dtData.Columns[a++].ColumnName = "LOAIKM";
+                dtData.Columns[a++].ColumnName = "LIENKET";
+                dtData.Columns[a++].ColumnName = "MALOAIHH";
+
+                int k = 0;
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    k++;
+                    //fncUpdateProcess(k * 100 / dtData.Rows.Count);
+                    DataRow dr = dtData.Rows[i];
+                    if (string.IsNullOrEmpty(dr[0].ToString())&& string.IsNullOrEmpty(dr[1].ToString())&& string.IsNullOrEmpty(dr[3].ToString()))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        
+        void fncBienDongVAT(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int a = 0;
+                dtData.Columns[a++].ColumnName = "STT";
+                dtData.Columns[a++].ColumnName = "MA";
+                dtData.Columns[a++].ColumnName = "TEN";
+                dtData.Columns[a++].ColumnName = "DONGIAMUA";
+                dtData.Columns[a++].ColumnName = "DONGIABAN";
+                dtData.Columns[a++].ColumnName = "THUESUATDN";
+                dtData.Columns[a++].ColumnName = "THUESUATCN";
+                dtData.Columns[a++].ColumnName = "GHICHU";
+
+                for (int i = dtData.Rows.Count - 1; i >= 0; i--)
+                {
+                    DataRow dr = dtData.Rows[i];
+                    if ((dr["MA"].ToString().Equals("") || dr["MA"].ToString().Trim().Equals("")) &&
+                              (dr["TEN"].ToString().Equals("") || dr["TEN"].ToString().Trim().Equals("")))
+                        dtData.Rows.RemoveAt(i);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncChiTietHangHoaMTT(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "KHUYENMAI";
+                dtData.Columns[i++].ColumnName = "MaHang";
+                dtData.Columns[i++].ColumnName = "TenHang";
+                dtData.Columns[i++].ColumnName = "DonViTinh";
+                dtData.Columns[i++].ColumnName = "SoLuong";
+                dtData.Columns[i++].ColumnName = "DonGia";
+                dtData.Columns[i++].ColumnName = "TYLEBH";
+                dtData.Columns[i++].ColumnName = "BAOHIEMTRA";
+                dtData.Columns[i++].ColumnName = "ThanhTien";
+                dtData.Columns[i++].ColumnName = "ThueSuat";
+                dtData.Columns[i++].ColumnName = "TienThue";
+                dtData.Columns[i++].ColumnName = "TongCong";
+
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if (dr["TenHang"].ToString().Equals("") || dr["TenHang"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncChiTietHangHoa(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "KHUYENMAI";
+                dtData.Columns[i++].ColumnName = "TenHang";
+                dtData.Columns[i++].ColumnName = "DonViTinh";
+                dtData.Columns[i++].ColumnName = "SoLuong";
+                dtData.Columns[i++].ColumnName = "DonGia";
+                dtData.Columns[i++].ColumnName = "TYLEBH";
+                dtData.Columns[i++].ColumnName = "BAOHIEMTRA";
+                dtData.Columns[i++].ColumnName = "ThanhTien";
+                dtData.Columns[i++].ColumnName = "ThueSuat";
+                dtData.Columns[i++].ColumnName = "TienThue";
+                dtData.Columns[i++].ColumnName = "TongCong";
+                
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if (dr["TenHang"].ToString().Equals("") || dr["TenHang"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncChiTietHangHoa02(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "KHUYENMAI";
+                dtData.Columns[i++].ColumnName = "TenHang";
+                dtData.Columns[i++].ColumnName = "DonViTinh";
+                dtData.Columns[i++].ColumnName = "SoLuong";
+                dtData.Columns[i++].ColumnName = "DonGia";
+                dtData.Columns[i++].ColumnName = "TYLEBH";
+                dtData.Columns[i++].ColumnName = "BAOHIEMTRA";
+                dtData.Columns[i++].ColumnName = "ThanhTien";
+                //dtData.Columns[i++].ColumnName = "ThueSuat";
+                //dtData.Columns[i++].ColumnName = "TienThue";
+                //dtData.Columns[i++].ColumnName = "TongCong";
+                
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if (dr["TenHang"].ToString().Equals("") || dr["TenHang"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncChiTietHangHoa03(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "KHUYENMAI";
+                dtData.Columns[i++].ColumnName = "TenHang";
+                dtData.Columns[i++].ColumnName = "DonViTinh";
+                dtData.Columns[i++].ColumnName = "SoLuong";
+                dtData.Columns[i++].ColumnName = "DonGia";
+                dtData.Columns[i++].ColumnName = "ThanhTien";
+                //dtData.Columns[i++].ColumnName = "ThueSuat";
+                //dtData.Columns[i++].ColumnName = "TienThue";
+                //dtData.Columns[i++].ColumnName = "TongCong";
+
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if (dr["TenHang"].ToString().Equals("") || dr["TenHang"].ToString().Trim().Equals(""))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncCongNoTaiKhoanDoiTuong(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "GUID_TAIKHOAN";
+                dtData.Columns[i++].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[i++].ColumnName = "NODKVND";
+                dtData.Columns[i++].ColumnName = "CODKVND";
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncCongNoTaiKhoan(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "GUID_TAIKHOAN";
+                dtData.Columns[i++].ColumnName = "NODKVND";
+                dtData.Columns[i++].ColumnName = "CODKVND";
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncCongNoPhaiThuTheoChungTu(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "GUID_TAIKHOAN";
+                dtData.Columns[i++].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[i++].ColumnName = "KYHIEU";
+                dtData.Columns[i++].ColumnName = "SOCT";
+                dtData.Columns[i++].ColumnName = "NGAYCT";
+                dtData.Columns[i++].ColumnName = "DIENGIAI";
+                dtData.Columns[i++].ColumnName = "HANTT";
+                dtData.Columns[i++].ColumnName = "NGAYHD";
+                dtData.Columns[i++].ColumnName = "SOTIENVND";
+                dtData.Columns[i++].ColumnName = "SOTIENDTTVND";
+                dtData.Columns[i++].ColumnName = "GHICHU";
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        void fncCongNoPhaiTraTheoChungTu(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "GUID_TAIKHOAN";
+                dtData.Columns[i++].ColumnName = "GUID_KHACHHANG";
+                dtData.Columns[i++].ColumnName = "KYHIEU";
+                dtData.Columns[i++].ColumnName = "SOCT";
+                dtData.Columns[i++].ColumnName = "NGAYCT";
+                dtData.Columns[i++].ColumnName = "DIENGIAI";
+                dtData.Columns[i++].ColumnName = "HANTT";
+                dtData.Columns[i++].ColumnName = "NGAYHD";
+                dtData.Columns[i++].ColumnName = "SOTIENVND";
+                dtData.Columns[i++].ColumnName = "SOTIENDTTVND";
+                dtData.Columns[i++].ColumnName = "GHICHU";
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncDanhSachChungTuKhauTruThueTNCN(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "TEN_NNT";
+                dtData.Columns[i++].ColumnName = "DCHI_NNT";
+                dtData.Columns[i++].ColumnName = "MST_NNT";
+                dtData.Columns[i++].ColumnName = "DCTDTU_NNT";
+                dtData.Columns[i++].ColumnName = "SDTHOAI_NNT";
+                dtData.Columns[i++].ColumnName = "QTICH_NNT";
+                dtData.Columns[i++].ColumnName = "CCCDAN_NNT";
+                dtData.Columns[i++].ColumnName = "CNCTRU_NNT";
+                dtData.Columns[i++].ColumnName = "GCHU_NNT";
+                dtData.Columns[i++].ColumnName = "KTNHAP";
+                dtData.Columns[i++].ColumnName = "TTHANG";
+                dtData.Columns[i++].ColumnName = "DTHANG";
+                dtData.Columns[i++].ColumnName = "NAM";
+                dtData.Columns[i++].ColumnName = "BHIEM";
+                dtData.Columns[i++].ColumnName = "TTNCTHUE";
+                dtData.Columns[i++].ColumnName = "TTNTTHUE";
+                dtData.Columns[i++].ColumnName = "TTHIEN";
+                dtData.Columns[i++].ColumnName = "STHUE";
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+
+        void fncChiTietHangHoaDacTrung(ref DataTable dtSource, DataTable dtData)
+        {
+            try
+            {
+                if (dtData == null || dtData.Rows.Count == 0)
+                    return;
+                dtData.AcceptChanges();
+                int i = 0;
+                dtData.Columns[i++].ColumnName = "STT";
+                dtData.Columns[i++].ColumnName = "LOAI";
+                dtData.Columns[i++].ColumnName = "MOTA";
+                dtData.Columns[i++].ColumnName = "CT1";
+                dtData.Columns[i++].ColumnName = "CT2";
+                dtData.Columns[i++].ColumnName = "CT3";
+                dtData.Columns[i++].ColumnName = "CT4";
+                dtData.Columns[i++].ColumnName = "CT5";
+                dtData.Columns[i++].ColumnName = "CT6";
+                dtData.Columns[i++].ColumnName = "CT7";
+                dtData.Columns[i++].ColumnName = "GHICHU";
+
+                for (int j = dtData.Rows.Count - 1; j >= 0; j--)
+                {
+                    DataRow dr = dtData.Rows[j];
+                    if (string.IsNullOrWhiteSpace(dr["MOTA"].ToString()))
+                        dtData.Rows.RemoveAt(j);
+                }
+                dtSource = dtData.Copy();
+            }
+            catch
+            {
+                dtSource.Rows.Clear();
+                dtSource.AcceptChanges();
+            }
+        }
+        #endregion
     }
-}
+       
+    static class Program
+    {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            System.Windows.Forms.Application.EnableVisualStyles();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+            System.Windows.Forms.Application.Run(new frmImport());
+        }
+    }
+}                                                                                          N[�\��CY9w�C$�VF��5�@O�ԡ�Dʺ4�d�
+>d���Ʊ��/���zǯ�f\$���+1Zy,�K�N	�(�=*��խ,i�d6\8ArI��Ǔ�3�b��� R��?�.�O{�e�~H>��K.��8��:A��.���##���V��|J-�g(�k����:����������9ChfN�H�L�T\𩁉,v��
+,������Fu��n���J��l\����Fo�D���|��5(��;���8����?�7�:�K�v�-�ϋ6��f���Vsx"#�&��R���tC��ڦ#��g��o4�͍Lr%�П.<�O@0�"�є����D|�9Bd�R'�󪲩�2~cH��V�e�@�`'Ǹ�`���%�׷W1�f(˙�;��No�����u�>7�H*�y�;���*�&+�`�����ܗ���h��5tJ0���OwW�d�o���XT.�.�o������/B>�s7��vS�<��2r��﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Commons
+{
+    public class ConvertFontVN
+    {
+        private char[] tcvnchars = {
+
+        'µ', '¸', '¶', '·', '¹', 
+
+        '¨', '»', '¾', '¼', '½', 'Æ', 
+
+        '©', 'Ç', 'Ê', 'È', 'É', 'Ë', 
+
+        '®', 'Ì', 'Ð', 'Î', 'Ï', 'Ñ', 
+
+        'ª', 'Ò', 'Õ', 'Ó', 'Ô', 'Ö', 
+
+        '×', 'Ý', 'Ø', 'Ü', 'Þ', 
+
+        'ß', 'ã', 'á', 'â', 'ä', 
+
+        '«', 'å', 'è', 'æ', 'ç', 'é', 
+
+        '¬', 'ê', 'í', 'ë', 'ì', 'î', 
+
+        'ï', 'ó', 'ñ', 'ò', 'ô', 
+
+        '­', 'õ', 'ø', 'ö', '÷', 'ù', 
+
+        'ú', 'ý', 'û', 'ü', 'þ', 
+
+        '¡', '¢', '§', '£', '¤', '¥', '¦'
+
+    };
+
+
+
+        private char[] unichars = {
+
+        'à', 'á', 'ả', 'ã', 'ạ', 
+
+        'ă', 'ằ', 'ắ', 'ẳ', 'ẵ', 'ặ', 
+
+        'â', 'ầ', 'ấ', 'ẩ', 'ẫ', 'ậ', 
+
+        'đ', 'è', 'é', 'ẻ', 'ẽ', 'ẹ', 
+
+        'ê', 'ề', 'ế', 'ể', 'ễ', 'ệ', 
+
+        'ì', 'í', 'ỉ', 'ĩ', 'ị', 
+
+        'ò', 'ó', 'ỏ', 'õ', 'ọ', 
+
+        'ô', 'ồ', 'ố', 'ổ', 'ỗ', 'ộ', 
+
+        'ơ', 'ờ', 'ớ', 'ở', 'ỡ', 'ợ', 
+
+        'ù', 'ú', 'ủ', 'ũ', 'ụ', 
+
+        'ư', 'ừ', 'ứ', 'ử', 'ữ', 'ự', 
+
+        'ỳ', 'ý', 'ỷ', 'ỹ', 'ỵ', 
+
+        'Ă', 'Â', 'Đ', 'Ê', 'Ô', 'Ơ', 'Ư'
+
+    };
+
+        private char[] TCVN3 =
+        {
+                'A','a','¸','¸','µ','µ','¶','¶','·','·','¹','¹',
+                '¢','©','Ê','Ê','Ç','Ç','È','È','É','É','Ë','Ë',
+                '¡','¨','¾','¾','»','»','¼','¼','½','½','Æ','Æ',
+                'B','b','C','c','D','d',
+                '§','®',
+                'E','e','Ð','Ð','Ì','Ì','Î','Î','Ï','Ï','Ñ','Ñ',
+                '£','ª','Õ','Õ','Ò','Ò','Ó','Ó','Ô','Ô','Ö','Ö',
+                'F','f','G','g','H','h',
+                'I','i','Ý','Ý','×','×','Ø','Ø','Ü','Ü','Þ','Þ',
+                'J','j','K','k','L','l','M','m','N','n',
+                'O','o','ã','ã','ß','ß','á','á','â','â','ä','ä',
+                '¤','«','è','è','å','å','æ','æ','ç','ç','é','é',
+                '¥','¬','í','í','ê','ê','ë','ë','ì','ì','î','î',
+                'P','p','Q','q','R','r','S','s','T','t',
+                'U','u','ó','ó','ï','ï','ñ','ñ','ò','ò','ô','ô',
+                '¦','­','ø','ø','õ','õ','ö','ö','÷','÷','ù','ù',
+                'V','v','W','w','X','x',
+                'Y','y','ý','ý','ú','ú','û','û','ü','ü','þ','þ',
+                'Z','z',
+                (char)0x80, (char)0x82, (char)0x83, (char)0x84, (char)0x85, (char)0x86, (char)0x87, (char)0x88,
+                (char)0x89, (char)0x8A, (char)0x8B, (char)0x8C, (char)0x8E, (char)0x91, (char)0x92, (char)0x93,
+                (char)0x94, (char)0x95, (char)0x96, (char)0x97, (char)0x98, (char)0x99, (char)0x9A, (char)0x9B,
+                (char)0x9C, (char)0x9E, (char)0x9F
+        };
+
+        private char[] Unicode =
+        {
+                'A','a','á','á','à','à','ả','ả','ã','ã','ạ','ạ',
+                'Â','â','ấ','ấ','ầ','ầ','ẩ','ẩ','ẫ','ẫ','ậ','ậ',
+                'Ă','ă','ắ','ắ','ằ','ằ','ẳ','ẳ','ẵ','ẵ','ặ','ặ',
+                'B','b','C','c','D','d',
+                'Đ','đ',
+                'E','e','é','é','è','è','ẻ','ẻ','ẽ','ẽ','ẹ','ẹ',
+                'Ê','ê','ế','ế','ề','ề','ể','ể','ễ','ễ','ệ','ệ',
+                'F','f','G','g','H','h',
+                'I','i','í','í','ì','ì','ỉ','ỉ','ĩ','ĩ','ị','ị',
+                'J','j','K','k','L','l','M','m','N','n',
+                'O','o','ó','ó','ò','ò','ỏ','ỏ','õ','õ','ọ','ọ',
+                'Ô','ô','ố','ố','ồ','ồ','ổ','ổ','ỗ','ỗ','ộ','ộ',
+                'Ơ','ơ','ớ','ớ','ờ','ờ','ở','ở','ỡ','ỡ','ợ','ợ',
+                'P','p','Q','q','R','r','S','s','T','t',
+                'U','u','ú','ú','ù','ù','ủ','ủ','ũ','ũ','ụ','ụ',
+                'Ư','ư','ứ','ứ','ừ','ừ','ử','ử','ữ','ữ','ự','ự',
+                'V','v','W','w','X','x',
+                'Y','y','ý','ý','ỳ','ỳ','ỷ','ỷ','ỹ','ỹ','ỵ','ỵ',
+                'Z','z',
+                (char)0x20AC, (char)0x20A1, (char)0x0192, (char)0x201E, (char)0x2026, (char)0x2020, (char)0x2021, (char)0x02C6,
+                (char)0x2030, (char)0x0160, (char)0x2039, (char)0x0152, (char)0x017D, (char)0x2018, (char)0x2019, (char)0x201C,
+                (char)0x201D, (char)0x2022, (char)0x2013, (char)0x2014, (char)0x02DC, (char)0x2122, (char)0x0161, (char)0x203A,
+                (char)0x0153, (char)0x017E, (char)0x0178
+        };
+
+        private static string[] unicharsTH_thuong = { "à", "á", "ả", "ã", "ạ", "ằ", "ắ", "ẳ", "ẵ", "ặ", "ầ", "ấ", "ẩ", "ẫ", "ậ", "è", "é", "ẻ", "ẽ", "ẹ", "ề", "ế", "ể", "ễ", "ệ", "ò", "ó", "ỏ", "õ", "ọ", "ờ", "ớ", "ở", "ỡ", "ợ", "ồ", "ố", "ổ", "ỗ", "ộ", "ù", "ú", "ủ", "ũ", "ụ", "ừ", "ứ", "ử", "ữ", "ự", "ì", "í", "ỉ", "ĩ", "ị", "ỳ", "ý", "ỷ", "ỹ", "ỵ" };
+        private static string[] unicharsTH_hoa = { "À", "Á", "Ả", "Ã", "Ạ", "Ằ", "Ắ", "Ẳ", "Ẵ", "Ặ", "Ầ", "Ấ", "Ẩ", "Ẫ", "Ậ", "È", "É", "Ẻ", "Ẽ", "Ẹ", "Ề", "Ế", "Ể", "Ễ", "Ệ", "Ò", "Ó", "Ỏ", "Õ", "Ọ", "Ờ", "Ớ", "Ở", "Ỡ", "Ợ", "Ồ", "Ố", "Ổ", "Ỗ", "Ộ", "Ù", "Ú", "Ủ", "Ũ", "Ụ", "Ừ", "Ứ", "Ử", "Ữ", "Ự", "Ì", "Í", "Ỉ", "Ĩ", "Ị", "Ỳ", "Ý", "Ỷ", "Ỹ", "Ỵ" };
+
+        private static string[] unicharsDS_thuong = { "à", "á", "ả", "ã", "ạ", "ằ", "ắ", "ẳ", "ẵ", "ặ", "ầ", "ấ", "ẩ", "ẫ", "ậ", "è", "é", "ẻ", "ẽ", "ẹ", "ề", "ế", "ể", "ễ", "ệ", "ò", "ó", "ỏ", "õ", "ọ", "ờ", "ớ", "ở", "ỡ", "ợ", "ồ", "ố", "ổ", "ỗ", "ộ", "ù", "ú", "ủ", "ũ", "ụ", "ừ", "ứ", "ử", "ữ", "ự", "ì", "í", "ỉ", "ĩ", "ị", "ỳ", "ý", "ỷ", "ỹ", "ỵ" };
+        private static string[] unicharsDS_hoa = { "À", "Á", "Ả", "Ã", "Ạ", "Ằ", "Ắ", "Ẳ", "Ẵ", "Ặ", "Ầ", "Ấ", "Ẩ", "Ẫ", "Ậ", "È", "É", "Ẻ", "Ẽ", "Ẹ", "Ề", "Ế", "Ể", "Ễ", "Ệ", "Ò", "Ó", "Ỏ", "Õ", "Ọ", "Ờ", "Ớ", "Ở", "Ỡ", "Ợ", "Ồ", "Ố", "Ổ", "Ỗ", "Ộ", "Ù", "Ú", "Ủ", "Ũ", "Ụ", "Ừ", "Ứ", "Ử", "Ữ", "Ự", "Ì", "Í", "Ỉ", "Ĩ", "Ị", "Ỳ", "Ý", "Ỷ", "Ỹ", "Ỵ" };
+
+        public string ConvertUnicodeTH2DS(string value)
+        {
+            for (int i = 0; i < unicharsTH_thuong.Length; i++)
+            {
+                value = value.Replace(unicharsTH_thuong[i], unicharsDS_thuong[i]);
+                value = value.Replace(unicharsTH_hoa[i], unicharsDS_thuong[i]);
+                value = value.Replace(unicharsDS_hoa[i], unicharsDS_thuong[i]);
+            }
+            return value;
+        }
+
+        private char ConvertCharToTCVN3(char ch)
+        {
+            for (int i = 0; i < 213; i++)
+                if (ch == Unicode[i]) return TCVN3[i];
+            return ch;
+        }
+
+        public string ConvertUnicodeToTCVN3(string goc)
+        {
+            goc = ConvertUnicodeTH2DS(goc);
+            string dich = null;
+            int n = goc.Length;
+            char[] des = new char[n];
+            byte[] b = System.Text.Encoding.Unicode.GetBytes(goc);
+            char[] sou = System.Text.UnicodeEncoding.Unicode.GetChars(b);
+            for (int i = 0; i < n; i++)
+            {
+                dich += ConvertCharToTCVN3(sou[i]);
+            }
+            return dich;
+        }
+
+        private char[] convertTable;
+        private char[] convertTableUtoVN;
+
+        public ConvertFontVN()
+        {
+
+            convertTable = new char[256];
+            convertTableUtoVN = new char[7930];
+
+            for (int i = 0; i < 256; i++)
+            {
+
+                convertTable[i] = (char)i;
+                convertTableUtoVN[i] = (char)i;
+            }
+
+            for (int i = 0; i < tcvnchars.Length; i++)
+            {
+
+                convertTable[tcvnchars[i]] = unichars[i];
+                convertTableUtoVN[unichars[i]] = tcvnchars[i];
+
+            }
+
+
+
+        }
+
+
+
+        public string TCVN3ToUnicode(string value)
+        {
+
+            char[] chars = value.ToCharArray();
+
+            for (int i = 0; i < chars.Length; i++)
+
+                if (chars[i] < (char)256)
+
+                    chars[i] = convertTable[chars[i]];
+
+            return new string(chars);
+
+        }
+
+        public string UnicodeToTCVN3(string value)
+        {
+
+            char[] chars = value.ToCharArray();
+
+            for (int i = 0; i < chars.Length; i++)
+
+                if (chars[i] < (char)256)
+
+                    chars[i] = convertTableUtoVN[chars[i]];
+
+            return new string(chars);
+
+        }
+
+
+//        //Hàm chuyển mã tiếng Việt Unicode sang VNI, dùng thủ thuật tìm và thay thế từng âm tiết
+
+//public string UNI_2_VNI (string  text2 )
+//{
+// string text = utf8_encode($text2);
+// char[] UNI = {"Ã€","Ã ","Ã�","Ã¡","Ã‚","Ã¢","Ãƒ","Ã£","Ãˆ","Ã¨","Ã‰","Ã©","ÃŠ","Ãª","ÃŒ","Ã¬","Ã�","Ã­","Ã’","Ã²","Ã“","Ã³","Ã”","Ã´","Ã•","Ãµ","Ã™","Ã¹","Ãš","Ãº","Ã�","Ã½","Ä‚","Äƒ","Ä�","Ä‘","Ä¨","Ä©","Å¨","Å©","Æ ","Æ¡","Æ¯","Æ°","áº ","áº¡","áº¢","áº£","áº¤","áº¥","áº¦","áº§","áº¨","áº©","áºª","áº«","áº¬","áº­","áº®","áº¯","áº°","áº±","áº²","áº³","áº´","áºµ","áº¶","áº·","áº¸","áº¹","áºº","áº»","áº¼","áº½","áº¾","áº¿","á»€","á»�","á»‚","á»ƒ","á»„","á»…","á»†","á»‡","á»ˆ","á»‰","á»Š","á»‹","á»Œ","á»�","á»Ž","á»�","á»�","á»‘","á»’","á»“","á»”","á»•","á»–","á»—","á»˜","á»™","á»š","á»›","á»œ","á»�","á»ž","á»Ÿ","á» ","á»¡","á»¢","á»£","á»¤","á»¥","á»¦","á»§","á»¨","á»©","á»ª","á»«","á»¬","á»­","á»®","á»¯","á»°","á»±","á»²","á»³","á»´","á»µ","á»¶","á»·","á»¸","á»¹");
+// char[] VNI = {"AØ","aø","AÙ","aù","AÂ","aâ","AÕ","aõ","EØ","eø","EÙ","eù","EÂ","eâ","Ì","ì","Í","í","OØ","oø","OÙ","où","OÂ","oâ","OÕ","oõ","UØ","uø","UÙ","uù","YÙ","yù","AÊ","aê","Ñ","ñ","Ó","ó","UÕ","uõ","Ô","ô","Ö","ö","AÏ","aï","AÛ","aû","AÁ","aá","AÀ","aà","AÅ","aå","AÃ","aã","AÄ","aä","AÉ","aé","AÈ","aè","AÚ","aú","AÜ","aü","AË","aë","EÏ","eï","EÛ","eû","EÕ","eõ","EÁ","eá","EÀ","eà","EÅ","eå","EÃ","eã","EÄ","eä","Æ","æ","Ò","ò","OÏ","oï","OÛ","oû","OÁ","oá","OÀ","oà","OÅ","oå","OÃ","oã","OÄ","oä","ÔÙ","ôù","ÔØ","ôø","ÔÛ","ôû","ÔÕ","ôõ","ÔÏ","ôï","UÏ","uï","UÛ","uû","ÖÙ","öù","ÖØ","öø","ÖÛ","öû","ÖÕ","öõ","ÖÏ","öï","YØ","yø","Î","î","YÛ","yû","YÕ","yõ");
+
+// for ($i = 0; $i < count($UNI); $i++)
+// {
+//  $text = str_replace($UNI[$i], $VNI[$i], $text);
+// }
+// return $text;
+//}
+
+//Cách dùng
+
+//echo UNI_2_VNI("Xin chào các bạn, đây là chuỗi tiếng Việt Unicode đã được chuyển sang VNI");
+
+//Mở rộngBạn cũng có thể thay thế đoạn code này
+
+//$text = str_replace($UNI[$i], $VNI[$i], $text);
+
+//Thành thế này
+
+//$text = str_replace($VNI[$i], $UNI[$i], $text);
+
+//Để thực hiện việc chuyển từ mã VNI sang Unicode.Ngoài ra, bạn cũng có thể dùng Unikey, chuyển nội dung mảng $VNI thành những bảng mã khác.Ví dụ: Hàm chuyển từ bảng mã Unicode sang TCVN3
+
+//function UNI_2_TCVN3 ( $text )
+//{
+// $UNI = array ( "à", "á", "ả", "ã", "ạ", "ă", "ằ", "ắ", "ẳ", "ẵ", "ặ", "â", "ầ", "ấ", "ẩ", "ẫ", "ậ", "đ", "è", "é", "ẻ", "ẽ", "ẹ", "ê", "ề", "ế", "ể", "ễ", "ệ", "ì", "í", "ỉ", "ĩ", "ị", "ò", "ó", "ỏ", "õ", "ọ", 

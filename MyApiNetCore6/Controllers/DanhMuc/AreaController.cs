@@ -1,296 +1,275 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: MyApiNetCore6.Controllers.AreaController
+// Assembly: API_QuanLyTHP, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: DC050ACB-EFEA-4AC7-80CD-78C98E6478D1
+// Assembly location: G:\MyApiNetCore6-03_Authentication_New\Publish_API\API_QuanLyTHP.dll
+
+using DatabaseTHP;
+using DatabaseTHP.Class;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MyApiNetCore6.Data;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Threading.Tasks;
-using DatabaseTHP;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Options;
-using MyApiNetCore6.Data;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
-
-using DatabaseTHP.Class;
 using System.Linq.Dynamic.Core;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Permissions;
-using MyApiNetCore6.Models;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 
-namespace MyApiNetCore6.Controllers
+
+namespace MyApiNetCore6.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AreaController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AreaController : ControllerBase
+  private readonly dbTrangHiepPhatContext _context;
+  private readonly IConfiguration _configuration;
+
+  public AreaController(dbTrangHiepPhatContext context, IConfiguration configuration)
+  {
+    this._context = context;
+    this._configuration = configuration;
+  }
+
+  [HttpGet("{LOC_ID}")]
+  [Authorize(Roles = "User")]
+  public async Task<IActionResult> GetArea(string LOC_ID)
+  {
+    try
     {
-        private readonly dbTrangHiepPhatContext _context;
-        private readonly IConfiguration _configuration;
-        public AreaController(dbTrangHiepPhatContext context, IConfiguration configuration)
-        {
-            _context = context;
-            _configuration = configuration;
-        }
-        [HttpGet("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID)
-        {
-            try
-            {
-
-                var lstValue = await _context.dm_KhuVuc!.Where(e => e.LOC_ID == LOC_ID).OrderBy(e => e.MA).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-
-        }
-
-        // GET: api/Area
-        [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
-        {
-            try
-            {
-                ValuesSearch = ValuesSearch.Replace("%2f", "/");
-                var lstValue = await _context.dm_KhuVuc!.Where(e => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch).OrderBy(e => e.MA).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-
-        //GET: api/Area/5
-        [HttpGet("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID, string ID)
-        {
-            try
-            {
-                var Area = await _context.dm_KhuVuc!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-
-                if (Area == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = Area
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-
-        }
-
-        // PUT: api/Area/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}/{MA}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutArea(string LOC_ID, string MA, dm_KhuVuc Area)
-        {
-            try
-            {
-                if (LOC_ID != Area.LOC_ID || Area.MA != MA)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Dữ liệu khóa không giống nhau!",
-                        Data = ""
-                    });
-                }
-                if (AreaExists(Area))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Đã tồn tại" + Area.LOC_ID + "-" + Area.MA + " trong dữ liệu!",
-                        Data = ""
-                    });
-                }
-                if (!AreaExistsID(LOC_ID, Area.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID + "-" + Area.ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.Entry(Area).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog(); await _context.SaveChangesAsync();
-                var OKArea = await _context.dm_KhuVuc!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = OKArea
-                });
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // POST: api/Area
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<dm_KhuVuc>> PostArea(dm_KhuVuc Area)
-        {
-            try
-            {
-                if (AreaExistsMA(Area.LOC_ID, Area.MA))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Đã tồn tại" + Area.LOC_ID + "-" + Area.MA + " trong dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.dm_KhuVuc!.Add(Area);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                var OKArea = await _context.dm_KhuVuc!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = OKArea
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // DELETE: api/Area/5
-        [HttpDelete("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> DeleteArea(string LOC_ID, string ID)
-        {
-            try
-            {
-               
-                var Area = await _context.dm_KhuVuc!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-                if (Area == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                ExecuteStoredProc ExecuteStoredProc = new ExecuteStoredProc(_context, _configuration);
-                ApiResponse apiResponse = await ExecuteStoredProc.CheckDelete<dm_KhuVuc>(Area, Area.ID, Area.MA);
-                if (!apiResponse.Success)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = apiResponse.Message,
-                        Data = ""
-                    });
-                }
-                var lstweb_PhanQuyenSanPham = await _context.web_PhanQuyenKhuVuc!.Where(e => e.LOC_ID == LOC_ID && e.ID_KHUVUC == ID).ToListAsync();
-                if (lstweb_PhanQuyenSanPham != null)
-                {
-                    foreach (var itm in lstweb_PhanQuyenSanPham)
-                    {
-                        _context.web_PhanQuyenKhuVuc!.Remove(itm);
-                    }
-                }
-                _context.dm_KhuVuc!.Remove(Area);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-           
-        }
-
-        private bool AreaExistsMA(string LOC_ID, string MA)
-        {
-            return _context.dm_KhuVuc!.Any(e => e.LOC_ID == LOC_ID && e.MA == MA);
-        }
-
-        private bool AreaExistsID(string LOC_ID, string ID)
-        {
-            return _context.dm_KhuVuc!.Any(e => e.LOC_ID == LOC_ID && e.ID == ID);
-        }
-        private bool AreaExists(dm_KhuVuc Area)
-        {
-            return _context.dm_KhuVuc!.Any(e => e.LOC_ID == Area.LOC_ID && e.MA == Area.MA && e.ID != Area.ID);
-        }
+      List<dm_KhuVuc> lstValue = await this._context.dm_KhuVuc.Where<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID)).OrderBy<dm_KhuVuc, string>((Expression<Func<dm_KhuVuc, string>>) (e => e.MA)).ToListAsync<dm_KhuVuc>();
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) lstValue
+      });
     }
+    catch (Exception ex)
+    {
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
+  [Authorize(Roles = "User")]
+  public async Task<IActionResult> GetArea(
+    string LOC_ID,
+    int Type,
+    string KeyWhere = "",
+    string ValuesSearch = "")
+  {
+    try
+    {
+      ValuesSearch = ValuesSearch.Replace("%2f", "/");
+      List<dm_KhuVuc> lstValue = await this._context.dm_KhuVuc.Where<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID)).Where<dm_KhuVuc>(KeyWhere, (object) ValuesSearch).OrderBy<dm_KhuVuc, string>((Expression<Func<dm_KhuVuc, string>>) (e => e.MA)).ToListAsync<dm_KhuVuc>();
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) lstValue
+      });
+    }
+    catch (Exception ex)
+    {
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  [HttpGet("{LOC_ID}/{ID}")]
+  [Authorize(Roles = "User")]
+  public async Task<IActionResult> GetArea(string LOC_ID, string ID)
+  {
+    try
+    {
+      dm_KhuVuc Area = await this._context.dm_KhuVuc.FirstOrDefaultAsync<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID && e.ID == ID));
+      if (Area == null)
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = $"Không tìm thấy {LOC_ID}-{ID} dữ liệu!",
+          Data = (object) ""
+        });
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) Area
+      });
+    }
+    catch (Exception ex)
+    {
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  [HttpPut("{LOC_ID}/{MA}")]
+  [Authorize(Roles = "User")]
+  public async Task<IActionResult> PutArea(string LOC_ID, string MA, dm_KhuVuc Area)
+  {
+    try
+    {
+      if (LOC_ID != Area.LOC_ID || Area.MA != MA)
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = "Dữ liệu khóa không giống nhau!",
+          Data = (object) ""
+        });
+      if (this.AreaExists(Area))
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = $"Đã tồn tại{Area.LOC_ID}-{Area.MA} trong dữ liệu!",
+          Data = (object) ""
+        });
+      if (!this.AreaExistsID(LOC_ID, Area.ID))
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = $"Không tìm thấy {LOC_ID}-{Area.ID} dữ liệu!",
+          Data = (object) ""
+        });
+      this._context.Entry<dm_KhuVuc>(Area).State = EntityState.Modified;
+      AuditLogController auditLog = new AuditLogController(this._context, this._configuration);
+      auditLog.InserAuditLog();
+      int num = await this._context.SaveChangesAsync();
+      dm_KhuVuc OKArea = await this._context.dm_KhuVuc.FirstOrDefaultAsync<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID));
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) OKArea
+      });
+    }
+    catch (DbUpdateConcurrencyException ex)
+    {
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  [HttpPost]
+  [Authorize(Roles = "User")]
+  public async Task<ActionResult<dm_KhuVuc>> PostArea(dm_KhuVuc Area)
+  {
+    try
+    {
+      if (this.AreaExistsMA(Area.LOC_ID, Area.MA))
+        return (ActionResult<dm_KhuVuc>) (ActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = $"Đã tồn tại{Area.LOC_ID}-{Area.MA} trong dữ liệu!",
+          Data = (object) ""
+        });
+      this._context.dm_KhuVuc.Add(Area);
+      AuditLogController auditLog = new AuditLogController(this._context, this._configuration);
+      auditLog.InserAuditLog();
+      int num = await this._context.SaveChangesAsync();
+      dm_KhuVuc OKArea = await this._context.dm_KhuVuc.FirstOrDefaultAsync<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID));
+      return (ActionResult<dm_KhuVuc>) (ActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) OKArea
+      });
+    }
+    catch (Exception ex)
+    {
+      return (ActionResult<dm_KhuVuc>) (ActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  [HttpDelete("{LOC_ID}/{ID}")]
+  [Authorize(Roles = "User")]
+  public async Task<IActionResult> DeleteArea(string LOC_ID, string ID)
+  {
+    try
+    {
+      dm_KhuVuc Area = await this._context.dm_KhuVuc.FirstOrDefaultAsync<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID && e.ID == ID));
+      if (Area == null)
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = $"Không tìm thấy {LOC_ID}-{ID} dữ liệu!",
+          Data = (object) ""
+        });
+      ExecuteStoredProc ExecuteStoredProc = new ExecuteStoredProc(this._context, this._configuration);
+      ApiResponse apiResponse = await ExecuteStoredProc.CheckDelete<dm_KhuVuc>(Area, Area.ID, Area.MA);
+      if (!apiResponse.Success)
+        return (IActionResult) this.Ok((object) new ApiResponse()
+        {
+          Success = false,
+          Message = apiResponse.Message,
+          Data = (object) ""
+        });
+      List<web_PhanQuyenKhuVuc> lstweb_PhanQuyenSanPham = await this._context.web_PhanQuyenKhuVuc.Where<web_PhanQuyenKhuVuc>((Expression<Func<web_PhanQuyenKhuVuc, bool>>) (e => e.LOC_ID == LOC_ID && e.ID_KHUVUC == ID)).ToListAsync<web_PhanQuyenKhuVuc>();
+      if (lstweb_PhanQuyenSanPham != null)
+      {
+        foreach (web_PhanQuyenKhuVuc itm in lstweb_PhanQuyenSanPham)
+          this._context.web_PhanQuyenKhuVuc.Remove(itm);
+      }
+      this._context.dm_KhuVuc.Remove(Area);
+      AuditLogController auditLog = new AuditLogController(this._context, this._configuration);
+      auditLog.InserAuditLog();
+      int num = await this._context.SaveChangesAsync();
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = true,
+        Message = "Success",
+        Data = (object) ""
+      });
+    }
+    catch (Exception ex)
+    {
+      return (IActionResult) this.Ok((object) new ApiResponse()
+      {
+        Success = false,
+        Message = ex.Message,
+        Data = (object) ""
+      });
+    }
+  }
+
+  private bool AreaExistsMA(string LOC_ID, string MA)
+  {
+    return this._context.dm_KhuVuc.Any<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID && e.MA == MA));
+  }
+
+  private bool AreaExistsID(string LOC_ID, string ID)
+  {
+    return this._context.dm_KhuVuc.Any<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == LOC_ID && e.ID == ID));
+  }
+
+  private bool AreaExists(dm_KhuVuc Area)
+  {
+    return this._context.dm_KhuVuc.Any<dm_KhuVuc>((Expression<Func<dm_KhuVuc, bool>>) (e => e.LOC_ID == Area.LOC_ID && e.MA == Area.MA && e.ID != Area.ID));
+  }
 }

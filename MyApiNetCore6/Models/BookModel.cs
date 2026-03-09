@@ -1,17 +1,20 @@
-﻿using MyApiNetCore6.Data;
-using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Devart.Data.MySql;
 
-namespace MyApiNetCore6.Models
+namespace TS24.SM24.Danhmuc.DB
 {
-    public class BookModel
+    public class IDBBase : TS24.MySQLLib.Abstract.IData
     {
-        public int Id { get; set; }
-        [MaxLength(100)]
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        [Range(0, double.MaxValue)]
-        public double Price { get; set; }
-        [Range(0, 100)]
-        public int Quantity { get; set; }
-    }
-}
+        public IDBBase() : base()
+        {
+
+        }
+        public virtual int OnSave(Devart.Data.MySql.MySqlTransaction trans = null)
+        {
+            return -1;
+        }
+
+        //public override List<T> ToList<T>(MySQLLib

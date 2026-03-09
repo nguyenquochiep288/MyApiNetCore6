@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\BooksController.cs" />
-    <Compile Remove="Controllers\DanhMuc\Product_PromotionController.cs" />
     <Compile Remove="Controllers\NghiepVu\DepositController_1.cs" />
     <Compile Remove="Controllers\PhanQuyen\GroupAreaController.cs" />
     <Compile Remove="Controllers\ProductsController.cs" />
@@ -39,7 +38,6 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
-    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.10" />

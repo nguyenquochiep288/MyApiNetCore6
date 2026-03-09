@@ -1,257 +1,221 @@
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using DatabaseTHP;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Options;
-using MyApiNetCore6.Data;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
-
-using DatabaseTHP.Class;
-using System.Linq.Dynamic.Core;
-using Microsoft.EntityFrameworkCore;
-
-namespace MyApiNetCore6.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PermissionsGroupCustomerController : ControllerBase
-    {
-        private readonly dbTrangHiepPhatContext _context;
-        private readonly IConfiguration _configuration;
-        public PermissionsGroupCustomerController(dbTrangHiepPhatContext context, IConfiguration configuration)
+  void RemoveError(string column, int row)
         {
-            _context = context;
-            _context = context;
-            _configuration = configuration;
+            if (Errors == null)
+                return;
+            string key = column + row.ToString();
+            if (Errors.Contains(key))
+                Errors.Remove(key);
         }
-        [HttpGet("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupCustomer(string LOC_ID)
+        void SetError(string column, int row, string msg)
         {
             try
             {
+                if (Errors == null)
+                    Errors = new Hashtable();
+                ErrorCell ex = new ErrorCell(row, column, msg);
+                string key = column + row.ToString();
+                if (Errors.Contains(key))
+                    Errors.Remove(key);
+                Errors.Add(key, ex);
+            }
+            catch (Exception e)
+            {
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, e.Message);
+                throw;
+            }
+        }
+        #endregion
 
-                var lstValue = await _context.web_PhanQuyenNhomKhachHang!.Where(e => e.LOC_ID == LOC_ID).ToListAsync();
-                return Ok(new ApiResponse
+        private void slkHangHoa_EditValueChanged(object sender, System.EventArgs e)
+        {
+            hh_trungbay_view hh = (hh_trungbay_view)gridView.GetFocusedRow();
+            if (hh != null)
+            {
+                if (sender.Equals(slkHangHoa))
                 {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
+                    if (slkHangHoa.EditValue != null && !string.IsNullOrEmpty(slkHangHoa.EditValue.ToString()))
+                    {
+                        dm_hanghoa_view dmhh = (dm_hanghoa_view)slkHangHoa.Properties.View.GetFocusedRow();
+
+                        hh.GUID_HANGHOA = slkHangHoa.EditValue.ToString();
+                        if (dmhh != null)
+                        {
+                            hh.TENHANGHOA = txtTENHANGHOA.Text = dmhh.TEN;
+
+                            try
+                            {
+                                hh.MADVT = new dm_dvt_view().GetByGuid<dm_dvt_view>(dmhh.GUID_DVT).MA;
+                                slkDVT.EditValue = hh.MADVT;
+                            }
+                            catch (Exception)
+                            {
+                                hh.MADVT = "";
+                                slkDVT.EditValue = null;
+                            }
+                            hh.DONGIABAN = dmhh.DGBAN;
+                            txtDONGIABAN.EditValue = dmhh.DGBAN;
+
+                        }
+
+                        gridView.Focus();
+                    }
+                }
+                if (sender.Equals(slkDVT))
+                {
+                    if (slkDVT.EditValue != null && !string.IsNullOrEmpty(slkDVT.EditValue.ToString()))
+                    {
+                        hh.MADVT = slkDVT.EditValue.ToString();
+                        gridView.Focus();
+                    }
+                }
+            }
+        }
+
+        private void rps_colID_LOAIHH_EditValueChanged(object sender, System.EventArgs e)
+        {
+            //GridLookUpEdit grLookup = (GridLookUpEdit)sender;
+            //dm_hanghoa obj = (dm_hanghoa)grLookup.Properties.View.GetFocusedRow();
+            //if (obj != null)
+            //slkHangHoa.EditValue = obj.GUID;
+        }
+
+        private void rps_colID_DVT_EditGridLookUp_EditValueChanged(object sender, System.EventArgs e)
+        {
+            GridLookUpEdit grLookup = (GridLookUpEdit)sender;
+            dm_dvt_view obj = (dm_dvt_view)grLookup.Properties.View.GetFocusedRow();
+            if(obj!=null)
+            slkDVT.EditValue = obj.MA;
+        }
+
+        private void btnAddPicVideo_Click(object sender, System.EventArgs e)
+        {
+            try
+            {
+                
+                  SimpleButton btn = (SimpleButton)sender;
+                  if (btn.Equals(btnAddPic))
+                  {
+                      hh_trungbay_view hh = (hh_trungbay_view)gridView.GetFocusedRow();
+                      Interface_Hinh Hinhanh = new Interface_Hinh();
+                      openFileDialog1 = new OpenFileDialog();
+                      openFileDialog1.Filter = "JPG,BMP,JPEG,GIF,PNG|*.jpg;*.bmp;*.jpeg;*.gif;*.png";
+                      openFileDialog1.ShowDialog();
+                      if (!string.IsNullOrEmpty(openFileDialog1.FileName))
+                      {
+                        FileStream stream = new FileStream(openFileDialog1.FileName, FileMode.Open, FileAccess.Read);
+                      //  Image myImg = Image.FromFile(openFileDialog1.FileName);
+                      
+                          string strSourceFile = openFileDialog1.FileName;
+
+                          Hinhanh.TENFILE = openFileDialog1.SafeFileName;
+                          Hinhanh.DUONGDAN = openFileDialog1.FileName;
+                          Hinhanh.image = Image.FromStream(stream);
+                        listHinhAnh.Add(Hinhanh);
+                          bindingImage.DataSource = listHinhAnh;
+                          MainGridHH.DataSource = bindingImage;
+                          MainGridHH.RefreshDataSource();
+                        stream.Close();
+                    }
+                  }
+                  else if (btn.Equals(btnAddVideo))
+                  {
+                      hh_trungbay_view hh = (hh_trungbay_view)gridView.GetFocusedRow();
+                      Interface_Video video = new Interface_Video();
+                      openFileDialog1 = new OpenFileDialog();
+                      openFileDialog1.Filter = "MP4,AVI,WMV|*.mp4;*.avi;*.wmv";
+                      openFileDialog1.ShowDialog();
+                      if (!string.IsNullOrEmpty(openFileDialog1.FileName))
+                      {
+                          //Image myImg = Image.FromFile(openFileDialog1.FileName);
+                          string strSourceFile = openFileDialog1.FileName;
+
+                          //  hh.HINHANH = Convert.ToBase64String(File.ReadAllBytes(strSourceFile));//ImageToByte(strSourceFile);
+                          //  Hinhanh.hinhanh = Convert.ToBase64String(Common.ConvertResizeImage(strSourceFile));
+                          video.TENFILE = openFileDialog1.SafeFileName;
+                          video.DUONGDAN = openFileDialog1.FileName;
+
+                          listVideo.Add(video);
+                          bindingVideo.DataSource = listVideo;
+                          MainGridVideo.DataSource = bindingVideo;
+                          MainGridVideo.RefreshDataSource();
+                      }
+                  }
             }
             catch (Exception ex)
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                Log.WriteLog(this, System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message);
             }
 
-         }
 
-        // GET: api/PermissionsGroupCustomer
-        [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupCustomer(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
+        }
+
+        private void btnDelPicVideo_Click(object sender, System.EventArgs e)
+        {
+            SimpleButton btn = (SimpleButton)sender;
+            if (btn.Equals(btnDelPic))
+            {
+                Interface_Hinh ha = (Interface_Hinh)cardViewHH.GetFocusedRow();
+                if (ha == null) return;
+                listDelHinhAnh.Add(ha);
+                listHinhAnh.Remove(ha);
+                bindingImage.DataSource = listHinhAnh;
+                MainGridHH.DataSource = bindingImage;
+                MainGridHH.RefreshDataSource();
+            }
+            else if (btn.Equals(btnDelVideo))
+            {
+                Interface_Video ha = (Interface_Video)cardVideo.GetFocusedRow();
+                if (ha == null) return;
+                listDelVideo.Add(ha);
+                listVideo.Remove(ha);
+                bindingVideo.DataSource = listVideo;
+                MainGridVideo.DataSource = bindingVideo;
+                MainGridVideo.RefreshDataSource();
+            }
+        }
+
+        private void btnNaptuExcel_Click(object sender, System.EventArgs e)
+        {
+            if(btnSua.Enabled==false)
+              fncImport();
+        }
+
+        private void gridView_CustomColumnDisplayText(object sender, DevExpress.XtraGrid.Views.Base.CustomColumnDisplayTextEventArgs e)
+        {
+            if (e.Column.FieldName == "STT")
+                if (e.ListSourceRowIndex >= 0)
+                    e.DisplayText = (e.ListSourceRowIndex + 1).ToString();
+        }
+
+        private void cardVideo_DoubleClick(object sender, EventArgs e)
         {
             try
             {
-                var lstValue = await _context.web_PhanQuyenNhomKhachHang!.Where(e => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                }); 
-            } 
-            catch(Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                Interface_Video ha = (Interface_Video)cardVideo.GetFocusedRow();
+                if (ha == null) return;
+                if (File.Exists(ha.DUONGDAN))
+                    System.Diagnostics.Process.Start(ha.DUONGDAN);
+                else
+                    XtraMessageBox.Show("Video không tồn tại, vui lòng chọn video khác!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+            catch { }
+            
         }
-        
 
-        //GET: api/PermissionsGroupCustomer/5
-        [HttpGet("{LOC_ID}/{id}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupCustomer(string LOC_ID,string ID)
+        private void cardViewHH_DoubleClick(object sender, EventArgs e)
         {
             try
             {
-                var PermissionsGroupCustomer = await _context.web_PhanQuyenNhomKhachHang!.FirstOrDefaultAsync(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
+                Interface_Hinh ha = (Interface_Hinh)cardViewHH.GetFocusedRow();
+                if (ha == null) return;
+                if (File.Exists(ha.DUONGDAN))
+                    System.Diagnostics.Process.Start(ha.DUONGDAN);
+                else
+                    XtraMessageBox.Show("Hình ảnh không tồn tại, vui lòng chọn hình khác!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                if (PermissionsGroupCustomer == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-				
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = PermissionsGroupCustomer
-                });
             }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-           
+            catch { }
+     
         }
 
-        // PUT: api/PermissionsGroupCustomer/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}/{ID}")]
-		[Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutPermissionsGroupCustomer(string LOC_ID,string ID, web_PhanQuyenNhomKhachHang PermissionsGroupCustomer)
-        {
-            try
-            {
-                if ( LOC_ID != PermissionsGroupCustomer.LOC_ID && ID != PermissionsGroupCustomer.ID)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Dữ liệu khóa không giống nhau!",
-                        Data = ""
-                    });
-                }
-                if (!PermissionsGroupCustomerExists(PermissionsGroupCustomer.LOC_ID,PermissionsGroupCustomer.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.Entry(PermissionsGroupCustomer).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // POST: api/PermissionsGroupCustomer
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<web_PhanQuyenNhomKhachHang>> PostPermissionsGroupCustomer(web_PhanQuyenNhomKhachHang PermissionsGroupCustomer)
-        {
-            try
-            {
-                if (PermissionsGroupCustomerExists(PermissionsGroupCustomer.LOC_ID,PermissionsGroupCustomer.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Đã tồn tại " + PermissionsGroupCustomer.LOC_ID + "-" + PermissionsGroupCustomer.ID +  " trong dữ liệu!",
-                        Data = "",
-                        CheckValue = true
-                    });
-                }
-                _context.web_PhanQuyenNhomKhachHang!.Add(PermissionsGroupCustomer);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = PermissionsGroupCustomer
-                });
-            }
-            catch(Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // DELETE: api/PermissionsGroupCustomer/5
-        [HttpDelete("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> DeletePermissionsGroupCustomer(string LOC_ID,string ID)
-        {
-            try
-            {
-                var PermissionsGroupCustomer = await _context.web_PhanQuyenNhomKhachHang!.FirstOrDefaultAsync(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
-                if (PermissionsGroupCustomer == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.web_PhanQuyenNhomKhachHang!.Remove(PermissionsGroupCustomer);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        private bool PermissionsGroupCustomerExists(string LOC_ID,string ID)
-        {
-            return _context.web_PhanQuyenNhomKhachHang!.Any(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
-        }
-
-       
-    }
-}
+      

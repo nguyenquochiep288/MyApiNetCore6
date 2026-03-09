@@ -1,710 +1,589 @@
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using DatabaseTHP;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Options;
-using MyApiNetCore6.Data;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
-
-using DatabaseTHP.Class;
-using System.Linq.Dynamic.Core;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Permissions;
-using MyApiNetCore6.Models;
-using DatabaseTHP.StoredProcedure;
-using Newtonsoft.Json;
-
-namespace MyApiNetCore6.Controllers
+Ôªønamespace TS24.SM24.Danhmuc
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PayrollController : ControllerBase
+    partial class dm_khchungtu
     {
-        private readonly dbTrangHiepPhatContext _context;
-        private readonly IConfiguration _configuration;
-        public PayrollController(dbTrangHiepPhatContext context, IConfiguration configuration)
-        {
-            _context = context;
-            _context = context;
-            _configuration = configuration;
-        }
-        [HttpGet("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID)
-        {
-            try
-            {
+        /// <summary> 
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
 
-                var lstValue = await _context.view_nv_BangLuong!.Where(e => e.LOC_ID == LOC_ID).OrderBy(e => e.NAMTHANG_ORDERBY).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
+        /// <summary> 
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
             {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
+                components.Dispose();
             }
-
+            base.Dispose(disposing);
         }
 
-        // GET: api/Area
-        [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
+        #region Component Designer generated code
+
+        /// <summary> 
+        /// Required method for Designer support - do not modify 
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
         {
-            try
-            {
-                ValuesSearch = ValuesSearch.Replace("%2f", "/");
-                var lstValue = await _context.view_nv_BangLuong!.Where(e => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch).OrderBy(e => e.NAMTHANG_ORDERBY).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
+            this.splitContainerControl1 = new DevExpress.XtraEditors.SplitContainerControl();
+            this.GridMaster = new DevExpress.XtraGrid.GridControl();
+            this.gV_Master = new DevExpress.XtraGrid.Views.Grid.GridView();
+            this.gridColumn7 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn8 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn9 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn11 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn10 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn13 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.repositoryItemCheckEdit1 = new DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit();
+            this.gridColumn12 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.MainGrid = new DevExpress.XtraGrid.GridControl();
+            this.gridView = new DevExpress.XtraGrid.Views.Grid.GridView();
+            this.gridColumn1 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn2 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn3 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn4 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn14 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn15 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.rps_Chk = new DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit();
+            this.gridColumn6 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn5 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.gridColumn16 = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.colMACDINH = new DevExpress.XtraGrid.Columns.GridColumn();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.btnThem = new DevExpress.XtraEditors.SimpleButton();
+            this.btnCapNhat = new DevExpress.XtraEditors.SimpleButton();
+            this.btnDong = new DevExpress.XtraEditors.SimpleButton();
+            this.panelControl2 = new DevExpress.XtraEditors.PanelControl();
+            this.panelControl1 = new DevExpress.XtraEditors.PanelControl();
+            this.panelControl3 = new DevExpress.XtraEditors.PanelControl();
+            this.lblTitle = new DevExpress.XtraEditors.LabelControl();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerControl1)).BeginInit();
+            this.splitContainerControl1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.GridMaster)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gV_Master)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MainGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rps_Chk)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).BeginInit();
+            this.panelControl2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).BeginInit();
+            this.panelControl1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl3)).BeginInit();
+            this.panelControl3.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // splitContainerControl1
+            // 
+            this.splitContainerControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainerControl1.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.Office2003;
+            this.splitContainerControl1.Location = new System.Drawing.Point(1, 81);
+            this.splitContainerControl1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.splitContainerControl1.Name = "splitContainerControl1";
+            this.splitContainerControl1.Panel1.Controls.Add(this.GridMaster);
+            this.splitContainerControl1.Panel1.Text = "Panel1";
+            this.splitContainerControl1.Panel2.Controls.Add(this.MainGrid);
+            this.splitContainerControl1.Panel2.Text = "Panel2";
+            this.splitContainerControl1.Size = new System.Drawing.Size(1094, 705);
+            this.splitContainerControl1.SplitterPosition = 395;
+            this.splitContainerControl1.TabIndex = 42;
+            this.splitContainerControl1.Text = "splitContainerControl1";
+            // 
+            // GridMaster
+            // 
+            this.GridMaster.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.GridMaster.EmbeddedNavigator.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.GridMaster.Location = new System.Drawing.Point(0, 0);
+            this.GridMaster.MainView = this.gV_Master;
+            this.GridMaster.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.GridMaster.Name = "GridMaster";
+            this.GridMaster.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
+            this.repositoryItemCheckEdit1});
+            this.GridMaster.Size = new System.Drawing.Size(395, 701);
+            this.GridMaster.TabIndex = 37;
+            this.GridMaster.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {
+            this.gV_Master});
+            // 
+            // gV_Master
+            // 
+            this.gV_Master.Columns.AddRange(new DevExpress.XtraGrid.Columns.GridColumn[] {
+            this.gridColumn7,
+            this.gridColumn8,
+            this.gridColumn9,
+            this.gridColumn11,
+            this.gridColumn10,
+            this.gridColumn13,
+            this.gridColumn12});
+            this.gV_Master.DetailHeight = 400;
+            this.gV_Master.GridControl = this.GridMaster;
+            this.gV_Master.Name = "gV_Master";
+            this.gV_Master.OptionsBehavior.AutoExpandAllGroups = true;
+            this.gV_Master.OptionsBehavior.Editable = false;
+            this.gV_Master.OptionsBehavior.ReadOnly = true;
+            this.gV_Master.OptionsView.ShowGroupPanel = false;
+            this.gV_Master.OptionsView.ShowIndicator = false;
+            this.gV_Master.FocusedRowChanged += new DevExpress.XtraGrid.Views.Base.FocusedRowChangedEventHandler(this.gV_Master_FocusedRowChanged);
+            // 
+            // gridColumn7
+            // 
+            this.gridColumn7.Caption = "gridColumn1";
+            this.gridColumn7.FieldName = "ID";
+            this.gridColumn7.MinWidth = 23;
+            this.gridColumn7.Name = "gridColumn7";
+            this.gridColumn7.Width = 87;
+            // 
+            // gridColumn8
+            // 
+            this.gridColumn8.Caption = "gridColumn2";
+            this.gridColumn8.FieldName = "MATHEODOI";
+            this.gridColumn8.MinWidth = 23;
+            this.gridColumn8.Name = "gridColumn8";
+            this.gridColumn8.Width = 87;
+            // 
+            // gridColumn9
+            // 
+            this.gridColumn9.AppearanceCell.Options.UseTextOptions = true;
+            this.gridColumn9.AppearanceCell.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Near;
+            this.gridColumn9.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn9.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn9.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn9.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn9.Caption = "K√Ω hi·ªáu";
+            this.gridColumn9.FieldName = "KYHIEU";
+            this.gridColumn9.MinWidth = 23;
+            this.gridColumn9.Name = "gridColumn9";
+            this.gridColumn9.Width = 173;
+            // 
+            // gridColumn11
+            // 
+            this.gridColumn11.AppearanceCell.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(205)))), ((int)(((byte)(230)))), ((int)(((byte)(247)))));
+            this.gridColumn11.AppearanceCell.Options.UseBackColor = true;
+            this.gridColumn11.AppearanceCell.Options.UseTextOptions = true;
+            this.gridColumn11.AppearanceCell.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn11.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn11.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn11.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn11.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn11.Caption = "NƒÉm";
+            this.gridColumn11.FieldName = "NAM";
+            this.gridColumn11.MinWidth = 23;
+            this.gridColumn11.Name = "gridColumn11";
+            this.gridColumn11.OptionsColumn.ReadOnly = true;
+            this.gridColumn11.Width = 54;
+            // 
+            // gridColumn10
+            // 
+            this.gridColumn10.AppearanceCell.ForeColor = System.Drawing.Color.Black;
+            this.gridColumn10.AppearanceCell.Options.UseForeColor = true;
+            this.gridColumn10.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn10.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn10.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn10.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn10.Caption = "Nh√≥m ch·ª©ng t·ª´";
+            this.gridColumn10.FieldName = "DIENGIAI";
+            this.gridColumn10.MinWidth = 23;
+            this.gridColumn10.Name = "gridColumn10";
+            this.gridColumn10.OptionsColumn.ReadOnly = true;
+            this.gridColumn10.Visible = true;
+            this.gridColumn10.VisibleIndex = 0;
+            this.gridColumn10.Width = 203;
+            // 
+            // gridColumn13
+            // 
+            this.gridColumn13.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn13.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn13.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn13.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn13.Caption = "M·∫∑c ƒë·ªãnh";
+            this.gridColumn13.ColumnEdit = this.repositoryItemCheckEdit1;
+            this.gridColumn13.FieldName = "MACDINH";
+            this.gridColumn13.MinWidth = 23;
+            this.gridColumn13.Name = "gridColumn13";
+            this.gridColumn13.Width = 77;
+            // 
+            // repositoryItemCheckEdit1
+            // 
+            this.repositoryItemCheckEdit1.AutoHeight = false;
+            this.repositoryItemCheckEdit1.Name = "repositoryItemCheckEdit1";
+            this.repositoryItemCheckEdit1.NullStyle = DevExpress.XtraEditors.Controls.StyleIndeterminate.Unchecked;
+            this.repositoryItemCheckEdit1.ValueChecked = ((short)(1));
+            this.repositoryItemCheckEdit1.ValueGrayed = "0";
+            this.repositoryItemCheckEdit1.ValueUnchecked = ((short)(0));
+            // 
+            // gridColumn12
+            // 
+            this.gridColumn12.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn12.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn12.Caption = "gridColumn5";
+            this.gridColumn12.FieldName = "GUIID_CONGTY";
+            this.gridColumn12.MinWidth = 23;
+            this.gridColumn12.Name = "gridColumn12";
+            this.gridColumn12.Width = 87;
+            // 
+            // MainGrid
+            // 
+            this.MainGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MainGrid.EmbeddedNavigator.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.MainGrid.Location = new System.Drawing.Point(0, 0);
+            this.MainGrid.MainView = this.gridView;
+            this.MainGrid.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.MainGrid.Name = "MainGrid";
+            this.MainGrid.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
+            this.rps_Chk});
+            this.MainGrid.Size = new System.Drawing.Size(680, 701);
+            this.MainGrid.TabIndex = 0;
+            this.MainGrid.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] {
+            this.gridView});
+            // 
+            // gridView
+            // 
+            this.gridView.Columns.AddRange(new DevExpress.XtraGrid.Columns.GridColumn[] {
+            this.gridColumn1,
+            this.gridColumn2,
+            this.gridColumn3,
+            this.gridColumn4,
+            this.gridColumn14,
+            this.gridColumn15,
+            this.gridColumn6,
+            this.gridColumn5,
+            this.gridColumn16,
+            this.colMACDINH});
+            this.gridView.DetailHeight = 400;
+            this.gridView.GridControl = this.MainGrid;
+            this.gridView.Name = "gridView";
+            this.gridView.OptionsNavigation.AutoFocusNewRow = true;
+            this.gridView.OptionsView.ShowGroupPanel = false;
+            this.gridView.OptionsView.ShowIndicator = false;
+            this.gridView.FocusedRowChanged += new DevExpress.XtraGrid.Views.Base.FocusedRowChangedEventHandler(this.gridView_FocusedRowChanged);
+            this.gridView.CellValueChanged += new DevExpress.XtraGrid.Views.Base.CellValueChangedEventHandler(this.gridView_CellValueChanged);
+            this.gridView.CellValueChanging += new DevExpress.XtraGrid.Views.Base.CellValueChangedEventHandler(this.gridView_CellValueChanging);
+            this.gridView.ValidateRow += new DevExpress.XtraGrid.Views.Base.ValidateRowEventHandler(this.gridView_ValidateRow);
+            this.gridView.ValidatingEditor += new DevExpress.XtraEditors.Controls.BaseContainerValidateEditorEventHandler(this.gridView_ValidatingEditor);
+            // 
+            // gridColumn1
+            // 
+            this.gridColumn1.Caption = "gridColumn1";
+            this.gridColumn1.FieldName = "ID";
+            this.gridColumn1.MinWidth = 23;
+            this.gridColumn1.Name = "gridColumn1";
+            this.gridColumn1.Width = 87;
+            // 
+            // gridColumn2
+            // 
+            this.gridColumn2.Caption = "gridColumn2";
+            this.gridColumn2.FieldName = "MATHEODOI";
+            this.gridColumn2.MinWidth = 23;
+            this.gridColumn2.Name = "gridColumn2";
+            this.gridColumn2.Width = 87;
+            // 
+            // gridColumn3
+            // 
+            this.gridColumn3.AppearanceCell.BackColor = System.Drawing.Color.LightCyan;
+            this.gridColumn3.AppearanceCell.Options.UseBackColor = true;
+            this.gridColumn3.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn3.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn3.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn3.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn3.Caption = "Nh√≥m ch·ª©ng t·ª´";
+            this.gridColumn3.FieldName = "DIENGIAI";
+            this.gridColumn3.MinWidth = 23;
+            this.gridColumn3.Name = "gridColumn3";
+            this.gridColumn3.OptionsColumn.ReadOnly = true;
+            this.gridColumn3.Width = 612;
+            // 
+            // gridColumn4
+            // 
+            this.gridColumn4.AppearanceCell.Options.UseTextOptions = true;
+            this.gridColumn4.AppearanceCell.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn4.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn4.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn4.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn4.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn4.Caption = "K√Ω hi·ªáu";
+            this.gridColumn4.FieldName = "KYHIEU";
+            this.gridColumn4.MinWidth = 23;
+            this.gridColumn4.Name = "gridColumn4";
+            this.gridColumn4.Visible = true;
+            this.gridColumn4.VisibleIndex = 0;
+            this.gridColumn4.Width = 84;
+            // 
+            // gridColumn14
+            // 
+            this.gridColumn14.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn14.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn14.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn14.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn14.Caption = "Di·ªÖn gi·∫£i";
+            this.gridColumn14.FieldName = "DIENGIAI";
+            this.gridColumn14.MinWidth = 23;
+            this.gridColumn14.Name = "gridColumn14";
+            this.gridColumn14.Visible = true;
+            this.gridColumn14.VisibleIndex = 1;
+            this.gridColumn14.Width = 371;
+            // 
+            // gridColumn15
+            // 
+            this.gridColumn15.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn15.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn15.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn15.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn15.Caption = "S·ª≠ d·ª•ng";
+            this.gridColumn15.ColumnEdit = this.rps_Chk;
+            this.gridColumn15.FieldName = "DUNG";
+            this.gridColumn15.MinWidth = 23;
+            this.gridColumn15.Name = "gridColumn15";
+            this.gridColumn15.Width = 63;
+            // 
+            // rps_Chk
+            // 
+            this.rps_Chk.AutoHeight = false;
+            this.rps_Chk.DisplayValueChecked = "1";
+            this.rps_Chk.DisplayValueGrayed = "<Null>";
+            this.rps_Chk.DisplayValueUnchecked = "0";
+            this.rps_Chk.Name = "rps_Chk";
+            this.rps_Chk.NullStyle = DevExpress.XtraEditors.Controls.StyleIndeterminate.Unchecked;
+            this.rps_Chk.ValueChecked = 1;
+            this.rps_Chk.ValueGrayed = 0;
+            this.rps_Chk.ValueUnchecked = 0;
+            this.rps_Chk.CheckedChanged += new System.EventHandler(this.rps_Chk_CheckedChanged);
+            // 
+            // gridColumn6
+            // 
+            this.gridColumn6.AppearanceCell.Options.UseTextOptions = true;
+            this.gridColumn6.AppearanceCell.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Near;
+            this.gridColumn6.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn6.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn6.AppearanceHeader.Options.UseTextOptions = true;
+            this.gridColumn6.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.gridColumn6.Caption = "NƒÉm";
+            this.gridColumn6.FieldName = "NAM";
+            this.gridColumn6.MinWidth = 23;
+            this.gridColumn6.Name = "gridColumn6";
+            this.gridColumn6.Visible = true;
+            this.gridColumn6.VisibleIndex = 2;
+            this.gridColumn6.Width = 87;
+            // 
+            // gridColumn5
+            // 
+            this.gridColumn5.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.gridColumn5.AppearanceHeader.Options.UseFont = true;
+            this.gridColumn5.Caption = "gridColumn5";
+            this.gridColumn5.FieldName = "ID_CONGTY";
+            this.gridColumn5.MinWidth = 23;
+            this.gridColumn5.Name = "gridColumn5";
+            this.gridColumn5.Width = 87;
+            // 
+            // gridColumn16
+            // 
+            this.gridColumn16.Caption = "gridColumn16";
+            this.gridColumn16.FieldName = "tinhtrang";
+            this.gridColumn16.MinWidth = 23;
+            this.gridColumn16.Name = "gridColumn16";
+            this.gridColumn16.Width = 87;
+            // 
+            // colMACDINH
+            // 
+            this.colMACDINH.AppearanceHeader.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold);
+            this.colMACDINH.AppearanceHeader.Options.UseFont = true;
+            this.colMACDINH.AppearanceHeader.Options.UseTextOptions = true;
+            this.colMACDINH.AppearanceHeader.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.colMACDINH.Caption = "M·∫∑c ƒë·ªãnh";
+            this.colMACDINH.ColumnEdit = this.rps_Chk;
+            this.colMACDINH.FieldName = "MACDINH";
+            this.colMACDINH.MinWidth = 23;
+            this.colMACDINH.Name = "colMACDINH";
+            this.colMACDINH.Visible = true;
+            this.colMACDINH.VisibleIndex = 3;
+            this.colMACDINH.Width = 110;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Tahoma", 7.8F, System.Drawing.FontStyle.Bold);
+            this.label1.Location = new System.Drawing.Point(5, 59);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(118, 17);
+            this.label1.TabIndex = 38;
+            this.label1.Text = "Nh√≥m ch·ª©ng t·ª´";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Tahoma", 7.8F, System.Drawing.FontStyle.Bold);
+            this.label2.Location = new System.Drawing.Point(401, 60);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(166, 17);
+            this.label2.TabIndex = 38;
+            this.label2.Text = "G·ªìm c√≥ c√°c lo·∫°i k√Ω hi·ªáu";
+            // 
+            // btnThem
+            // 
+            this.btnThem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnThem.Location = new System.Drawing.Point(754, 10);
+            this.btnThem.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnThem.Name = "btnThem";
+            this.btnThem.Size = new System.Drawing.Size(112, 28);
+            this.btnThem.TabIndex = 1;
+            this.btnThem.Text = "Th√™m k√Ω hi·ªáu (F4)";
+            this.btnThem.Click += new System.EventHandler(this.btn_Click);
+            // 
+            // btnCapNhat
+            // 
+            this.btnCapNhat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCapNhat.Location = new System.Drawing.Point(873, 10);
+            this.btnCapNhat.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnCapNhat.Name = "btnCapNhat";
+            this.btnCapNhat.Size = new System.Drawing.Size(94, 28);
+            this.btnCapNhat.TabIndex = 0;
+            this.btnCapNhat.Text = "C·∫≠p nh·∫≠t (F5)";
+            this.btnCapNhat.Click += new System.EventHandler(this.btn_Click);
+            // 
+            // btnDong
+            // 
+            this.btnDong.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnDong.Location = new System.Drawing.Point(974, 10);
+            this.btnDong.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnDong.Name = "btnDong";
+            this.btnDong.Size = new System.Drawing.Size(93, 28);
+            this.btnDong.TabIndex = 2;
+            this.btnDong.Text = "ƒê√≥ng (F12)";
+            this.btnDong.Click += new System.EventHandler(this.btnDong_Click);
+            // 
+            // panelControl2
+            // 
+            this.panelControl2.Appearance.Options.UseTextOptions = true;
+            this.panelControl2.Appearance.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Near;
+            this.panelControl2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.panelControl2.Controls.Add(this.btnThem);
+            this.panelControl2.Controls.Add(this.btnCapNhat);
+            this.panelControl2.Controls.Add(this.btnDong);
+            this.panelControl2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelControl2.Location = new System.Drawing.Point(0, 788);
+            this.panelControl2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.panelControl2.Name = "panelControl2";
+            this.panelControl2.Size = new System.Drawing.Size(1095, 48);
+            this.panelControl2.TabIndex = 41;
+            // 
+            // panelControl1
+            // 
+            this.panelControl1.Controls.Add(this.panelControl3);
+            this.panelControl1.Controls.Add(this.splitContainerControl1);
+            this.panelControl1.Controls.Add(this.label2);
+            this.panelControl1.Controls.Add(this.label1);
+            this.panelControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelControl1.Location = new System.Drawing.Point(0, 0);
+            this.panelControl1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.panelControl1.Name = "panelControl1";
+            this.panelControl1.Size = new System.Drawing.Size(1095, 788);
+            this.panelControl1.TabIndex = 43;
+            // 
+            // panelControl3
+            // 
+            this.panelControl3.Controls.Add(this.lblTitle);
+            this.panelControl3.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelControl3.Location = new System.Drawing.Point(2, 2);
+            this.panelControl3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.panelControl3.Name = "panelControl3";
+            this.panelControl3.Size = new System.Drawing.Size(1091, 48);
+            this.panelControl3.TabIndex = 43;
+            // 
+            // lblTitle
+            // 
+            this.lblTitle.Appearance.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTitle.Appearance.ForeColor = System.Drawing.Color.Black;
+            this.lblTitle.Appearance.Options.UseFont = true;
+            this.lblTitle.Appearance.Options.UseForeColor = true;
+            this.lblTitle.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblTitle.Location = new System.Drawing.Point(2, 2);
+            this.lblTitle.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(251, 24);
+            this.lblTitle.TabIndex = 1;
+            this.lblTitle.Text = "Khai b√°o k√Ω hi·ªáu ch·ª©ng t·ª´";
+            // 
+            // dm_khchungtu
+            // 
+            this.Appearance.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(236)))), ((int)(((byte)(239)))));
+            this.Appearance.Options.UseBackColor = true;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.panelControl1);
+            this.Controls.Add(this.panelControl2);
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.Name = "dm_khchungtu";
+            this.Size = new System.Drawing.Size(1095, 836);
+            this.Load += new System.EventHandler(this.dm_khchungtu_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerControl1)).EndInit();
+            this.splitContainerControl1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.GridMaster)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gV_Master)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.repositoryItemCheckEdit1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MainGrid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rps_Chk)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).EndInit();
+            this.panelControl2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).EndInit();
+            this.panelControl1.ResumeLayout(false);
+            this.panelControl1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl3)).EndInit();
+            this.panelControl3.ResumeLayout(false);
+            this.panelControl3.PerformLayout();
+            this.ResumeLayout(false);
+
         }
 
+        #endregion
 
-        //GET: api/Area/5
-        [HttpGet("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetArea(string LOC_ID, string ID)
-        {
-            try
-            {
-                var Area = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-                if (Area == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Kh√¥ng t√¨m th·∫•y " + LOC_ID + "-" + ID + " d·ªØ li·ªáu!",
-                        Data = ""
-                    });
-                }
-                v_nv_BangLuong ct_PhieuDatHang = new v_nv_BangLuong();
-                if (Area != null)
-                {
-                    string strDeposit = JsonConvert.SerializeObject(Area);
-                    ct_PhieuDatHang = JsonConvert.DeserializeObject<v_nv_BangLuong>(strDeposit) ?? new v_nv_BangLuong();
-                }
-
-                ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = new List<nv_BangLuong_ChiTiet>();
-                var lstValue = await _context.nv_BangLuong_ChiTiet!.Where(e => e.LOC_ID == LOC_ID && e.ID_BANGLUONG == ID).ToListAsync();
-                if (lstValue != null)
-                    ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = lstValue;
-                
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ct_PhieuDatHang
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-
-        }
-
-        // PUT: api/Area/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutArea(v_nv_BangLuong Area)
-        {
-            try
-            {
-                var Area1 = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID_THANGLUONG == Area.ID_THANGLUONG && e.ID != Area.ID);
-                if (Area1 != null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "ƒê√£ t·ªìn t·∫°i th√°ng l∆∞∆°ng " + Area.LOC_ID + "-" + Area.ID_THANGLUONG + " d·ªØ li·ªáu b·∫£ng l∆∞∆°ng!",
-                        Data = ""
-                    });
-                }
-                var lstValueChiTiet = await _context.nv_BangLuong_ChiTiet!.AsNoTracking().Where(e => e.LOC_ID == Area.LOC_ID && e.ID_BANGLUONG == Area.ID).ToListAsync();
-                using var transaction = _context.Database.BeginTransaction();
-                {
-                    foreach (var itm in lstValueChiTiet)
-                    {
-                        if (!(Area.lstnv_BangLuong_ChiTiet.Count(s => s.ID == itm.ID) > 0))
-                            _context.nv_BangLuong_ChiTiet!.Remove(itm);
-                          
-                    }
-                    foreach (var itm in Area.lstnv_BangLuong_ChiTiet)
-                    {
-                        if (!(lstValueChiTiet.Count(s => s.ID == itm.ID) > 0))
-                        {
-                            itm.ID_BANGLUONG = Area.ID;
-                            _context.nv_BangLuong_ChiTiet!.Add(itm);
-                        }
-                        else
-                        {
-                            _context.Entry(itm).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                        }
-                    }
-                    Area.TIENLUONG = Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) > 0).Sum(s => s.SOTIEN);
-                    Area.TIENGIAM = Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) < 0).Sum(s => s.SOTIEN);
-                    Area.TIENTHUCNHAN = Area.TIENLUONG - Area.TIENGIAM;
-                    _context.Entry(Area).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                }
-                transaction.Commit();
-                var view_nv_BangLuong = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
-                if (view_nv_BangLuong == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Kh√¥ng t√¨m th·∫•y " + Area.LOC_ID + "-" + Area.ID + " d·ªØ li·ªáu!",
-                        Data = ""
-                    });
-                }
-                v_nv_BangLuong ct_PhieuDatHang = new v_nv_BangLuong();
-                if (view_nv_BangLuong != null)
-                {
-                    string strDeposit = JsonConvert.SerializeObject(view_nv_BangLuong);
-                    ct_PhieuDatHang = JsonConvert.DeserializeObject<v_nv_BangLuong>(strDeposit) ?? new v_nv_BangLuong();
-                }
-
-                ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = new List<nv_BangLuong_ChiTiet>();
-                var lstValue = await _context.nv_BangLuong_ChiTiet!.Where(e => e.LOC_ID == Area.LOC_ID && e.ID_BANGLUONG == Area.ID).ToListAsync();
-                if (lstValue != null)
-                    ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = lstValue;
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ct_PhieuDatHang
-                });
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // POST: api/Area
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<dm_KhuVuc>> PostArea(v_nv_BangLuong Area)
-        {
-            try
-            {
-                var Area1 = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID_THANGLUONG == Area.ID_THANGLUONG);
-                if (Area1 != null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "ƒê√£ t·ªìn t·∫°i th√°ng l∆∞∆°ng " + Area.LOC_ID + "-" + Area.ID_THANGLUONG + " d·ªØ li·ªáu b·∫£ng l∆∞∆°ng!",
-                        Data = ""
-                    });
-                }
-                using var transaction = _context.Database.BeginTransaction();
-                {
-                    foreach (var itm in Area.lstnv_BangLuong_ChiTiet)
-                    {
-                        _context.nv_BangLuong_ChiTiet!.Add(itm);
-                    }
-                    Area.TIENLUONG = Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) > 0).Sum(s => s.SOTIEN);
-                    Area.TIENGIAM = Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) < 0).Sum(s => s.SOTIEN);
-                    Area.TIENTHUCNHAN = Area.TIENLUONG - Area.TIENGIAM;
-                    _context.nv_BangLuong!.Add(Area);
-                    AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                }
-                transaction.Commit();
-                var view_nv_BangLuong = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
-                if (view_nv_BangLuong == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Kh√¥ng t√¨m th·∫•y " + Area.LOC_ID + "-" + Area.ID + " d·ªØ li·ªáu!",
-                        Data = ""
-                    });
-                }
-                v_nv_BangLuong ct_PhieuDatHang = new v_nv_BangLuong();
-                if (view_nv_BangLuong != null)
-                {
-                    string strDeposit = JsonConvert.SerializeObject(view_nv_BangLuong);
-                    ct_PhieuDatHang = JsonConvert.DeserializeObject<v_nv_BangLuong>(strDeposit) ?? new v_nv_BangLuong();
-                }
-
-                ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = new List<nv_BangLuong_ChiTiet>();
-                var lstValue = await _context.nv_BangLuong_ChiTiet!.Where(e => e.LOC_ID == Area.LOC_ID && e.ID_BANGLUONG == Area.ID).ToListAsync();
-                if (lstValue != null)
-                    ct_PhieuDatHang.lstnv_BangLuong_ChiTiet = lstValue;
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ct_PhieuDatHang
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // DELETE: api/Area/5
-        [HttpDelete("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> DeleteArea(string LOC_ID, string ID)
-        {
-            try
-            {
-                
-                var Area = await _context.nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == LOC_ID && e.ID == ID);
-                if (Area == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Kh√¥ng t√¨m th·∫•y " + LOC_ID + "-" + ID + " d·ªØ li·ªáu!",
-                        Data = ""
-                    });
-                }
-                var lstValueChiTiet = await _context.nv_BangLuong_ChiTiet!.AsNoTracking().Where(e => e.LOC_ID == LOC_ID && e.ID_BANGLUONG == ID).ToListAsync();
-                foreach(var itm in lstValueChiTiet)
-                {
-                    _context.nv_BangLuong_ChiTiet!.Remove(itm);
-                }
-                    
-                _context.nv_BangLuong!.Remove(Area);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        [HttpPost("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<dm_KhuVuc>> GetLuongThang(v_nv_BangLuong Area, string LOC_ID)
-        {
-            try
-            {
-                var Area1 = await _context.view_nv_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID_THANGLUONG == Area.ID_THANGLUONG);
-                if (Area1 != null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "ƒê√£ t·ªìn t·∫°i th√°ng l∆∞∆°ng " + Area.LOC_ID + "-" + Area.ID_THANGLUONG + " d·ªØ li·ªáu b·∫£ng l∆∞∆°ng!",
-                        Data = ""
-                    });
-                }
-                
-                var NhanVien = await _context.view_dm_NhanVien!.FirstOrDefaultAsync(e => e.ID == Area.ID_NHANVIEN);
-                if (NhanVien == null || string.IsNullOrEmpty(NhanVien.ID_TAIKHOAN)) return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y nh√¢n vi√™n: " + Area.ID_NHANVIEN,
-                    Data = ""
-                });
-                var PhongBan = await _context.dm_PhongBan!.FirstOrDefaultAsync(e => e.ID == NhanVien.ID_PHONGBAN);
-                if (PhongBan == null) return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y ph√≤ng ban: " + NhanVien.ID_PHONGBAN,
-                    Data = ""
-                });
-                var dm_ThangLuong = await _context.dm_ThangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID_THANGLUONG && ("," + e.ID_PHONGBAN + ",").Contains("," + PhongBan.MA + ",") && e.ISACTIVE);
-                if (dm_ThangLuong == null) return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y danh m·ª•c th√°ng l∆∞∆°ng: " + Area.ID_THANGLUONG + "-" + PhongBan.MA,
-                    Data = ""
-                });
-                var TaiKhoan = await _context.AspNetUsers!.FirstOrDefaultAsync(e => e.ID == NhanVien.ID_TAIKHOAN);
-                if (TaiKhoan == null) return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y t√†i kho·∫£n: " + NhanVien.ID_TAIKHOAN,
-                    Data = ""
-                });
-                
-                
-                var vdm_BangLuong = await _context.dm_BangLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && (string.IsNullOrEmpty(e.ID_PHONGBAN) || e.ID_PHONGBAN == NhanVien.ID_PHONGBAN));
-                if (vdm_BangLuong == null) return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = "Kh√¥ng t√¨m th·∫•y danh m·ª•c b·∫£ng l∆∞∆°ng cho ph√≤ng ban: " + NhanVien.ID_PHONGBAN,
-                    Data = ""
-                });
-                var lstdm_BangLuong_ChiTiet = await _context.dm_BangLuong_ChiTiet!.Where(e => e.LOC_ID == Area.LOC_ID && e.ID_BANGLUONG == vdm_BangLuong.ID).ToListAsync();
-                string GhiChuNghiPhep = "";
-                string GhiChuNghiKhongPhep = "";
-                string GhiChuVeSom = "";
-                double SoNgayCong = 0;
-                double SoNgayNghiPhep = 0;
-                double SoNgayLamViec = 0;
-                double SoNgayNghiKhongPhep = 0;
-                double SoNgayCoDiLam = 0;
-                for (DateTime date = dm_ThangLuong.NGAYBATDAU; date <= dm_ThangLuong.NGAYKETTHUC; date = date.AddDays(1))
-                {
-                    bool bolDungPhep = false;
-                    if (!string.IsNullOrEmpty(dm_ThangLuong.DANHSACHNGAYNGHI) && !("," + dm_ThangLuong.DANHSACHNGAYNGHI +",").Contains("," + date.Day + ","))
-                    {
-                        var nv_NghiPhep = await _context.nv_NghiPhep!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.THOIGIANRA.Date >= date.Date && e.THOIGIANVAO.Date <= date.Date && e.ID_NHANVIEN == NhanVien.ID);
-                        if (nv_NghiPhep != null && nv_NghiPhep.ISNGHIPHEP)
-                        {
-                            if (string.IsNullOrEmpty(GhiChuNghiPhep))
-                                GhiChuNghiPhep = "Ngh·ªâ ph√©p: ";
-
-                            SoNgayCong += 1;
-                            if(nv_NghiPhep.HINHTHUCNGHIPHEP  == (int)API.HinhThucNghiPhep.NguyenNgay)
-                            {
-                                SoNgayNghiPhep += 1;
-                                GhiChuNghiPhep += date.Day + "("+ (nv_NghiPhep.ISDUYETPHEP ? "Duy·ªát" : "Ch∆∞a duy·ªát") + " 1 ng√†y);";
-                                continue;
-                            }
-                            else
-                            {
-                                SoNgayNghiPhep += 0.5;
-                                GhiChuNghiPhep += date.Day + "("+ (nv_NghiPhep.ISDUYETPHEP ? "Duy·ªát" : "Ch∆∞a duy·ªát") + " 0.5 ng√†y);";
-                                bolDungPhep = true;
-                            }    
-                        }
-                        var nv_ChamCong = await _context.nv_ChamCong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.NGAYCONG.Date == date.Date);
-                        if (nv_ChamCong != null)
-                        {
-                            TimeSpan GIOBATDAU = dm_ThangLuong.GIOBATDAU;
-                            TimeSpan GIOKETTHUC = dm_ThangLuong.GIOKETTHUC;
-                            double SoGioLe = 0;
-                            if (nv_ChamCong.THOIGIANVAO != null && nv_ChamCong.THOIGIANRA != null)
-                            {
-                                if (nv_ChamCong.THOIGIANVAO != null)
-                                {
-                                    if (nv_ChamCong.THOIGIANVAO.Value.TimeOfDay > dm_ThangLuong.GIOBATDAU)
-                                    {
-                                        GIOBATDAU = nv_ChamCong.THOIGIANVAO.Value.TimeOfDay;
-                                        if (!bolDungPhep)
-                                        {
-                                            if (string.IsNullOrEmpty(GhiChuVeSom))
-                                                GhiChuVeSom = "ƒêi tr·ªÖ, v·ªÅ s·ªõm: ";
-                                            GhiChuVeSom += "(v1) " + nv_ChamCong.THOIGIANVAO.Value.ToString("dd HH:mm") + ";";
-                                        }
-                                    }
-                                    else
-                                    {
-                                        SoGioLe = 1;
-                                    }
-                                }
-                                if (nv_ChamCong.THOIGIANRA != null)
-                                {
-                                    if (nv_ChamCong.THOIGIANRA.Value.TimeOfDay < dm_ThangLuong.GIOKETTHUC)
-                                    {
-                                        GIOKETTHUC = nv_ChamCong.THOIGIANRA.Value.TimeOfDay;
-                                        if (!bolDungPhep)
-                                        {
-                                            if (string.IsNullOrEmpty(GhiChuVeSom))
-                                                GhiChuVeSom = "ƒêi tr·ªÖ, v·ªÅ s·ªõm: ";
-                                            GhiChuVeSom += "(v2) " + nv_ChamCong.THOIGIANRA.Value.ToString("dd HH:mm") + ";";
-                                        }
-                                    }
-                                    else
-                                    {
-                                        SoGioLe = 1;
-                                    }
-                                }
-                                double SoGioLamViec = (GIOKETTHUC - GIOBATDAU).TotalHours;
-                                TimeSpan SoTiengLamTrongNgay = dm_ThangLuong.GIOKETTHUC - dm_ThangLuong.GIOBATDAU;
-                                double SoGioNghiTrua = (dm_ThangLuong.GIOKETTHUC_NGHITRUA - dm_ThangLuong.GIOBATDAU_NGHITRUA).TotalHours;
-                                double SoGioNghiTruaTrongNgay = (dm_ThangLuong.GIOKETTHUC_NGHITRUA - dm_ThangLuong.GIOBATDAU_NGHITRUA).TotalHours;
-                                // 10h < 12h - 13h <= 13h30 (10h - 13h)
-                                if (GIOBATDAU < dm_ThangLuong.GIOBATDAU_NGHITRUA && GIOKETTHUC <= dm_ThangLuong.GIOKETTHUC_NGHITRUA)
-                                    SoGioNghiTrua = (GIOKETTHUC - dm_ThangLuong.GIOBATDAU_NGHITRUA).TotalHours;
-
-                                // 13h > 13h30 - 15h > 13h30 (13h - 15h)
-                                if (GIOBATDAU > dm_ThangLuong.GIOKETTHUC_NGHITRUA && GIOKETTHUC > dm_ThangLuong.GIOKETTHUC_NGHITRUA)
-                                    SoGioNghiTrua = (dm_ThangLuong.GIOKETTHUC_NGHITRUA - dm_ThangLuong.GIOBATDAU_NGHITRUA).TotalHours;
-
-                                // 8h < 12h - 11h <= 12h (8h - 11h)
-                                if (GIOBATDAU < dm_ThangLuong.GIOBATDAU_NGHITRUA && GIOKETTHUC <= dm_ThangLuong.GIOBATDAU_NGHITRUA)
-                                    SoGioNghiTrua = 0;
-
-                                // 14h >= 13h30
-                                if (GIOBATDAU >= dm_ThangLuong.GIOKETTHUC_NGHITRUA)
-                                    SoGioNghiTrua = 0;
-
-                                SoGioLe = (SoGioLamViec - SoGioNghiTrua) / (SoTiengLamTrongNgay.TotalHours - SoGioNghiTruaTrongNgay);
-                                if (bolDungPhep)
-                                    SoGioLe = 0.5;
-
-                            }
-                            else
-                            {
-                                if (string.IsNullOrEmpty(GhiChuVeSom))
-                                    GhiChuVeSom = "ƒêi tr·ªÖ, v·ªÅ s·ªõm: ";
-                                GhiChuVeSom += "(v1v2) " + date.ToString("dd") + ";";
-                            }
-
-                            SoNgayCong += SoGioLe;
-                            SoNgayLamViec += SoGioLe;
-                            SoNgayCoDiLam += 1;
-                        }
-                        else
-                        {
-                            if(!dm_ThangLuong.ISCHAMCONG && !bolDungPhep)
-                            {
-                                SoNgayCong += 1;
-                                SoNgayLamViec += 1;
-                                SoNgayCoDiLam += 1;
-                            }    
-                        }
-
-                        if((nv_NghiPhep == null && nv_ChamCong == null && dm_ThangLuong.ISCHAMCONG) || (nv_NghiPhep != null && !nv_NghiPhep.ISNGHIPHEP))
-                        {
-                            SoNgayNghiKhongPhep += 1;
-                            if (string.IsNullOrEmpty(GhiChuNghiKhongPhep))
-                                GhiChuNghiKhongPhep = "Ngh·ªâ kh√¥ng ph√©p: ";
-                            GhiChuNghiKhongPhep +=  "Ng√†y "+ date.Day + ((nv_NghiPhep != null && nv_NghiPhep.ISDUYETPHEP) ? " ƒê√£ duy·ªát" : ((nv_NghiPhep != null) ? " Ch∆∞a duy·ªát ngh·ªâ" : " Ch∆∞a xin ngh·ªâ")) + ";";
-                        }
-                        else
-                        {
-
-                        }    
-                    }
-                }
-
-                Area.MUCLUONG = NhanVien.LUONGCOBAN;
-                Area.SONGAYCONG = dm_ThangLuong.SONGAYCONG;
-                Area.SONGAYLAMVIEC = Math.Round(SoNgayLamViec, 2);
-                Area.SONGAYNGHIPHEP = SoNgayNghiPhep;
-                Area.SONGAYNGHIKHONGPHEP = SoNgayNghiKhongPhep;
-                Area.GHICHU = GhiChuNghiPhep + (string.IsNullOrEmpty(GhiChuNghiKhongPhep) ? "" : Environment.NewLine + GhiChuNghiKhongPhep) + (string.IsNullOrEmpty(GhiChuVeSom) ? "" : Environment.NewLine + GhiChuVeSom) ;
-                //Area.TIENLUONG = NhanVien.LUONGCOBAN;
-                if (lstdm_BangLuong_ChiTiet != null)
-                {
-                    Area.lstnv_BangLuong_ChiTiet = new List<nv_BangLuong_ChiTiet>();
-                    foreach (var itm in lstdm_BangLuong_ChiTiet)
-                    {
-                        nv_BangLuong_ChiTiet newnv_BangLuong_ChiTiet = new nv_BangLuong_ChiTiet();
-                        newnv_BangLuong_ChiTiet.ID_LOAILUONG = itm.ID_LOAILUONG;
-                        newnv_BangLuong_ChiTiet.ID_BANGLUONG = Area.ID;
-                        newnv_BangLuong_ChiTiet.ID = Guid.NewGuid().ToString();
-                        if (itm.TYPE_QUYTACTINHLUONG == (int)API.QuyTacTinhLuong.ThoiGianLamViec)
-                        {
-                            if (itm.TYPE_LUONG == (int)API.Luong.Luong)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(((itm.SOTIEN > 0 ? itm.SOTIEN : NhanVien.LUONGCOBAN) / dm_ThangLuong.SONGAYCONG) * (Area.SONGAYLAMVIEC + SoNgayNghiPhep));
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.KPI)
-                            {
-                                DatabaseTHP.StoredProcedure.Parameter.SP_Parameter SP_Parameter = new DatabaseTHP.StoredProcedure.Parameter.SP_Parameter();
-                                KPI_SaleController KPI = new KPI_SaleController(_context, _configuration);
-                                SP_Parameter.LOC_ID = Area.LOC_ID;
-                                SP_Parameter.TUNGAY = dm_ThangLuong.NGAYBATDAU;
-                                SP_Parameter.DENNGAY = dm_ThangLuong.NGAYKETTHUC;
-                                SP_Parameter.ID_NHANVIEN = NhanVien.ID;
-                                var KetQua = await KPI.PutProduct(SP_Parameter);
-
-                                var okResult = KetQua as OkObjectResult;
-                                if (okResult != null)
-                                {
-                                    var ApiResponse = okResult.Value as ApiResponse;
-                                    if (ApiResponse != null)
-                                    {
-
-                                        if (ApiResponse.Data != null)
-                                        {
-                                            var lst_ChiTiet = ApiResponse.Data as List<v_Tinh_KPI_KinhDoanh>;
-                                            newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(((itm.SOTIEN > 0 ? itm.SOTIEN : (lst_ChiTiet != null && lst_ChiTiet.Count > 0 ? lst_ChiTiet[0].SOTIEN_KPI : 0)) / dm_ThangLuong.SONGAYCONG) * (Area.SONGAYLAMVIEC + SoNgayNghiPhep));
-                                        }
-                                    }
-                                }
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.Khac)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling((itm.SOTIEN / dm_ThangLuong.SONGAYCONG) * (Area.SONGAYLAMVIEC + SoNgayNghiPhep));
-                            }
-                        }
-                        else if (itm.TYPE_QUYTACTINHLUONG == (int)API.QuyTacTinhLuong.Ngay)
-                        {
-                            if (itm.TYPE_LUONG == (int)API.Luong.Luong)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(((itm.SOTIEN > 0 ? itm.SOTIEN : NhanVien.LUONGCOBAN) / dm_ThangLuong.SONGAYCONG) * (SoNgayCoDiLam));
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.KPI)
-                            {
-                                DatabaseTHP.StoredProcedure.Parameter.SP_Parameter SP_Parameter = new DatabaseTHP.StoredProcedure.Parameter.SP_Parameter();
-                                KPI_SaleController KPI = new KPI_SaleController(_context, _configuration);
-                                SP_Parameter.LOC_ID = Area.LOC_ID;
-                                SP_Parameter.TUNGAY = dm_ThangLuong.NGAYBATDAU;
-                                SP_Parameter.DENNGAY = dm_ThangLuong.NGAYKETTHUC;
-                                SP_Parameter.ID_NHANVIEN = NhanVien.ID;
-                                var KetQua = await KPI.PutProduct(SP_Parameter);
-
-                                var okResult = KetQua as OkObjectResult;
-                                if (okResult != null)
-                                {
-                                    var ApiResponse = okResult.Value as ApiResponse;
-                                    if (ApiResponse != null)
-                                    {
-
-                                        if (ApiResponse.Data != null)
-                                        {
-                                            var lst_ChiTiet = ApiResponse.Data as List<v_Tinh_KPI_KinhDoanh>;
-                                            newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(((itm.SOTIEN > 0 ? itm.SOTIEN : (lst_ChiTiet != null && lst_ChiTiet.Count > 0 ? lst_ChiTiet[0].SOTIEN_KPI : 0)) / dm_ThangLuong.SONGAYCONG) * (SoNgayCoDiLam));
-                                        }
-                                    }
-                                }
-                                
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.Khac)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling((itm.SOTIEN / dm_ThangLuong.SONGAYCONG) * (SoNgayCoDiLam));
-                            }
-                        }
-                        else if (itm.TYPE_QUYTACTINHLUONG == (int)API.QuyTacTinhLuong.Thang)
-                        {
-                            if (itm.TYPE_LUONG == (int)API.Luong.Luong)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(itm.SOTIEN > 0 ? itm.SOTIEN : NhanVien.LUONGCOBAN);
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.KPI)
-                            {
-                                DatabaseTHP.StoredProcedure.Parameter.SP_Parameter SP_Parameter = new DatabaseTHP.StoredProcedure.Parameter.SP_Parameter();
-                                KPI_SaleController KPI = new KPI_SaleController(_context, _configuration);
-                                SP_Parameter.LOC_ID = Area.LOC_ID;
-                                SP_Parameter.TUNGAY = dm_ThangLuong.NGAYBATDAU;
-                                SP_Parameter.DENNGAY = dm_ThangLuong.NGAYKETTHUC;
-                                SP_Parameter.ID_NHANVIEN = NhanVien.ID;
-                                var KetQua = await KPI.PutProduct(SP_Parameter);
-
-                                var okResult = KetQua as OkObjectResult;
-                                if (okResult != null)
-                                {
-                                    var ApiResponse = okResult.Value as ApiResponse;
-                                    if (ApiResponse != null)
-                                    {
-
-                                        if (ApiResponse.Data != null)
-                                        {
-                                            var lst_ChiTiet = ApiResponse.Data as List<v_Tinh_KPI_KinhDoanh>;
-                                            newnv_BangLuong_ChiTiet.SOTIEN = Math.Ceiling(((itm.SOTIEN > 0 ? itm.SOTIEN : (lst_ChiTiet != null && lst_ChiTiet.Count > 0 ? lst_ChiTiet[0].SOTIEN_KPI : 0))));
-                                        }
-                                    }
-                                }
-                                
-                            }
-                            if (itm.TYPE_LUONG == (int)API.Luong.Khac)
-                            {
-                                newnv_BangLuong_ChiTiet.SOTIEN = (itm.SOTIEN);
-                            }
-                        }
-                        var dm_LoaiLuong = await _context.dm_LoaiLuong!.FirstOrDefaultAsync(e => e.LOC_ID == Area.LOC_ID && e.ID == itm.ID_LOAILUONG);
-                        newnv_BangLuong_ChiTiet.TYPE = dm_LoaiLuong != null ? dm_LoaiLuong.TYPE.ToString() : "0";
-                        Area.lstnv_BangLuong_ChiTiet.Add(newnv_BangLuong_ChiTiet);
-                    }
-                }
-                Area.TIENLUONG = Math.Ceiling(Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) > 0).Sum(s => s.SOTIEN));
-                Area.TIENGIAM = Math.Ceiling(Area.lstnv_BangLuong_ChiTiet.Where(s => Convert.ToInt32(s.TYPE) < 0).Sum(s => s.SOTIEN));
-                Area.TIENTHUCNHAN = Area.TIENLUONG - Area.TIENGIAM;
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = Area
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        [HttpPost("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<dm_KhuVuc>> GetPhieuIn(string LOC_ID, string ID)
-        {
-            try
-            {
-                var lstValue = await _context.view_nv_BangLuong_ChiTiet!.Where(e => e.LOC_ID == LOC_ID && e.ID_BANGLUONG == ID).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
+        private DevExpress.XtraEditors.SplitContainerControl splitContainerControl1;
+        private System.Windows.Forms.Label label1;
+        private DevExpress.XtraGrid.GridControl GridMaster;
+        private DevExpress.XtraGrid.Views.Grid.GridView gV_Master;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn7;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn8;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn9;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn11;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn10;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn13;
+        private DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit repositoryItemCheckEdit1;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn12;
+        private System.Windows.Forms.Label label2;
+        private DevExpress.XtraGrid.GridControl MainGrid;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridView;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn1;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn2;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn3;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn4;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn14;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn15;
+        private DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit rps_Chk;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn6;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn5;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn16;
+        private DevExpress.XtraEditors.SimpleButton btnThem;
+        private DevExpress.XtraEditors.SimpleButton btnCapNhat;
+        private DevExpress.XtraEditors.SimpleButton btnDong;
+        private DevExpress.XtraEditors.PanelControl panelControl2;
+        private DevExpress.XtraGrid.Columns.GridColumn colMACDINH;
+        private DevExpress.XtraEditors.PanelControl panelControl1;
+        private DevExpress.XtraEditors.PanelControl panelControl3;
+        private DevExpress.XtraEditors.LabelControl lblTitle;
     }
 }
+                                                                                                                                                                                                                                                                               î∏ ÜﬁAW™`„9AÅ&t¡“‚àW‰ùJH5◊7&Òo„6q!Ïe≥Æ~Ô#.˙ØÉΩ6ããÖQÅÒ§À‰F-∑·œl¢∑X‘Rõ™b9G»k≥ïRõ‚ü’ˇùÙûâ3q»W!~Ÿ]à!]y|†©Q–àö8<úBg⁄ä∑êπ€ËC˛Ÿ|‘"(!ºÙ8
+Ÿ›‹€F·Ú¬BG##∫Cäï‘e@‰ïı=6GVrA ÍàﬁÕ˚ápxıbh
+•<«PC£Bàãµø‚òqv8àÕÇ9Nö\”u8ïdˆ»¸w;›eÔó2ZB9£Y¨§û8ÂQ÷Â$h¡‹*;:<£(óR$GiEå˙=h¢ôõê—Ühn·Wqf4°TA</£’ﬂ1:£sπﬁt-c‚ﬁtÒ€ñ·r
+Ú©4E∑F8(Â∂Ëßr ≥LwØg⁄{ß6cˇsòêaµ†¶GûF9W‡å5©!hD’äLBz3‘œñaºYùèiõ¥âìæLMÜ8øÛ[F‚Â_h4	eq~~z»g‰õ#áìë⁄˜`OÛÀònÙ)ä3-“⁄—0}ÙJ≈døô≠ÓãBh°˛ØM˛p
+z^;öΩÄÔ4tPe.yVÇ°aPÅ Æåê“Ëﬂ3⁄ôÒëw8[: ˘%Y–&∑g4bTHeªvıŒ∫#˙ã·é·˚·›E1∂’
+´≤]†§'‰ qÓàº^6~¿l¡¶¯ÿ}#º.ËÂ˘5¢=/<‚÷Ér∂V)¢%\ScbˇEwÙﬂoÜﬁ˘ˇï¡£›ñElwKb≥àÅÈ6†)Ír‚¸ åå⁄q1«e m«.æv#@Ï%ËÁJàË⁄q>Ç›∂‡Ùz∆V—Õ{‘^Dv∑TMÖ=Xf61ím¿lé≈¬.ÿpÉå3ysﬁuJCk1¥;ÇIpm eÇd,VRˇ@ﬁî«∞¶¿æ»là‡e_7Ì]ˆÓH‹ªÔ„ç
+ÄAÀYÖ
+cÔÓä`:euÆ-Ó(∏¶‹ÿbRDu°’◊ç⁄{eb'
+ì‚`ÜúÀc{4i,ÊV@§⁄œpÔè‘+l(Í‰5·m1vÅ∞_ì°A∫êCñé'…æ’w†ëÖtù§,æqŒˇejL¸bÃ¡Jj¯©˙†Ä¯~ä'¸kMI*∫Ë*rÒ“WçàsiÔ]Ö∫RóøÉ˜w◊G&$´ï†vv¶ô&√Ôh~4Wzwáì;Ï·S•5tpX®€Ãµ≤[ŸπV˘éŒK_˜‹ÃW»ˇB¨ÏÔ€3ÿ∂-Ü∫.Êöô5s}~ò~i£•Po˚ÚÎXxˇŒ4~Ork—Ÿ÷øhÁBõzwûìÎ6¸–Mx ZŸ$®ôµ	“qœ`[ì%°Dµ!ëê¬ƒ¶2,®r≠ú®øÌøQﬂŸj+Àl1E©∞πÍy$©ÚA]πånJØnçÈK/•2z «§/u‰Ä∫ƒ¥%9£Å–∏=0>Uôb¥+7X	Âí9πî*Õ52‘;jﬁØ%X›3FL !Ù›‡25w≠SÈ8÷ÊR¿∫÷é¬ìå2qΩ∑”q¡w%¯ãSŸÅò—*Ñˆ¢r˘1É√a<ﬂEs»·Êv p‚x(jÒÔÜqµ1ŒCõv[€◊Ëíá„0†7FKjæ¢?h+ßÿúÅŒ	ƒ@VÀr$%≥Mˇ»ú„óü¿·[„0ú˚&°"A«ú7à”K†±YO3∂ñØŸÿﬁËçèM◊—+ÿ¥ú±Ûy;i£	D!=dôúú[¨Ùù‘íÙS°ﬁ–¶}é’m\¯[%I’ﬁ¯ÛÙ<ˆåïFWùæ0W-Às:∫úº‹%8æsÚÓìPweÄëäqo¶õSÕ¬·&OíÌñ'1–ÙÙÂÓº¶≤·\‰R*ÄLáMhã:–¸N!MdÀ…ÿ/∏Pd…µñ‹¶}≤ìÕ˝m,ì*¯0„∆‡£ü–~u¶öè5ÔKÆâD®ÇâÂ»P‰∑ñ¥i¥à·Ÿà˜†„¬{ii'ıö˘« ;R∏–-NÂ∞∂Íê¢œÉ»ˆi%‘Ï.|qºPçëìs1fúgd#˘ÓÃòDh,˘G8˙‰·à –P‰c(¢4_B≤ãG£r]ˆâd“I;µƒU}K¸‚;óL†_w€	∂cTã¸ÜÇu"øö§€â!B√ 4òö>‰˛˜èZàxè∆Ò*2πÒzÊx<≈='(Ù∑éAiÁ√Ë/›h€Ç˘≈≥Yã"Âæ≠‘Ωg„∆v™ÄñÖ4r—â”/5Çi˜óLÕ«q¡˙Äf}ú±+Ÿ°»Kît¨¬FWëp©_6j.?éãŸïdÈE,LŒπf√4íD7IÈ`Üƒ'BÜBô-%‚8N) ú»ﬁ4∑“ﬁü§EÓ~ŒÙ€Ö˛ò—†∏˛Æ‹Åt≤img' neãv%JVÜ]H´ÒàïM.•ev£9ç˛ÑH1_ªæ´ˆHï\ÍµHë#_“£ÍﬁÛYuK¡uÛW0Íá—r∂3ƒ*ÍCû~Ô®•OÖ·PJ≥≤S˚îΩ “∫ië;‚]≤Ç≈,2‡◊ïÄtA·=ùd<,Ù6	°˝ë˙öLπ´N îÅÏxﬁÿ’,œM¢:»È∏wxuö:° :BT≥»Ä◊5»]≥∂§µHÂ∞ä§	˛]£]\cP'wŸ+(ÑXÂFßö˚∞‡;$^"ì)Î∑9â÷ÖÇËïˇqÎÃÏ@?Ì˙"'bÑh≥Õ•úBáCIÛ= ¿AC∑ﬁì"d|À¿◊¢û.˙ﬂüœx⁄ü…z]√éxd‘B∏Â!ÏÒ
+π>‰úwèÇ ◊˚LË≤˛@Ô«XtEqˆHt˛Ë∑‡ ø¶Ö/iFŸ$∞„˜ˇ\o¡+J)®ŒZ·¡î˜÷[–ìÑæuˆÿ~ÎéÜ•bZ–UÎiA£Á∆F°-ÑùSº/%Àbhgi˛ñ»†Ö4¢ŸøØdﬁ#˘CfjÉéjò∆…¢÷X§›«9ç∏†æÓh%¬≤èı%Ã=[ŸnÌ8Ü˚<rQ^útÒèOzˆ€IìŒÜ3ﬂçOö_4ëm∑>3÷nÅÈEˆ±¡á<ß—…˛ ß|*76H ø(=±2¡Ü≤o9UN≈áf„«”≠ë	e—4ÎU
+CõÑ2Ò·”˙&Xöj∂"uÇ“˝ÏaÒ|ö†»åüë∞˛B πi2ü:&ÿ¯:Iﬁe±¶Ä2-*ÀÊÎ0Aã∫`qøÊ©2÷1∆¨__˜]@

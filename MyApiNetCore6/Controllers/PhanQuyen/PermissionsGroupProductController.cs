@@ -1,257 +1,134 @@
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
-using DatabaseTHP;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Options;
-using MyApiNetCore6.Data;
-using Newtonsoft.Json.Linq;
-using NuGet.Common;
+(this.chkUncheckall.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chkChuyenTungTo.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtSoLuongChon.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cboKyso.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridHDList)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.repCheckChon)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.repositoryItemDateEdit1.CalendarTimeProperties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.repositoryItemDateEdit1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rTongTien)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.itemOpenPDF)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rpsMoTa)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rps1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rps_1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rps2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pnMain)).EndInit();
+            this.pnMain.ResumeLayout(false);
+            this.ResumeLayout(false);
+            this.PerformLayout();
 
-using DatabaseTHP.Class;
-using System.Linq.Dynamic.Core;
-using Microsoft.EntityFrameworkCore;
-
-namespace MyApiNetCore6.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PermissionsGroupProductController : ControllerBase
-    {
-        private readonly dbTrangHiepPhatContext _context;
-        private readonly IConfiguration _configuration;
-        public PermissionsGroupProductController(dbTrangHiepPhatContext context, IConfiguration configuration)
-        {
-            _context = context;
-            _context = context;
-            _configuration = configuration;
-        }
-        [HttpGet("{LOC_ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupProduct(string LOC_ID)
-        {
-            try
-            {
-
-                var lstValue = await _context.web_PhanQuyenNhomSanPham!.Where(e => e.LOC_ID == LOC_ID).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-
-         }
-
-        // GET: api/PermissionsGroupProduct
-        [HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupProduct(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
-        {
-            try
-            {
-                var lstValue = await _context.web_PhanQuyenNhomSanPham!.Where(e => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch).ToListAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = lstValue
-                }); 
-            } 
-            catch(Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-        
-
-        //GET: api/PermissionsGroupProduct/5
-        [HttpGet("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> GetPermissionsGroupProduct(string LOC_ID,string ID)
-        {
-            try
-            {
-                var PermissionsGroupProduct = await _context.web_PhanQuyenNhomSanPham!.FirstOrDefaultAsync(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
-
-                if (PermissionsGroupProduct == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-				
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = PermissionsGroupProduct
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-           
         }
 
-        // PUT: api/PermissionsGroupProduct/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{LOC_ID}/{ID}")]
-		[Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> PutPermissionsGroupProduct(string LOC_ID,string ID, web_PhanQuyenNhomSanPham PermissionsGroupProduct)
-        {
-            try
-            {
-                if ( LOC_ID != PermissionsGroupProduct.LOC_ID&& ID != PermissionsGroupProduct.ID)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Dữ liệu khóa không giống nhau!",
-                        Data = ""
-                    });
-                }
-                if (!PermissionsGroupProductExists(PermissionsGroupProduct.LOC_ID,PermissionsGroupProduct.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.Entry(PermissionsGroupProduct).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // POST: api/PermissionsGroupProduct
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<ActionResult<web_PhanQuyenNhomSanPham>> PostPermissionsGroupProduct(web_PhanQuyenNhomSanPham PermissionsGroupProduct)
-        {
-            try
-            {
-                if (PermissionsGroupProductExists(PermissionsGroupProduct.LOC_ID,PermissionsGroupProduct.ID))
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Đã tồn tại " + PermissionsGroupProduct.LOC_ID +"-"+ PermissionsGroupProduct.ID +  " trong dữ liệu!",
-                        Data = "",
-                        CheckValue = true
-                    });
-                }
-                _context.web_PhanQuyenNhomSanPham!.Add(PermissionsGroupProduct);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = PermissionsGroupProduct
-                });
-            }
-            catch(Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        // DELETE: api/PermissionsGroupProduct/5
-        [HttpDelete("{LOC_ID}/{ID}")]
-        [Authorize(Roles = UserRoles.User)]
-        public async Task<IActionResult> DeletePermissionsGroupProduct(string LOC_ID,string ID)
-        {
-            try
-            {
-                var PermissionsGroupProduct = await _context.web_PhanQuyenNhomSanPham!.FirstOrDefaultAsync(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
-                if (PermissionsGroupProduct == null)
-                {
-                    return Ok(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy " + LOC_ID +"-"+ ID +  " dữ liệu!",
-                        Data = ""
-                    });
-                }
-                _context.web_PhanQuyenNhomSanPham!.Remove(PermissionsGroupProduct);
-                AuditLogController auditLog = new AuditLogController(_context, _configuration);auditLog.InserAuditLog();await _context.SaveChangesAsync();
-                return Ok(new ApiResponse
-                {
-                    Success = true,
-                    Message = "Success",
-                    Data = ""
-                });
-            }
-            catch (Exception ex)
-            {
-                return Ok(new ApiResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = ""
-                });
-            }
-        }
-
-        private bool PermissionsGroupProductExists(string LOC_ID,string ID)
-        {
-            return _context.web_PhanQuyenNhomSanPham!.Any(e =>  e.LOC_ID == LOC_ID&& e.ID == ID);
-        }
-
-       
-    }
-}
+        #endregion
+        private DevExpress.Utils.ImageCollection imageCollection2;
+        private DevExpress.XtraBars.PopupMenu popupMenu1;
+        private DevExpress.XtraBars.Docking.DockManager dockManager1;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private DevExpress.XtraBars.BarManager barManager1;
+        private DevExpress.XtraBars.BarDockControl barDockControlTop;
+        private DevExpress.XtraBars.BarDockControl barDockControlBottom;
+        private DevExpress.XtraBars.BarDockControl barDockControlLeft;
+        private DevExpress.XtraBars.BarDockControl barDockControlRight;
+        private DevExpress.XtraEditors.GroupControl groupControl3;
+        private DevExpress.XtraGrid.GridControl GridMau;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridForm;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn4;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn12;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn13;
+        private System.Windows.Forms.Panel panel2;
+        public DevExpress.XtraEditors.SimpleButton btnThem;
+        public DevExpress.XtraEditors.SimpleButton btnXoa;
+        public DevExpress.XtraEditors.SimpleButton btnSua;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn16;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn18;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn19;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn31;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn33;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn34;
+        private DevExpress.XtraEditors.Repository.RepositoryItemGridLookUpEdit repositoryItemGridLookUpEdit1;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridView1;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn36;
+        public DevExpress.XtraEditors.SimpleButton btnDongBoMa;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ImageList imageList1;
+        private DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit repChon;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit repCopy;
+        private System.Windows.Forms.Timer timer12;
+        public DevExpress.XtraEditors.SimpleButton btnGuiCoQuanThue;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip2;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem4;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn8;
+        private System.Windows.Forms.Panel panel3;
+        private DevExpress.XtraEditors.LookUpEdit lkTinhTrang;
+        private DevExpress.XtraEditors.DateEdit dTuNgay;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label4;
+        private DevExpress.XtraEditors.DateEdit dDenNgay;
+        private DevExpress.XtraEditors.SimpleButton simpleButton1;
+        private System.Windows.Forms.Label label5;
+        private DevExpress.XtraEditors.Repository.RepositoryItemMemoExEdit rpsMTKQua;
+        private DevExpress.XtraGrid.Views.Grid.GridView repositoryItemGridLookUpEdit1View;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit rpsHopLe;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit rpsKhongHopLe;
+        private DevExpress.XtraEditors.PanelControl panelControl2;
+        private DevExpress.XtraEditors.LabelControl lblLoaiHD;
+        private DevExpress.XtraEditors.LookUpEdit lkCaiDat;
+        private DevExpress.XtraEditors.LabelControl labelControl8;
+        private DevExpress.XtraEditors.DateEdit dBegin;
+        private System.Windows.Forms.Label label3;
+        private DevExpress.XtraEditors.DateEdit dTheEnd;
+        private System.Windows.Forms.Label label1;
+        private DevExpress.XtraEditors.SimpleButton btnSearch;
+        private DevExpress.XtraGrid.GridControl gridHDList;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridView;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn7;
+        private DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit repCheckChon;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn1;
+        private DevExpress.XtraGrid.Columns.GridColumn colMAUSOTEMP1;
+        private DevExpress.XtraGrid.Columns.GridColumn colMAUSOTEMP;
+        private DevExpress.XtraGrid.Columns.GridColumn MauSo;
+        private DevExpress.XtraGrid.Columns.GridColumn KyHieu;
+        private DevExpress.XtraGrid.Columns.GridColumn SoBatDau;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn2;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn3;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn2;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn1;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn6;
+        private DevExpress.XtraEditors.Repository.RepositoryItemDateEdit repositoryItemDateEdit1;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn4;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn10;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn7;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn5;
+        private DevExpress.XtraEditors.Repository.RepositoryItemTextEdit rTongTien;
+        private DevExpress.XtraGrid.Columns.GridColumn gridColumn9;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn3;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn6;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit itemOpenPDF;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn9;
+        private DevExpress.XtraGrid.Columns.GridColumn bandedGridColumn8;
+        private DevExpress.XtraEditors.Repository.RepositoryItemMemoExEdit rpsMoTa;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit rps1;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit rps_1;
+        private DevExpress.XtraEditors.Repository.RepositoryItemHyperLinkEdit rps2;
+        private System.Windows.Forms.Panel panel1;
+        private DevExpress.XtraEditors.CheckEdit chkChuyenTungTo;
+        private DevExpress.XtraEditors.ComboBoxEdit cboKyso;
+        private DevExpress.XtraEditors.LabelControl lblHinhThucKy;
+        public DevExpress.XtraEditors.SimpleButton btnNhanCQT;
+        private DevExpress.XtraEditors.SimpleButton btnTaoTDiep;
+        private DevExpress.XtraEditors.SimpleButton btnDong;
+        private DevExpress.XtraBars.Docking.DockPanel dockPanel1;
+        private DevExpress.XtraBars.Docking.ControlContainer dockPanel1_Container;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridView2;
+        private DevExpress.XtraEditors.PanelControl pnMain;
+        private DevExpress.XtraEditors.TextEdit txtSoLuongChon;
+        private DevExpress.XtraEditors.CheckEdit chkUncheckall;
+        private DevExpress.XtraEditors.LabelControl labelControl1;
+        private System.Windows.Fo

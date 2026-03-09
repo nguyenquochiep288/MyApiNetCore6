@@ -1,15 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Build.Framework;
-
-namespace MyApiNetCore6.Data
-{
-    public class ApplicationUser : IdentityUser
-    {
-        [Required]
-        public string ID_NHOMQUYEN { get; set; } = null!; 
-        public string FullName { get; set; } = null!;
-        public string PasswordDecrypt { get; set; } = null!;
-
-        public string URL_IMAGE { get; set; } = null!;
-    }
-}
+dResource Include="Fonts\FreeSerif.ctg" />
+    <EmbeddedResource Include="Fonts\FreeSerif.ttf" />
+    <EmbeddedResource Include="Fonts\FreeSerif.ufm" />
+    <EmbeddedResource Include="Fonts\FreeSerif.w" />
+    <EmbeddedResource Include="ProccessSign.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ProccessSign.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Embedded

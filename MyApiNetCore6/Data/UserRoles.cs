@@ -1,13 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+NT { get; set; }
 
-namespace MyApiNetCore6.Data
-{
-    [Table("UserRoles")]
-    public class UserRoles
-    {
-        public const string User = "User";
-        public const string Admin = "Admin";
-        public const string UserAdmin = "User,Admin";
-    }
-}
+        [XmlElement(ElementName = "TRANG_THAI")]
+        public string TRANGTHAI { get; set; }
+
+        [XmlElement(ElementName = "NGAYCAP_MST")]
+        public string NGAYCAPMST { get; set; }
+
+        [XmlElement(ElementName = "SO")]
+        public string SO { get; set; }
+
+        [XmlElement(ElementName = "C

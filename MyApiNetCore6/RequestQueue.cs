@@ -1,35 +1,34 @@
-﻿using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace API_QuanLyTHP
+﻿using System;
+namespace TS24.TO.HDDB
 {
-    public class RequestQueue
+    public class tt68_tokhaidangky_tctn : IDDataBase
     {
-        private readonly ConcurrentQueue<Func<Task>> _queue = new ConcurrentQueue<Func<Task>>();
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
-        public async Task Enqueue(Func<Task> task)
+        #region Define constructor
+        public tt68_tokhaidangky_tctn()
         {
-            _queue.Enqueue(task);
-            await ProcessQueue();
+            TableName = "tt68_tokhaidangky_tctn";
+            Command = new TS24.MySQLLib.MySQLUtilities();
         }
+        #endregion
 
-        private async Task ProcessQueue()
-        {
-            if (_queue.TryDequeue(out var task))
-            {
-                await _semaphore.WaitAsync();
-                try
-                {
-                    await task(); // Xử lý yêu cầu hiện tại
-                }
-                finally
-                {
-                    _semaphore.Release();
-                    await ProcessQueue(); // Xử lý tiếp yêu cầu tiếp theo
-                }
-            }
-        }
-    }
-}
+
+        #region Get or set property
+        //ID_Tkhai
+        private string _ID_TKHAI;
+        /// <summary>
+        /// Khóa ngoại
+        /// </summary>
+        public string ID_TKHAI { get { return _ID_TKHAI; } set { _ID_TKHAI = value; } }
+
+        private int _STT;
+        public int STT { get { return _STT; } set { _STT = value; } }
+
+        private string _TTCTN;
+        public string TTCTN { get { return _TTCTN; } set { _TTCTN = value; } }
+
+        private string _MSTTCTN;
+        public string MSTTCTN { get { return _MSTTCTN; } set { _MSTTCTN = value; } }
+
+        private DateTime _TNGAY;
+        public DateTime TNGAY { get { return
