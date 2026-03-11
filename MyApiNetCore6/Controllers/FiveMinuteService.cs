@@ -1,112 +1,160 @@
-﻿// Decompiled with JetBrains decompiler
-// Type: API_QuanLyTHP.Controllers.FiveMinuteService
-// Assembly: API_QuanLyTHP, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-// MVID: DC050ACB-EFEA-4AC7-80CD-78C98E6478D1
-// Assembly location: G:\MyApiNetCore6-03_Authentication_New\Publish_API\API_QuanLyTHP.dll
-
-using API_QuanLyTHP.Controllers.Misa;
+﻿using API_QuanLyTHP.Controllers.Misa;
 using DatabaseTHP;
 using DatabaseTHP.Class.Misa;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MyApiNetCore6.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-
-namespace API_QuanLyTHP.Controllers;
-
-public class FiveMinuteService : BackgroundService
+namespace MyApiNetCore6.Controllers
 {
-  private readonly dbTrangHiepPhatContext _context;
-  private readonly IConfiguration _configuration;
-  private string linkGetlist = "/getlist?InvoiceWithCode=true";
-  private int timerInterval = 5;
-
-  public FiveMinuteService(dbTrangHiepPhatContext context, IConfiguration configuration)
-  {
-    this._context = context;
-    this._configuration = configuration;
-  }
-
-  protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-  {
-    InvoiceService _invoiceService = new InvoiceService();
-    while (!stoppingToken.IsCancellationRequested)
+    public class FiveMinuteService : BackgroundService
     {
-      try
-      {
-        TimeSpan now = DateTime.Now.TimeOfDay;
-        this.timerInterval = !(now >= TimeSpan.FromHours(0.0)) || !(now < TimeSpan.FromHours(5.0)) ? 5 : 40;
-        Console.WriteLine($"Hàm chạy lúc: {DateTime.Now}");
-        dm_TaiKhoan_Misa TaiKhoan = await this._context.dm_TaiKhoan_Misa.Where<dm_TaiKhoan_Misa>((Expression<Func<dm_TaiKhoan_Misa, bool>>) (e => e.LOC_ID == "02" && e.ISACTIVE)).FirstOrDefaultAsync<dm_TaiKhoan_Misa>(stoppingToken);
-        if (TaiKhoan != null)
+        private readonly dbTrangHiepPhatContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<FiveMinuteService> _logger;
+        private const string LinkGetList = "/getlist?InvoiceWithCode=true";
+        private int _timerIntervalMinutes = 5;
+
+        public FiveMinuteService(
+            dbTrangHiepPhatContext context,
+            IConfiguration configuration,
+            ILogger<FiveMinuteService> logger)
         {
-          List<ct_HoaDon> lstValue = await this._context.ct_HoaDon.Where<ct_HoaDon>((Expression<Func<ct_HoaDon, bool>>) (e => e.ISXUATHOADON && string.IsNullOrEmpty(e.MATRACUU_MISA) && string.IsNullOrEmpty(e.ERROR))).ToListAsync<ct_HoaDon>(stoppingToken);
-          if (lstValue != null && lstValue.Count > 0)
-          {
-            List<string> lstID = lstValue.Select<ct_HoaDon, string>((Func<ct_HoaDon, string>) (i => i.ID)).ToList<string>();
-            MisaApiResponseInvoiced response = await _invoiceService.GetListInvoiced(lstID, TaiKhoan.ACCESSTOKEN, TaiKhoan.MASOTHUE, TaiKhoan.LINK + this.linkGetlist);
-            if (response != null && response.success)
-            {
-              string dataString = response.data;
-              if (!string.IsNullOrEmpty(dataString))
-              {
-                List<MisaInvoiceInfo> apiResponse = JsonSerializer.Deserialize<List<MisaInvoiceInfo>>(dataString);
-                if (apiResponse != null && apiResponse.Count > 0)
-                {
-                  foreach (MisaInvoiceInfo misaInvoiceInfo in apiResponse)
-                  {
-                    MisaInvoiceInfo item = misaInvoiceInfo;
-                    ct_HoaDon objUpdate = lstValue.FirstOrDefault<ct_HoaDon>((Func<ct_HoaDon, bool>) (e => e.ID == item.RefID));
-                    if (objUpdate != null)
-                    {
-                      objUpdate.MATRACUU_MISA = item.TransactionID;
-                      objUpdate.MACQT = item.InvoiceCode;
-                      objUpdate.SOHOADON = item.InvNo;
-                      objUpdate.KYHIEUHOADON = item.InvSeries;
-                      this._context.ct_HoaDon.Update(objUpdate);
-                    }
-                    objUpdate = (ct_HoaDon) null;
-                  }
-                  int num = await this._context.SaveChangesAsync(stoppingToken);
-                }
-                apiResponse = (List<MisaInvoiceInfo>) null;
-              }
-              dataString = (string) null;
-            }
-            lstID = (List<string>) null;
-            response = (MisaApiResponseInvoiced) null;
-          }
-          lstValue = (List<ct_HoaDon>) null;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        TaiKhoan = (dm_TaiKhoan_Misa) null;
-      }
-      catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested)
-      {
-        _invoiceService = (InvoiceService) null;
-        return;
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine("FiveMinuteService error: " + ex.Message);
-      }
-      try
-      {
-        await Task.Delay(TimeSpan.FromMinutes((double) this.timerInterval), stoppingToken);
-      }
-      catch (OperationCanceledException ex)
-      {
-        _invoiceService = (InvoiceService) null;
-        return;
-      }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            // InvoiceService is created once and reused for the lifetime of this background service.
+            // If InvoiceService requires disposal or has its own dependencies consider registering it in DI instead.
+            var invoiceService = new InvoiceService();
+
+            try
+            {
+                _logger.LogInformation("FiveMinuteService started at {Time}", DateTime.Now);
+
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        // Adjust interval between midnight and 5 AM
+                        var now = DateTime.Now.TimeOfDay;
+                        _timerIntervalMinutes = (now >= TimeSpan.FromHours(0) && now < TimeSpan.FromHours(5)) ? 40 : 5;
+
+                        _logger.LogInformation("Run at {Time}, next delay {Minutes} minutes", DateTime.Now, _timerIntervalMinutes);
+
+                        // Find active MISA account
+                        var taiKhoan = await _context.dm_TaiKhoan_Misa
+                            .Where(e => e.LOC_ID == "02" && e.ISACTIVE)
+                            .FirstOrDefaultAsync(stoppingToken);
+
+                        if (taiKhoan != null)
+                        {
+                            // Get invoices that have been exported but missing MISA lookup/result
+                            var invoices = await _context.ct_HoaDon
+                                .Where(e => e.ISXUATHOADON
+                                            && string.IsNullOrWhiteSpace(e.MATRACUU_MISA)
+                                            && string.IsNullOrWhiteSpace(e.ERROR))
+                                .ToListAsync(stoppingToken);
+
+                            if (invoices != null && invoices.Count > 0)
+                            {
+                                var ids = invoices.Select(i => i.ID).ToList();
+
+                                var response = await invoiceService.GetListInvoiced(ids, taiKhoan.ACCESSTOKEN, taiKhoan.MASOTHUE, taiKhoan.LINK + LinkGetList);
+
+                                if (response != null && response.success && !string.IsNullOrWhiteSpace(response.data))
+                                {
+                                    var options = new JsonSerializerOptions
+                                    {
+                                        PropertyNameCaseInsensitive = true
+                                    };
+
+                                    List<MisaInvoiceInfo>? apiResponse = null;
+
+                                    try
+                                    {
+                                        apiResponse = JsonSerializer.Deserialize<List<MisaInvoiceInfo>>(response.data, options);
+                                    }
+                                    catch (JsonException jsonEx)
+                                    {
+                                        _logger.LogError(jsonEx, "Failed to deserialize MISA response");
+                                    }
+
+                                    if (apiResponse != null && apiResponse.Count > 0)
+                                    {
+                                        // Update matching invoices
+                                        foreach (var item in apiResponse)
+                                        {
+                                            if (string.IsNullOrWhiteSpace(item?.RefID))
+                                                continue;
+
+                                            var invoiceToUpdate = invoices.FirstOrDefault(e => e.ID == item.RefID);
+                                            if (invoiceToUpdate != null)
+                                            {
+                                                invoiceToUpdate.MATRACUU_MISA = item.TransactionID;
+                                                invoiceToUpdate.MACQT = item.InvoiceCode;
+                                                invoiceToUpdate.SOHOADON = item.InvNo;
+                                                invoiceToUpdate.KYHIEUHOADON = item.InvSeries;
+
+                                                _context.ct_HoaDon.Update(invoiceToUpdate);
+                                            }
+                                        }
+
+                                        try
+                                        {
+                                            var saved = await _context.SaveChangesAsync(stoppingToken);
+                                            _logger.LogInformation("Updated {Count} invoice records", saved);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex, "Error saving updated invoices to database");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogDebug("No active MISA account (LOC_ID='02') found.");
+                        }
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        _logger.LogInformation("FiveMinuteService cancellation requested.");
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "FiveMinuteService error");
+                    }
+
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(_timerIntervalMinutes), stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _logger.LogInformation("FiveMinuteService delay cancelled.");
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                // If InvoiceService implements IDisposable consider disposing it here.
+                _logger.LogInformation("FiveMinuteService stopping at {Time}", DateTime.Now);
+            }
+        }
     }
-    _invoiceService = (InvoiceService) null;
-  }
 }

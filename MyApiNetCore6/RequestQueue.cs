@@ -1,34 +1,48 @@
-﻿using System;
-namespace TS24.TO.HDDB
+﻿// Decompiled with JetBrains decompiler
+// Type: API_QuanLyTHP.RequestQueue
+// Assembly: API_QuanLyTHP, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: DC050ACB-EFEA-4AC7-80CD-78C98E6478D1
+// Assembly location: G:\MyApiNetCore6-03_Authentication_New\Publish_API\API_QuanLyTHP.dll
+
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+#nullable enable
+namespace API_QuanLyTHP;
+
+public class RequestQueue
 {
-    public class tt68_tokhaidangky_tctn : IDDataBase
+  private readonly ConcurrentQueue<Func<Task>> _queue = new ConcurrentQueue<Func<Task>>();
+  private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+
+  public async Task Enqueue(Func<Task> task)
+  {
+    this._queue.Enqueue(task);
+    await this.ProcessQueue();
+  }
+
+  private async Task ProcessQueue()
+  {
+    Func<Task> task;
+    if (!this._queue.TryDequeue(out task))
     {
-
-        #region Define constructor
-        public tt68_tokhaidangky_tctn()
-        {
-            TableName = "tt68_tokhaidangky_tctn";
-            Command = new TS24.MySQLLib.MySQLUtilities();
-        }
-        #endregion
-
-
-        #region Get or set property
-        //ID_Tkhai
-        private string _ID_TKHAI;
-        /// <summary>
-        /// Khóa ngoại
-        /// </summary>
-        public string ID_TKHAI { get { return _ID_TKHAI; } set { _ID_TKHAI = value; } }
-
-        private int _STT;
-        public int STT { get { return _STT; } set { _STT = value; } }
-
-        private string _TTCTN;
-        public string TTCTN { get { return _TTCTN; } set { _TTCTN = value; } }
-
-        private string _MSTTCTN;
-        public string MSTTCTN { get { return _MSTTCTN; } set { _MSTTCTN = value; } }
-
-        private DateTime _TNGAY;
-        public DateTime TNGAY { get { return
+      task = (Func<Task>) null;
+    }
+    else
+    {
+      await this._semaphore.WaitAsync();
+      try
+      {
+        await task();
+      }
+      finally
+      {
+        this._semaphore.Release();
+        await this.ProcessQueue();
+      }
+      task = (Func<Task>) null;
+    }
+  }
+}

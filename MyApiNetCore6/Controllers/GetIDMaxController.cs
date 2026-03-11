@@ -4,6 +4,7 @@
 // MVID: DC050ACB-EFEA-4AC7-80CD-78C98E6478D1
 // Assembly location: G:\MyApiNetCore6-03_Authentication_New\Publish_API\API_QuanLyTHP.dll
 
+using DatabaseTHP;
 using DatabaseTHP.Class;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

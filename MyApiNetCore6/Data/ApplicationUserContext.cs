@@ -1,16 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using DatabaseTHP;
+using Microsoft.AspNetCore.Identity;
 
-namespace TS24.SM24.Danhmuc.DB
+namespace MyApiNetCore6.Data
 {
-    public partial class hh_yeucaumuahang : IDBBase
+    public class dbApplicationUserContext : IdentityDbContext<ApplicationUser>
     {
-        public hh_yeucaumuahang()
-            : base()
+        public dbApplicationUserContext(DbContextOptions<dbApplicationUserContext> opt): base(opt)
         {
-            TableName = "hh_yeucaumuahang";            
+
         }
-         public override int OnSave(Devart.Data.MySql.MySqlTransaction trans = null)
-    
+    }
+}

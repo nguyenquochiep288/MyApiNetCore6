@@ -1,260 +1,176 @@
-using System.Data;
-using System.Collections;
-using Microsoft.VisualBasic;
-using System.Diagnostics;
-using System;
-using MySql.Data.MySqlClient;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using DatabaseTHP;
+using DatabaseTHP.Class;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using MyApiNetCore6.Data;
 
-namespace  TS24.hd999.Class
+namespace MyApiNetCore6.Controllers
 {
-	public class clsExcute
-	{
-      
-        public static DataSet mDataset = new DataSet();
-        public static MySqlDataAdapter mDataAdapter;
-        public static MySqlTransaction objTran;
-		public static DataView dv;
-		public static string strConn;
-        public static string strError;
-        public static bool ExcuteSql(string strSql)
-		{
-			bool returnValue;
-			
-			if (clsConnection.ConnectSQL() == false)
-			{
-				returnValue = false;
-				return returnValue;
-			}
-			clsExcute.mDataset = new DataSet();
 
-            //clsExcute.mDataset.CaseSensitive = true;
-            clsConnection.mCommand = new MySqlCommand();
-            clsConnection.mCommand.Connection = clsConnection.mSqlConn;
-            clsConnection.mCommand.CommandText = strSql;
-            mDataAdapter = new MySqlDataAdapter();
-            mDataAdapter.SelectCommand = clsConnection.mCommand;
-			try
-			{
-				mDataAdapter.Fill(mDataset, "TableName");
-			}
-			catch (Exception ex)
-			{
-                return false;
-			}
-			clsConnection.DisconnectSQL();
-			returnValue = true;
-			
-			return returnValue;
-		}
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DebtCustomerController : ControllerBase
+    {
+        private readonly dbTrangHiepPhatContext _context;
 
-        public static int ExcuteMySQL(string strSql, string database=null, string databaseName = null)
+        private readonly IConfiguration _configuration;
+
+        public DebtCustomerController(dbTrangHiepPhatContext context, IConfiguration configuration)
+        {
+            _context = context;
+            _context = context;
+            _configuration = configuration;
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<List<v_ThongKeCongNo_ChiTiet>>> PostDetail([FromBody] v_ThongKeCongNoKhachHang KhachHang)
         {
             try
             {
-                if (!string.IsNullOrEmpty(database) && string.IsNullOrEmpty(databaseName))
+                List<v_ThongKeCongNo_ChiTiet> lstThongKeCongNo_ChiTiet = new List<v_ThongKeCongNo_ChiTiet>();
+                IQueryable<v_ThongKeCongNo_ChiTiet> rlsPhieuNhap = from itm in _context.ct_PhieuNhap
+                                                                   where itm.ID_KHACHHANG == KhachHang.ID
+                                                                   where !KhachHang.ISTHEOTHOIGIAN || ((itm.NGAYLAP.Date >= KhachHang.TUNGAY.Date) & (itm.NGAYLAP.Date <= KhachHang.DENNGAY.Date))
+                                                                   join lpn in _context.dm_LoaiPhieuNhap on itm.ID_LOAIPHIEUNHAP equals lpn.ID
+                                                                   select new v_ThongKeCongNo_ChiTiet
+                                                                   {
+                                                                       LOAIPHIEU = "1",
+                                                                       ID_PHIEU = itm.ID,
+                                                                       MAPHIEU = itm.MAPHIEU,
+                                                                       NGAY = itm.NGAYLAP,
+                                                                       DIENGIAI = lpn.NAME + (string.IsNullOrEmpty(itm.GHICHU) ? "" : (" - " + itm.GHICHU)),
+                                                                       THU = itm.TONGTIEN
+                                                                   };
+                IQueryable<v_ThongKeCongNo_ChiTiet> rlsPhieuXuat = from itm in _context.ct_PhieuXuat
+                                                                   where itm.ID_KHACHHANG == KhachHang.ID
+                                                                   where !KhachHang.ISTHEOTHOIGIAN || ((itm.NGAYLAP.Date >= KhachHang.TUNGAY.Date) & (itm.NGAYLAP.Date <= KhachHang.DENNGAY.Date))
+                                                                   join lpn in _context.dm_LoaiPhieuXuat on itm.ID_LOAIPHIEUXUAT equals lpn.ID
+                                                                   select new v_ThongKeCongNo_ChiTiet
+                                                                   {
+                                                                       LOAIPHIEU = "3",
+                                                                       ID_PHIEU = itm.ID,
+                                                                       MAPHIEU = itm.MAPHIEU,
+                                                                       NGAY = itm.NGAYLAP,
+                                                                       DIENGIAI = lpn.NAME + (string.IsNullOrEmpty(itm.GHICHU) ? "" : (" - " + itm.GHICHU)),
+                                                                       CHI = itm.TONGTIEN
+                                                                   };
+                IQueryable<v_ThongKeCongNo_ChiTiet> rlsPhieuThu = from itm in _context.ct_PhieuThu
+                                                                  where itm.ID_KHACHHANG == KhachHang.ID
+                                                                  where !KhachHang.ISTHEOTHOIGIAN || ((itm.NGAYLAP.Date >= KhachHang.TUNGAY.Date) & (itm.NGAYLAP.Date <= KhachHang.DENNGAY.Date))
+                                                                  join lpn in _context.dm_LoaiPhieuThu on itm.ID_LOAIPHIEUTHU equals lpn.ID
+                                                                  select new v_ThongKeCongNo_ChiTiet
+                                                                  {
+                                                                      LOAIPHIEU = "2",
+                                                                      ID_PHIEU = itm.ID,
+                                                                      MAPHIEU = itm.MAPHIEU,
+                                                                      NGAY = itm.NGAYLAP,
+                                                                      DIENGIAI = lpn.NAME + (string.IsNullOrEmpty(itm.LYDO) ? "" : (" - " + itm.LYDO)),
+                                                                      THU = itm.SOTIEN
+                                                                  };
+                IQueryable<v_ThongKeCongNo_ChiTiet> rlsPhieuChi = from itm in _context.ct_PhieuChi
+                                                                  where itm.ID_KHACHHANG == KhachHang.ID
+                                                                  where !KhachHang.ISTHEOTHOIGIAN || ((itm.NGAYLAP.Date >= KhachHang.TUNGAY.Date) & (itm.NGAYLAP.Date <= KhachHang.DENNGAY.Date))
+                                                                  join lpn in _context.dm_LoaiPhieuChi on itm.ID_LOAIPHIEUCHI equals lpn.ID
+                                                                  select new v_ThongKeCongNo_ChiTiet
+                                                                  {
+                                                                      LOAIPHIEU = "4",
+                                                                      ID_PHIEU = itm.ID,
+                                                                      MAPHIEU = itm.MAPHIEU,
+                                                                      NGAY = itm.NGAYLAP,
+                                                                      DIENGIAI = lpn.NAME + (string.IsNullOrEmpty(itm.LYDO) ? "" : (" - " + itm.LYDO)),
+                                                                      CHI = itm.SOTIEN
+                                                                  };
+                lstThongKeCongNo_ChiTiet.AddRange(rlsPhieuNhap);
+                lstThongKeCongNo_ChiTiet.AddRange(rlsPhieuXuat);
+                lstThongKeCongNo_ChiTiet.AddRange(rlsPhieuChi);
+                lstThongKeCongNo_ChiTiet.AddRange(rlsPhieuThu);
+                return Ok(new ApiResponse
                 {
-                    switch (database)
+                    Success = true,
+                    Message = "Success",
+                    Data = lstThongKeCongNo_ChiTiet
+                });
+            }
+            catch (Exception ex)
+            {
+                Exception ex2 = ex;
+                return Ok(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex2.Message,
+                    Data = ""
+                });
+            }
+        }
+
+        [HttpDelete("{LOC_ID}/{ID}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> DeleteInput(string LOC_ID, string ID)
+        {
+            try
+            {
+                ct_PhieuGiaoHang Input = await _context.ct_PhieuGiaoHang.FirstOrDefaultAsync((ct_PhieuGiaoHang e) => e.LOC_ID == LOC_ID && e.ID == ID);
+                if (Input == null)
+                {
+                    return Ok(new ApiResponse
                     {
-                        case "BEGIN":
-                            clsConnection._DBIP = BaseParam.IPDatabase_Begin;
-                            clsConnection._DBPort = BaseParam.PortDatabase_Begin.ToString();
-                            clsConnection._DBName = BaseParam.NameDatabase_Begin;
-                            clsConnection._DBUsername = BaseParam.UsernameDatabase_Begin;
-                            clsConnection._DBPassword = BaseParam.PasswordDatabase_Begin;
-                            break;
-                        case "END":
-                            clsConnection._DBIP = BaseParam.IPDatabase_End;
-                            clsConnection._DBPort = BaseParam.PortDatabase_End.ToString();
-                            clsConnection._DBName = string.IsNullOrEmpty(database) ? BaseParam.NameDatabase_End : database;
-                            clsConnection._DBUsername = BaseParam.UsernameDatabase_End;
-                            clsConnection._DBPassword = BaseParam.PasswordDatabase_End;
-                            break;
+                        Success = false,
+                        Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
+                        Data = ""
+                    });
+                }
+                using IDbContextTransaction transaction = _context.Database.BeginTransaction();
+                List<ct_PhieuGiaoHang_ChiTiet> lstPhieuNhap_ChiTiet = await _context.ct_PhieuGiaoHang_ChiTiet.Where((ct_PhieuGiaoHang_ChiTiet e) => e.LOC_ID == Input.LOC_ID && e.ID_PHIEUGIAOHANG == Input.ID).ToListAsync();
+                if (lstPhieuNhap_ChiTiet != null)
+                {
+                    foreach (ct_PhieuGiaoHang_ChiTiet itm in lstPhieuNhap_ChiTiet)
+                    {
+                        _context.ct_PhieuGiaoHang_ChiTiet.Remove(itm);
                     }
                 }
-                else if (!string.IsNullOrEmpty(databaseName))
+                List<ct_PhieuGiaoHang_NhanVienGiao> lstPhieuNhap_NhanVienGiao = await _context.ct_PhieuGiaoHang_NhanVienGiao.Where((ct_PhieuGiaoHang_NhanVienGiao e) => e.LOC_ID == Input.LOC_ID && e.ID_PHIEUGIAOHANG == Input.ID).ToListAsync();
+                if (lstPhieuNhap_ChiTiet != null)
                 {
-                    clsConnection._DBIP = BaseParam.IPDatabase_Begin;
-                    clsConnection._DBPort = BaseParam.PortDatabase_Begin.ToString();
-                    clsConnection._DBName = databaseName;
-                    clsConnection._DBUsername = BaseParam.UsernameDatabase_Begin;
-                    clsConnection._DBPassword = BaseParam.PasswordDatabase_Begin;
+                    foreach (ct_PhieuGiaoHang_NhanVienGiao itm2 in lstPhieuNhap_NhanVienGiao)
+                    {
+                        _context.ct_PhieuGiaoHang_NhanVienGiao.Remove(itm2);
+                    }
                 }
-                if (clsConnection.ConnectSQL() == false)
+                _context.ct_PhieuGiaoHang.Remove(Input);
+                AuditLogController auditLog = new AuditLogController(_context, _configuration);
+                auditLog.InserAuditLog();
+                await _context.SaveChangesAsync();
+                transaction.Commit();
+                return Ok(new ApiResponse
                 {
-                    return -1;
-                }
-
-                MySqlConnection mSqlConn = new MySqlConnection(strConn);
-                MySqlCommand mCommand = new MySqlCommand(strSql, clsConnection.mSqlConn);
-                int ikq = mCommand.ExecuteNonQuery();
-                clsConnection.DisconnectSQL();
-
-                return ikq;
+                    Success = true,
+                    Message = "Success",
+                    Data = ""
+                });
             }
             catch (Exception ex)
             {
-                strError = ex.Message;
-                return -1;
+                Exception ex2 = ex;
+                return Ok(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex2.Message,
+                    Data = ""
+                });
             }
-
         }
 
-        public static bool ExcuteSql(string strSql, string Connect, string database)
+        private bool InputExistsID(string LOC_ID, string ID)
         {
-            strError = string.Empty;
-            bool returnValue;
-            switch (Connect)
-            {
-                case "BEGIN":
-                    clsConnection._DBIP = BaseParam.IPDatabase_Begin;
-                    clsConnection._DBPort = BaseParam.PortDatabase_Begin.ToString();
-                    clsConnection._DBName = string.IsNullOrEmpty(database) ? BaseParam.NameDatabase_Begin : database;
-                    clsConnection._DBUsername = BaseParam.UsernameDatabase_Begin;
-                    clsConnection._DBPassword = BaseParam.PasswordDatabase_Begin;
-                    break;
-                case "END":
-                    clsConnection._DBIP = BaseParam.IPDatabase_End;
-                    clsConnection._DBPort = BaseParam.PortDatabase_End.ToString();
-                    clsConnection._DBName = string.IsNullOrEmpty(database) ?  BaseParam.NameDatabase_End : database;
-                    clsConnection._DBUsername = BaseParam.UsernameDatabase_End;
-                    clsConnection._DBPassword = BaseParam.PasswordDatabase_End;
-                    break;
-            }
-            if (clsConnection.ConnectSQL() == false)
-            {
-                returnValue = false;
-                return returnValue;
-            }
-            clsExcute.mDataset = new DataSet();
-
-            //clsExcute.mDataset.CaseSensitive = true;
-            clsConnection.mCommand = new MySqlCommand();
-            clsConnection.mCommand.Connection = clsConnection.mSqlConn;
-            clsConnection.mCommand.CommandText = strSql;
-            mDataAdapter = new MySqlDataAdapter();
-            mDataAdapter.SelectCommand = clsConnection.mCommand;
-            try
-            {
-                mDataAdapter.Fill(clsExcute.mDataset, "TableName");
-            }
-            catch (Exception ex)
-            {
-                strError = ex.Message;
-                return false;
-            }
-            clsConnection.DisconnectSQL();
-            returnValue = true;
-
-            return returnValue;
+            return _context.ct_PhieuGiaoHang.Any((ct_PhieuGiaoHang e) => e.LOC_ID == LOC_ID && e.ID == ID);
         }
-
-        public static bool ExcuteProcedure(string strProcedure)
-		{
-			bool returnValue;
-			// Dim dbConnection As New clsConnection 'gọi đến class DbConnection
-			bool bCheck = true;
-			if (clsConnection.ConnectSQL() == false)
-			{
-				return false;
-			}
-
-            clsConnection.mCommand = new MySqlCommand(strProcedure, clsConnection.mSqlConn);
-			clsConnection.StartTransaction();
-            clsConnection.mCommand.CommandType = CommandType.Text;
-			
-			try
-			{
-                clsConnection.mCommand.ExecuteNonQuery();
-				bCheck = true;
-				clsConnection.CommitTransaction();
-			}
-			catch (Exception ex)
-			{
-				//Tạm thời bỏ qua
-				bCheck = false;
-				clsConnection.RollbackTransaction();
-				//Thêm vào
-				clsConnection.DisconnectSQL();
-				returnValue = false;
-				return returnValue;
-				//hết
-			}
-			clsConnection.DisconnectSQL();
-			returnValue = true;
-			
-			return returnValue;
-		}
-		public static bool ExcuteBaoCaoSql(string strSql, DataSet ds)
-		{
-			bool returnValue;
-			// Dim dbConnection As New clsConnection 'gọi đến class DbConnection
-			if (clsConnection.ConnectSQL() == false)
-			{
-				returnValue = false;
-				return returnValue;
-			}
-			ds = new DataSet();
-			//ds.CaseSensitive = true;
-            clsConnection.mCommand = new MySqlCommand();
-            clsConnection.mCommand.Connection = clsConnection.mSqlConn;
-			clsConnection.mCommand.CommandText = strSql;
-            mDataAdapter = new MySqlDataAdapter();
-			mDataAdapter.SelectCommand = clsConnection.mCommand;
-			try
-			{
-				mDataAdapter.Fill(ds, "TableName");
-			}
-			catch (Exception ex)
-			{
-                //MessageBox.Show(ex.Message, "Thông Báo");
-			}
-			clsConnection.DisconnectSQL();
-			returnValue = true;
-			
-			return returnValue;
-		}
-		public static DataTable Select_Where(string sql)
-		{
-			DataTable returnValue = null;
-			if (ExcuteSql(sql) == true)
-			{
-				returnValue = clsExcute.mDataset.Tables[0];
-			}
-			return returnValue;
-		}
-
-        public static DataTable Select_Where(string sql, string Connect, string database = null)
-        {
-            DataTable returnValue = null;
-            if (ExcuteSql(sql, Connect, database) == true)
-            {
-                returnValue = clsExcute.mDataset.Tables[0];
-            }
-            return returnValue;
-        }
-
-        public static DataSet Select_Dataset(string sql, string Connect, string database = null)
-        {
-            DataSet returnValue = null;
-            if (ExcuteSql(sql, Connect, database) == true)
-            {
-                returnValue = clsExcute.mDataset;
-            }
-            return returnValue;
-        }
-
-
-        public static DataTable SelectKiemTraBaoCao(string sql)
-		{
-			DataTable returnValue = null;
-			if (ExcuteSql(sql) == true)
-			{
-				returnValue = clsExcute.mDataset.Tables[0];
-			}
-			return returnValue;
-		}
-
-	}
-	
+    }
 }
-                                                                                                                                             

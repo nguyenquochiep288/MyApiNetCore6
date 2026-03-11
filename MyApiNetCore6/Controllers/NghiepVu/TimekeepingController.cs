@@ -1,388 +1,362 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Text;
 using System.Linq;
-using System.Windows.Forms;
-using DevExpress.XtraEditors;
-using TS24.SM24.Danhmuc.DB.Forms;
-using TS24.SM24.Danhmuc.DB;
-using TS24.SM24.Danhmuc.DB.Forms.Processes;
-using TS24.SM24.BaseMethod;
+using System.Linq.Dynamic.Core;
+using System.Threading.Tasks;
+using DatabaseTHP;
+using DatabaseTHP.Class;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MyApiNetCore6.Data;
 
-namespace TS24.SM24.Danhmuc.UserControl
+namespace MyApiNetCore6.Controllers
 {
-    public partial class dm_quydoi : DevExpress.XtraEditors.XtraUserControl
-    {
-        public delegate void CloseForm(bool b);
-        public CloseForm fncCloseForm { set; get; }
-        public bool formHasChange { set; get; }
-        List<dm_dvt1> lsDVT { set; get; }
-        List<dm_hanghoa> lsHH { set; get; }
-        ViewDmQuyDoi oQuyDoi { set; get; }
-        string guid_hh { set; get; }
-        string ma_dvt { set; get; }
-        string ma_dvtqd { set; get; }
 
-        public dm_quydoi()
-        {
-            InitializeComponent();
-        }
+	[Route("api/[controller]")]
+	[ApiController]
+	public class TimekeepingController : ControllerBase
+	{
+		private readonly dbTrangHiepPhatContext _context;
 
-        bool Check()
-        {
-            bool rs = true;
-            if(cbDVT.Text == "")
-            {
-                dxError.SetError(cbDVT, "Vui lòng nhập đơn vị tính!");
-                rs = false;
-            }
-            else
-                dxError.SetError(cbDVT, "");
+		private readonly IConfiguration _configuration;
 
-            if (cbDVTQD.Text == "")
-            {
-                dxError.SetError(cbDVTQD, "Vui lòng nhập đơn vị tính quy đổi!");
-                rs = false;
-            }
-            else
-                dxError.SetError(cbDVTQD, "");
+		public TimekeepingController(dbTrangHiepPhatContext context, IConfiguration configuration)
+		{
+			_context = context;
+			_context = context;
+			_configuration = configuration;
+		}
 
-            if (txtSoLuong.Text == "" || Convert.ToDouble(txtSoLuong.Text) <= 0)
-            {
-                dxError.SetError(txtSoLuong, "Số lượng quy đổi không hợp lệ!");
-                rs = false;
-            }
-            else
-                dxError.SetError(txtSoLuong, "");
+		[HttpGet("{LOC_ID}")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> GetArea(string LOC_ID)
+		{
+			try
+			{
+				List<nv_ChamCong> lstValue = await (from e in _context.nv_ChamCong
+													where e.LOC_ID == LOC_ID
+													orderby e.NGAYCONG
+													select e).ToListAsync();
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = lstValue
+				});
+			}
+			catch (Exception ex)
+			{
+				Exception ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            return rs;
-        }
+		[HttpGet("{LOC_ID}/{Type}/{KeyWhere}/{ValuesSearch}")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> GetArea(string LOC_ID, int Type, string KeyWhere = "", string ValuesSearch = "")
+		{
+			try
+			{
+				ValuesSearch = ValuesSearch.Replace("%2f", "/");
+				List<nv_ChamCong> lstValue = await (from e in _context.nv_ChamCong.Where((nv_ChamCong e) => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch)
+													orderby e.NGAYCONG
+													select e).ToListAsync();
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = lstValue
+				});
+			}
+			catch (Exception ex)
+			{
+				Exception ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-        void Save()
-        {
-            if (!Check())
-                return;
+		[HttpGet("{LOC_ID}/{ID}")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> GetArea(string LOC_ID, string ID)
+		{
+			try
+			{
+				nv_ChamCong Area = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == LOC_ID && e.ID == ID);
+				if (Area == null)
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
+						Data = ""
+					});
+				}
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = Area
+				});
+			}
+			catch (Exception ex)
+			{
+				Exception ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            ma_dvt = "";
-            ma_dvtqd = "";
-            dm_dvt1 dvt = null;
-            dm_dvt1 dvtqd = null;
+		[HttpPut("{LOC_ID}/{ID}")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> PutArea(string LOC_ID, string ID, nv_ChamCong Area)
+		{
+			try
+			{
+				if (!AreaExistsID(LOC_ID, Area.ID))
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Không tìm thấy " + LOC_ID + "-" + Area.ID + " dữ liệu!",
+						Data = ""
+					});
+				}
+				_context.Entry(Area).State = EntityState.Modified;
+				AuditLogController auditLog = new AuditLogController(_context, _configuration);
+				auditLog.InserAuditLog();
+				await _context.SaveChangesAsync();
+				nv_ChamCong OKArea = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = OKArea
+				});
+			}
+			catch (DbUpdateConcurrencyException ex)
+			{
+				DbUpdateConcurrencyException ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            if (!string.IsNullOrEmpty(cbDVT.Text))
-            {
-                lap:
-                dvt = lsDVT.Where(c => c.TEN == cbDVT.Text).FirstOrDefault();
-                if (dvt != null)
-                    ma_dvt = dvt.MA;
-                else
-                {
-                    PDmQuyDoi.SaveDVT(cbDVT.Text);
-                    lsDVT = PDmQuyDoi.GetAllDVT();
-                    goto lap;
-                }
-            }
+		[HttpPost("PostCheckIn")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> PostCheckIn(nv_ChamCong Area)
+		{
+			try
+			{
+				nv_ChamCong nv_ChamCong2 = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.NGAYCONG.Date == Area.NGAYCONG.Date && e.ID_NHANVIEN == Area.ID_NHANVIEN);
+				if (nv_ChamCong2 != null)
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Đã tồn tại " + nv_ChamCong2.LOC_ID + "-" + nv_ChamCong2.ID + " trong dữ liệu!(Đã có dữ liệu chấm công ngày " + Area.NGAYCONG.ToString("dd/MM/yyyy") + " )",
+						Data = ""
+					});
+				}
+				_context.nv_ChamCong.Add(Area);
+				AuditLogController auditLog = new AuditLogController(_context, _configuration);
+				auditLog.InserAuditLog();
+				await _context.SaveChangesAsync();
+				nv_ChamCong OKArea = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = OKArea
+				});
+			}
+			catch (DbUpdateConcurrencyException ex)
+			{
+				DbUpdateConcurrencyException ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            if (!string.IsNullOrEmpty(cbDVT.Text))
-            {
-                lap1:
-                dvtqd = lsDVT.Where(c => c.TEN == cbDVTQD.Text).FirstOrDefault();
-                if (dvtqd != null)
-                    ma_dvtqd = dvtqd.MA;
-                else
-                {
-                    PDmQuyDoi.SaveDVT(cbDVTQD.Text);
-                    lsDVT = PDmQuyDoi.GetAllDVT();
-                    goto lap1;
-                }
-            }
+		[HttpPost("PostCheckOut")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> PostCheckOut(nv_ChamCong Area)
+		{
+			try
+			{
+				if (!AreaExistsID(Area.LOC_ID, Area.ID))
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Không tìm thấy " + Area.LOC_ID + "-" + Area.ID + " dữ liệu!",
+						Data = ""
+					});
+				}
+				nv_ChamCong nv_ChamCong2 = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
+				if (nv_ChamCong2 != null)
+				{
+					if (nv_ChamCong2.ID_NHANVIEN != Area.ID_NHANVIEN)
+					{
+						return Ok(new ApiResponse
+						{
+							Success = false,
+							Message = "Dữ liệu chấm công khác nhau!",
+							Data = ""
+						});
+					}
+					nv_ChamCong2.ID_NGUOISUA = Area.ID_NGUOISUA;
+					nv_ChamCong2.THOIGIANSUA = Area.THOIGIANSUA;
+					nv_ChamCong2.THOIGIANRA = Area.THOIGIANRA;
+					nv_ChamCong2.IP_CHAMCONGRA = Area.IP_CHAMCONGRA;
+					string GHICHU = nv_ChamCong2.GHICHU + Area.GHICHU;
+					if (GHICHU.Length > 250)
+					{
+						nv_ChamCong2.GHICHU = GHICHU.Substring(0, 249);
+					}
+					else
+					{
+						nv_ChamCong2.GHICHU = GHICHU;
+					}
+				}
+				_context.Entry(nv_ChamCong2).State = EntityState.Modified;
+				AuditLogController auditLog = new AuditLogController(_context, _configuration);
+				auditLog.InserAuditLog();
+				await _context.SaveChangesAsync();
+				nv_ChamCong OKArea = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = OKArea
+				});
+			}
+			catch (DbUpdateConcurrencyException ex)
+			{
+				DbUpdateConcurrencyException ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            bool insert = true;
-            if (oQuyDoi != null && !string.IsNullOrEmpty(oQuyDoi.ID))
-                insert = false;
+		[HttpPost]
+		[Authorize(Roles = "User")]
+		public async Task<ActionResult<nv_ChamCong>> PostArea(nv_ChamCong Area)
+		{
+			try
+			{
+				if (AreaExistsID(Area.LOC_ID, Area.ID))
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Đã tồn tại " + Area.LOC_ID + "-" + Area.ID + " trong dữ liệu!",
+						Data = ""
+					});
+				}
+				nv_ChamCong nv_ChamCong2 = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.NGAYCONG.Date == Area.NGAYCONG.Date && e.ID_NHANVIEN == Area.ID_NHANVIEN);
+				if (nv_ChamCong2 != null)
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Đã tồn tại " + nv_ChamCong2.LOC_ID + "-" + nv_ChamCong2.ID + " trong dữ liệu!(Đã có dữ liệu chấm công ngày " + Area.NGAYCONG.ToString("dd/MM/yyyy") + " )",
+						Data = ""
+					});
+				}
+				_context.nv_ChamCong.Add(Area);
+				AuditLogController auditLog = new AuditLogController(_context, _configuration);
+				auditLog.InserAuditLog();
+				await _context.SaveChangesAsync();
+				nv_ChamCong OKArea = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == Area.LOC_ID && e.ID == Area.ID);
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = OKArea
+				});
+			}
+			catch (Exception ex)
+			{
+				Exception ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            string id = oQuyDoi != null && !string.IsNullOrEmpty(oQuyDoi.ID) ? oQuyDoi.ID : Guid.NewGuid().ToString();
-            if (oQuyDoi != null && guid_hh == oQuyDoi.TENHH) guid_hh = null;
+		[HttpDelete("{LOC_ID}/{ID}")]
+		[Authorize(Roles = "User")]
+		public async Task<IActionResult> DeleteArea(string LOC_ID, string ID)
+		{
+			try
+			{
+				nv_ChamCong Area = await _context.nv_ChamCong.FirstOrDefaultAsync((nv_ChamCong e) => e.LOC_ID == LOC_ID && e.ID == ID);
+				if (Area == null)
+				{
+					return Ok(new ApiResponse
+					{
+						Success = false,
+						Message = "Không tìm thấy " + LOC_ID + "-" + ID + " dữ liệu!",
+						Data = ""
+					});
+				}
+				_context.nv_ChamCong.Remove(Area);
+				AuditLogController auditLog = new AuditLogController(_context, _configuration);
+				auditLog.InserAuditLog();
+				await _context.SaveChangesAsync();
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = ""
+				});
+			}
+			catch (Exception ex)
+			{
+				Exception ex2 = ex;
+				return Ok(new ApiResponse
+				{
+					Success = false,
+					Message = ex2.Message,
+					Data = ""
+				});
+			}
+		}
 
-            if (PDmQuyDoi.Save(new ViewDmQuyDoi
-            {
-                ID = id,
-                GUID = oQuyDoi != null && !string.IsNullOrEmpty(oQuyDoi.GUID) ? oQuyDoi.GUID : id,
-                DONGIA = Convert.ToDouble(txtDonGia.EditValue == null ? "0" : txtDonGia.EditValue.ToString()),
-                GHICHU = txtGhiChu.Text,
-                GUID_CONGTY = BaseParam.ActiveID,
-                GUID_DVT = dvt != null && !string.IsNullOrEmpty(dvt.ID) ? dvt.GUID : "",
-                GUID_DVTQD = dvtqd != null && !string.IsNullOrEmpty(dvtqd.ID) ? dvtqd.GUID : "",
-                GUID_HH = guid_hh,
-                GUID_KHO = BaseParam.GuidKhoUser,
-                MADVT = ma_dvt,
-                MADVTQD = ma_dvtqd,
-                NGAYTHUCHIEN = DateTime.Now,
-                NGUOITHUCHIEN = BaseParam.TenDangNhap,
-                SOLUONG = Convert.ToDouble(txtSoLuong.EditValue == null ? "0" : txtSoLuong.EditValue.ToString()),
-                TENHH = !String.IsNullOrEmpty(guid_hh) ? null : txtTenHH.Text,
-                TINHTRANGSD = chkTTSD.Checked ? "1" : "0",
-                XOA = !chkTTSD.Checked ? "1" : "0"
-            }, insert))
-            {
-                XtraMessageBox.Show("Lưu thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Reset();
-                LoadData();
-                btnXoa.Enabled = btnGhi.Enabled = 
-                    panelControl3.Enabled = false;
-            }
-            else
-                XtraMessageBox.Show("Lưu không thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-
-        private void btn_Click(object sender, EventArgs e)
-        {
-            if (sender.Equals(btnDong))
-            {
-                if (fncCloseForm != null)
-                    fncCloseForm(true);
-            }
-            else if (sender.Equals(btnThem))
-            {
-                Reset();
-                panelControl3.Enabled = btnGhi.Enabled = btnNgung.Enabled = true;
-                btnSua.Enabled = btnXoa.Enabled = false;
-            }
-            else if (sender.Equals(btnSua))
-            {
-                panelControl3.Enabled = false;
-                gridView_Click(null, null);
-            }
-            else if (sender.Equals(btnGhi))
-            {
-                Save();
-            }
-            else if (sender.Equals(btnNgung))
-            {
-                Reset();
-                panelControl3.Enabled =
-                    btnGhi.Enabled = btnXoa.Enabled = false;
-                btnSua.Enabled = true;
-            }
-            else if (sender.Equals(btnXoa))
-            {
-                Deleted();
-                //if (oQuyDoi == null || string.IsNullOrEmpty(oQuyDoi.ID) || oQuyDoi.XOA == "1")
-                //    return;
-                //if (PDmQuyDoi.Xoa(oQuyDoi.ID))
-                //{
-                //    XtraMessageBox.Show("Lưu trạng thái thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                //    panelControl3.Enabled = false;
-                //    Reset();
-                //    LoadData();
-                //}
-                //else
-                //    XtraMessageBox.Show("Lưu trạng thái không thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void dm_quydoi_Load(object sender, EventArgs e)
-        {
-            LoadData();
-        }
-
-        void LoadData()
-        {
-            lsDVT = PDmQuyDoi.GetAllDVT();
-            lkDVT.DataSource = lsDVT;
-            cbDVT.Properties.Items.Clear();
-            cbDVTQD.Properties.Items.Clear();
-            if (lsDVT != null)
-            {
-                foreach (var i in lsDVT)
-                {
-                    cbDVT.Properties.Items.Add(i.TEN);
-                    cbDVTQD.Properties.Items.Add(i.TEN);
-                }
-            }
-            MainGrid.DataSource = PDmQuyDoi.GetAll();
-            dm_hanghoa hh = new dm_hanghoa();
-            cbHangHoa.Properties.DataSource =
-                lsHH = hh.GetAll<dm_hanghoa>();
-            repDMHH.DataSource = lsHH;
-        }
-
-        private void gridView_Click(object sender, EventArgs e)
-        {
-            oQuyDoi = (ViewDmQuyDoi)gridView.GetFocusedRow();
-            if (oQuyDoi == null) return;
-
-            guid_hh = oQuyDoi.GUID_HH;
-            btnNgung.Enabled =
-                btnXoa.Enabled = 
-                btnGhi.Enabled = 
-                panelControl3.Enabled = true;
-
-            if (!String.IsNullOrEmpty(oQuyDoi.GUID_HH))
-            {
-                var chk = lsHH.Where(c => c.GUID == oQuyDoi.GUID_HH).FirstOrDefault();
-                if (chk != null)
-                {
-                    txtTenHH.Text = chk.TEN;
-                    txtTenHH.Enabled = false;
-                }
-                else
-                {
-                    txtTenHH.Text = oQuyDoi.TENHH;
-                    txtTenHH.Enabled = true;
-                }
-            }
-            else
-                txtTenHH.Text = oQuyDoi.TENHH;
-            
-
-            chkDelete.Checked = oQuyDoi.XOA == "1";
-            chkTTSD.Checked = oQuyDoi.TINHTRANGSD == "1";
-
-            if (!string.IsNullOrEmpty(oQuyDoi.GUID_DVT))
-            {
-                var dvt = lsDVT.Where(c => c.GUID == oQuyDoi.GUID_DVT).FirstOrDefault();
-                if (dvt != null) cbDVT.Text = dvt.TEN;
-                else cbDVT.Text = "";
-            }
-            else
-                cbDVT.Text = "";
-
-            if (!string.IsNullOrEmpty(oQuyDoi.GUID_DVTQD))
-            {
-                var dvt = lsDVT.Where(c => c.GUID == oQuyDoi.GUID_DVTQD).FirstOrDefault();
-                if (dvt != null) cbDVTQD.Text = dvt.TEN;
-                else cbDVTQD.Text = "";
-            }
-            else
-                cbDVTQD.Text = "";
-
-            txtSoLuong.EditValue = oQuyDoi.SOLUONG;
-            txtDonGia.EditValue = oQuyDoi.DONGIA;
-            txtGhiChu.Text = oQuyDoi.GHICHU;
-        }
-
-        void Reset()
-        {
-            oQuyDoi = new ViewDmQuyDoi();
-            txtTenHH.Text = "";
-            chkDelete.Checked = false;
-            chkTTSD.Checked = true;
-            cbDVT.Text = "";
-            cbDVTQD.Text = "";
-            txtSoLuong.EditValue = null;
-            txtDonGia.EditValue = null;
-            txtGhiChu.Text = "";
-            txtTenHH.Enabled = true;
-            guid_hh = null;
-        }
-
-        private void cbHangHoa_EditValueChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                SearchLookUpEdit grLookup = (SearchLookUpEdit)sender;
-                dm_hanghoa h = (dm_hanghoa)grLookup.Properties.View.GetFocusedRow();
-                if (oQuyDoi == null || String.IsNullOrEmpty(oQuyDoi.ID)) Reset();
-
-                guid_hh = h.ID;
-                txtTenHH.Text = h.TEN;
-
-                if (!string.IsNullOrEmpty(h.GUID_DVT))
-                {
-                    var dvt = lsDVT.Where(c => c.GUID == h.GUID_DVT).FirstOrDefault();
-                    if (dvt != null)
-                    {
-                        cbDVTQD.Text = cbDVT.Text = dvt.TEN;
-                    }
-                    else
-                    {
-                        cbDVTQD.Text = cbDVT.Text = "";
-                    }
-                }
-
-                txtSoLuong.EditValue = 1;
-                txtDonGia.EditValue = h.DGBAN;
-                txtTenHH.Enabled = false;
-            }
-            catch(Exception ex)
-            {
-                XtraMessageBox.Show(ex.Message);
-            }
-        }
-
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if ((base.ActiveControl is TextEdit) && (keyData == Keys.Return))
-            {
-                SendKeys.Send("{Tab}");
-            }
-            if (keyData == Keys.F11)
-            {
-                Deleted();
-            }
-            if (keyData == Keys.F5)
-            {
-                if (btnGhi.Enabled)
-                    Save();
-            }
-            if (keyData == Keys.F4)
-            {
-                if (btnThem.Enabled)
-                    Reset();
-            }
-            if (keyData == Keys.F12)
-            {
-                btn_Click(btnDong, null);
-            }
-            if (keyData == Keys.Escape)
-            {
-                btn_Click(btnNgung, null);
-            }
-
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
-
-        private void Deleted()
-        {
-            if (oQuyDoi == null || string.IsNullOrEmpty(oQuyDoi.ID))
-                return;
-
-            //if(oQuyDoi.TINHTRANGSD == "1" && chkTTSD.Checked)
-            //{
-            //    XtraMessageBox.Show("Danh mục đang sử dụng không thể xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            //    return;
-            //}
-
-            if (XtraMessageBox.Show("Xác nhận xóa mục/hàng hóa quy đổi?", "Thông báo", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                if (PDmQuyDoi.Delete(oQuyDoi.ID))
-                    LoadData();
-            }
-        }
-
-        private void cbHangHoa_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
-        {
-            if (e.Button.Kind == DevExpress.XtraEditors.Controls.ButtonPredefines.Plus)
-            {
-                frm_dmhanghoaNew f = new frm_dmhanghoaNew();
-                f.ShowDialog();
-
-                cbHangHoa.Properties.DataSource =
-                    lsHH = (new dm_hanghoa()).GetAll<dm_hanghoa>();
-                repDMHH.DataSource = lsHH;
-            }
-        }
-
-        private void gridView_CustomRowCellEdit(object sender, DevExpress.XtraGrid.Views.Grid.CustomRowCellEditEventArgs e)
-        {
-            if (e.Column.FieldName == "GUID_HH")
-            {
-                var hh = (ViewDmQuyDoi)gridView.GetRow(e.RowHandle);
-                if (!String.IsNullOrEmpty(hh.GUID_HH))
-                {
-                    var chk = lsHH.Where(c => c.ID == hh.GUID_HH).FirstOrDefault();
-                    if (chk != null)
-                    {
+		private bool AreaExistsID(string LOC_ID, string ID)
+		{
+			return _context.nv_ChamCong.Any((nv_ChamCong e) => e.LOC_ID == LOC_ID && e.ID == ID);
+		}
+	}
+}
