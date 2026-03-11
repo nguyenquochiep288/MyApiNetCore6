@@ -124,7 +124,7 @@ namespace MyApiNetCore6.Controllers
 
 		[HttpPut("{LOC_ID}/{MA}")]
 		[Authorize(Roles = "User")]
-		public async Task<IActionResult> PutCustomer(string LOC_ID, string MA, dm_KhachHang Customer)
+		public async Task<IActionResult> PutCustomer(string LOC_ID, string MA, v_dm_KhachHang Customer)
 		{
 			try
 			{
@@ -160,7 +160,36 @@ namespace MyApiNetCore6.Controllers
 				auditLog.InserAuditLog();
 				await _context.SaveChangesAsync();
 				view_dm_KhachHang OKCustomer = await _context.view_dm_KhachHang.FirstOrDefaultAsync((view_dm_KhachHang e) => e.LOC_ID == LOC_ID && e.ID == Customer.ID);
-				return Ok(new ApiResponse
+                if (!string.IsNullOrEmpty(Customer.PICTURE) && Customer.FILENEW)
+                {
+                    string path = "C:\\FTP\\Images_Upload\\Customer";
+                    if (Customer.FILENEW)
+                    {
+                        try
+                        {
+                            if (!Directory.Exists(path))
+                            {
+                                Directory.CreateDirectory(path);
+                            }
+                            if (System.IO.File.Exists(path + "\\" + Customer.PICTURE))
+                            {
+                                System.IO.File.Delete(path + "\\" + Customer.PICTURE);
+                            }
+                            System.IO.File.WriteAllBytes(bytes: Convert.FromBase64String(Customer.FILEBASE64), path: path + "\\" + Customer.PICTURE);
+                        }
+                        catch (Exception ex)
+                        {
+                            Exception e = ex;
+                            return Ok(new ApiResponse
+                            {
+                                Success = false,
+                                Message = e.Message,
+                                Data = ""
+                            });
+                        }
+                    }
+                }
+                return Ok(new ApiResponse
 				{
 					Success = true,
 					Message = "Success",
@@ -181,7 +210,7 @@ namespace MyApiNetCore6.Controllers
 
 		[HttpPost]
 		[Authorize(Roles = "User")]
-		public async Task<ActionResult<dm_KhachHang>> PostCustomer(dm_KhachHang Customer)
+		public async Task<ActionResult<dm_KhachHang>> PostCustomer(v_dm_KhachHang Customer)
 		{
 			try
 			{
@@ -194,7 +223,29 @@ namespace MyApiNetCore6.Controllers
 						Data = ""
 					});
 				}
-				_context.dm_KhachHang.Add(Customer);
+                if (!string.IsNullOrEmpty(Customer.PICTURE) && !string.IsNullOrEmpty(Customer.FILEBASE64))
+                {
+                    try
+                    {
+                        string path = "C:\\FTP\\Images_Upload\\Customer";
+                        if (!Directory.Exists(path))
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        System.IO.File.WriteAllBytes(bytes: Convert.FromBase64String(Customer.FILEBASE64), path: path + "\\" + Customer.PICTURE);
+                    }
+                    catch (Exception ex)
+                    {
+                        Exception e = ex;
+                        return Ok(new ApiResponse
+                        {
+                            Success = false,
+                            Message = e.Message,
+                            Data = ""
+                        });
+                    }
+                }
+                _context.dm_KhachHang.Add(Customer);
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
 				await _context.SaveChangesAsync();
