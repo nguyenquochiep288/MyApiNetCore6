@@ -129,9 +129,6 @@ namespace MyApiNetCore6.Data
         public virtual DbSet<uniben_dm_LienKet_KhachHang> uniben_dm_LienKet_KhachHang { get; set; }
         public virtual DbSet<uniben_dm_LienKet_HangHoa> uniben_dm_LienKet_HangHoa { get; set; }
         public virtual DbSet<uniben_dm_LienKet_NhanVien> uniben_dm_LienKet_NhanVien { get; set; }
-        public virtual DbSet<v_uniben_dm_LienKet_HangHoa> v_uniben_dm_LienKet_HangHoa { get; set; }
-        public virtual DbSet<v_uniben_dm_LienKet_KhachHang> v_uniben_dm_LienKet_KhachHang { get; set; }
-        public virtual DbSet<v_uniben_dm_LienKet_NhanVien> v_uniben_dm_LienKet_NhanVien { get; set; }
         public virtual DbSet<dm_TaiKhoan_Uniben> dm_TaiKhoan_Uniben { get; set; }
         public virtual DbSet<dm_TaiKhoan_Misa> dm_TaiKhoan_Misa { get; set; }
         public virtual DbSet<dm_HangHoa_KhungGia> dm_HangHoa_KhungGia { get; set; }
