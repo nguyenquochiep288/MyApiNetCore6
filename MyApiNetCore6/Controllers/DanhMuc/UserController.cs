@@ -147,7 +147,8 @@ namespace MyApiNetCore6.Controllers
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
 				await _context.SaveChangesAsync();
-				view_AspNetUsers OKUser = await _context.view_AspNetUsers.FirstOrDefaultAsync((view_AspNetUsers e) => e.ID == User.ID);
+                
+                view_AspNetUsers OKUser = await _context.view_AspNetUsers.FirstOrDefaultAsync((view_AspNetUsers e) => e.ID == User.ID);
 				return Ok(new ApiResponse
 				{
 					Success = true,
