@@ -69,6 +69,7 @@ namespace MyApiNetCore6.Controllers
 
                             if (invoices != null && invoices.Count > 0)
                             {
+
                                 var ids = invoices.Select(i => i.ID).ToList();
 
                                 var response = await invoiceService.GetListInvoiced(ids, taiKhoan.ACCESSTOKEN, taiKhoan.MASOTHUE, taiKhoan.LINK + LinkGetList);

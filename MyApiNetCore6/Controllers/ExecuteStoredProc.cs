@@ -1668,8 +1668,8 @@ namespace MyApiNetCore6.Controllers
 			if (sp_Parameter.ISPHATSINHCONGNOTRONGKY.HasValue)
 			{
 				dictionary.Add("ISPHATSINHCONGNOTRONGKY", sp_Parameter.ISPHATSINHCONGNOTRONGKY);
-			}
-			if (sp_Parameter.ISCONCONGNO.HasValue)
+			}          
+            if (sp_Parameter.ISCONCONGNO.HasValue)
 			{
 				dictionary.Add("ISCONCONGNO", sp_Parameter.ISCONCONGNO);
 			}

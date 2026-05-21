@@ -374,24 +374,25 @@ namespace MyApiNetCore6.Controllers
 									{
 										if (NhanVien.HINHTHUC == 0 && (string.IsNullOrEmpty(SP_Parameter.ID_NHANVIEN) || NhanVien.ID_NHANVIEN == SP_Parameter.ID_NHANVIEN))
 										{
-											if (!string.IsNullOrEmpty(SP_Parameter.ID_NHOMQUYEN))
-											{
-												view_dm_NhanVien objNhanVien = await _context.view_dm_NhanVien.Where((view_dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN).FirstOrDefaultAsync();
+                                            view_dm_NhanVien objNhanVien = await _context.view_dm_NhanVien.Where((view_dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN).FirstOrDefaultAsync();
+											if (objNhanVien == null) continue;
+                                            if (objNhanVien != null && !string.IsNullOrEmpty(SP_Parameter.ID_NHOMQUYEN))
+											{					
 												if (objNhanVien != null && objNhanVien.ID_NHOMQUYEN != SP_Parameter.ID_NHOMQUYEN)
 												{
 													continue;
 												}
 											}
-											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhanVien.ID_NHANVIEN);
+											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == objNhanVien.ID_TAIKHOAN);
 											if (NhanVienKinhDoanh == null)
 											{
 												NhanVienKinhDoanh = new v_Tinh_KPI_KinhDoanh
 												{
 													lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>(),
-													ID_NHANVIEN = NhanVien.ID_NHANVIEN,
+													ID_NHANVIEN = objNhanVien.ID_TAIKHOAN,
 													NAME_NHANVIEN = NhanVien.MA + " - " + NhanVien.NAME
 												};
-												await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN);
+												// _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN);
 												NhanVienKinhDoanh.lstTinh_KPI_KinhDoanh_ChiTiet.AddRange(Get_ChiTiet(itm, NhanVien, lstValue_YeuCau, lst_ChiTiet, NhanVienKinhDoanh, lst_ChiTiet_TraHang));
 												NhanVienKinhDoanh.SOTIEN_KPI = NhanVienKinhDoanh.lstTinh_KPI_KinhDoanh_ChiTiet.Sum((v_Tinh_KPI_KinhDoanh_ChiTiet e) => e.SOTIEN_KPI);
 												if (NhanVienKinhDoanh.lstTinh_KPI_KinhDoanh_ChiTiet != null && NhanVienKinhDoanh.lstTinh_KPI_KinhDoanh_ChiTiet.Count > 0)
@@ -423,13 +424,13 @@ namespace MyApiNetCore6.Controllers
 											{
 												continue;
 											}
-											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh2 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == item.ID);
+											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh2 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == item.ID_TAIKHOAN);
 											if (NhanVienKinhDoanh2 == null)
 											{
 												NhanVienKinhDoanh2 = new v_Tinh_KPI_KinhDoanh
 												{
 													lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>(),
-													ID_NHANVIEN = item.ID,
+													ID_NHANVIEN = item.ID_TAIKHOAN,
 													NAME_NHANVIEN = item.MA + " - " + item.NAME
 												};
 												await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID == item.ID);
@@ -488,7 +489,7 @@ namespace MyApiNetCore6.Controllers
 												continue;
 											}
 											List<view_dm_HangHoa_KhungGia> lstview_dm_HangHoa_KhungGia = await _context.view_dm_HangHoa_KhungGia.Where((view_dm_HangHoa_KhungGia e) => e.ID_HANGHOA_KHUNGGIA_MASTER == item2.ID_HANGHOA_KHUNGGIA_MASTER).ToListAsync();
-											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh3 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhaVien.ID);
+											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh3 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhaVien.ID_TAIKHOAN);
 											if (NhanVienKinhDoanh3 == null)
 											{
 												NhanVienKinhDoanh3 = new v_Tinh_KPI_KinhDoanh();
@@ -1081,21 +1082,22 @@ namespace MyApiNetCore6.Controllers
 								{
 									if (NhanVien.HINHTHUC == 0 && (string.IsNullOrEmpty(SP_Parameter.ID_NHANVIEN) || NhanVien.ID_NHANVIEN == SP_Parameter.ID_NHANVIEN))
 									{
-										if (!string.IsNullOrEmpty(SP_Parameter.ID_NHOMQUYEN))
-										{
-											view_dm_NhanVien objNhanVien = await _context.view_dm_NhanVien.Where((view_dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN).FirstOrDefaultAsync();
+                                        view_dm_NhanVien objNhanVien = await _context.view_dm_NhanVien.Where((view_dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN).FirstOrDefaultAsync();
+										if (objNhanVien == null) continue;
+                                        if (!string.IsNullOrEmpty(SP_Parameter.ID_NHOMQUYEN))
+										{									
 											if (objNhanVien != null && objNhanVien.ID_NHOMQUYEN != SP_Parameter.ID_NHOMQUYEN)
 											{
 												continue;
 											}
 										}
-										v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhanVien.ID_NHANVIEN);
+										v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == objNhanVien.ID_TAIKHOAN);
 										if (NhanVienKinhDoanh == null)
 										{
 											NhanVienKinhDoanh = new v_Tinh_KPI_KinhDoanh
 											{
 												lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>(),
-												ID_NHANVIEN = NhanVien.ID_NHANVIEN,
+												ID_NHANVIEN = objNhanVien.ID_TAIKHOAN,
 												NAME_NHANVIEN = NhanVien.MA + " - " + NhanVien.NAME
 											};
 											await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID == NhanVien.ID_NHANVIEN);
@@ -1130,13 +1132,13 @@ namespace MyApiNetCore6.Controllers
 										{
 											continue;
 										}
-										v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh2 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == item.ID);
+										v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh2 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == item.ID_TAIKHOAN);
 										if (NhanVienKinhDoanh2 == null)
 										{
 											NhanVienKinhDoanh2 = new v_Tinh_KPI_KinhDoanh
 											{
 												lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>(),
-												ID_NHANVIEN = item.ID,
+												ID_NHANVIEN = item.ID_TAIKHOAN,
 												NAME_NHANVIEN = item.MA + " - " + item.NAME
 											};
 											await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID == item.ID);

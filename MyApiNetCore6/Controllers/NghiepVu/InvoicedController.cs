@@ -445,7 +445,13 @@ namespace MyApiNetCore6.Controllers
 								Product_Detail product_Detail59 = Product_Detail;
 								sOLUONG = (ct_HoaDon_ChiTiet2.TONGTIENVAT = Math.Round(Product_Detail.TONGCONG - Product_Detail.THANHTIEN, 0));
 								product_Detail59.TONGTIENVAT = sOLUONG;
-								Product_Detail product_Detail60 = Product_Detail;
+                                //double VAT13 = Math.Round(Product_Detail.THANHTIEN * (Product_Detail.THUESUAT / 100.0), 0);
+                                //if (VAT13 - Product_Detail.TONGTIENVAT > 1.0)
+                                //{
+                                //    Product_Detail.THANHTIEN -= 1.0;
+                                //    Product_Detail.TONGTIENVAT += 1.0;
+                                //}
+                                Product_Detail product_Detail60 = Product_Detail;
 								iD = (ct_HoaDon_ChiTiet2.ID_PHIEUXUAT_CHITIET = itm.ID);
 								product_Detail60.ID_PHIEUXUAT_CHITIET = iD;
 								Product_Detail.ISKHUYENMAI = itm.ISKHUYENMAI;
