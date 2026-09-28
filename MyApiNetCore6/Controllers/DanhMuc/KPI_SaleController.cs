@@ -348,10 +348,12 @@ namespace MyApiNetCore6.Controllers
 				List<DanhSachPhieuTraHang_ChiTiet_KPI> lst_ChiTiet_TraHang = new List<DanhSachPhieuTraHang_ChiTiet_KPI>();
 				List<v_Tinh_KPI_KinhDoanh> lstTinh_KPI_KinhDoanh = new List<v_Tinh_KPI_KinhDoanh>();
 				List<view_dm_KPI_KinhDoanh> lstValue = await (from e in _context.view_dm_KPI_KinhDoanh
-															  where e.LOC_ID == SP_Parameter.LOC_ID && e.TUNGAY <= SP_Parameter.TUNGAY && e.DENNGAY >= SP_Parameter.DENNGAY && e.ISACTIVE
+															  where e.LOC_ID == SP_Parameter.LOC_ID && e.TUNGAY.Date <= SP_Parameter.TUNGAY && e.DENNGAY.Date >= SP_Parameter.DENNGAY && e.ISACTIVE
 															  orderby e.CAPDO
 															  select e).ToListAsync();
-				List<view_dm_HangHoa_KhungGia_HangHoa> lstValueKhungGia = await _context.view_dm_HangHoa_KhungGia_HangHoa.Where((view_dm_HangHoa_KhungGia_HangHoa e) => e.LOC_ID == SP_Parameter.LOC_ID && e.ISACTIVE).ToListAsync();
+				List<dm_HangHoa_KhungGia_Master> lstValueKhungGia = await _context.dm_HangHoa_KhungGia_Master.Where((dm_HangHoa_KhungGia_Master e) => e.LOC_ID == SP_Parameter.LOC_ID && e.ISACTIVE
+                && e.TUNGAY <= SP_Parameter.DENNGAY
+        && e.DENNGAY >= SP_Parameter.TUNGAY).ToListAsync();
 				if (lstValue != null || (lstValueKhungGia != null && lstValueKhungGia.Count > 0))
 				{
 					ExecuteStoredProc ExecuteStoredProc1 = new ExecuteStoredProc(_context, _configuration);
@@ -450,71 +452,66 @@ namespace MyApiNetCore6.Controllers
 									}
 								}
 							}
-							if (lstValueKhungGia != null && lstValueKhungGia.Count > 0)
-							{
-								lst_ChiTiet = lst_ChiTiet.Where((DanhSachPhieuDatHang_ChiTiet_KPI s) => lstValueKhungGia.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA)).ToList();
-								lst_ChiTiet_TraHang = lst_ChiTiet_TraHang.Where((DanhSachPhieuTraHang_ChiTiet_KPI s) => lstValueKhungGia.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA)).ToList();
-								if (lst_ChiTiet != null && lst_ChiTiet.Count > 0 && lst_ChiTiet_TraHang != null)
-								{
-                                    List<KhungGiaMaster> lstMater = (from e in lstValueKhungGia
-													group e by new { e.ID_HANGHOA_KHUNGGIA_MASTER } into g
-													select new KhungGiaMaster
-                                                    {
-                                                        ID_HANGHOA_KHUNGGIA_MASTER = g.Key.ID_HANGHOA_KHUNGGIA_MASTER
-                                                    }).ToList();
-									var lstTaiKhoan = (from e in lst_ChiTiet
-													   group e by new { e.ID_TAIKHOAN } into g
-													   select new { g.Key.ID_TAIKHOAN }).ToList();
-                                    KhungGiaMaster item2;
-									foreach (var item3 in lstMater)
-									{
-										item2 = item3;
-										dm_HangHoa_KhungGia_Master view_dm_HangHoa_KhungGia_Master = await _context.dm_HangHoa_KhungGia_Master.FirstOrDefaultAsync((dm_HangHoa_KhungGia_Master e) => e.ID == item2.ID_HANGHOA_KHUNGGIA_MASTER);
-										if (view_dm_HangHoa_KhungGia_Master == null)
-										{
-											continue;
-										}
-										List<view_dm_HangHoa_KhungGia_HangHoa> lstHangHoa = await _context.view_dm_HangHoa_KhungGia_HangHoa.Where((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA_KHUNGGIA_MASTER == item2.ID_HANGHOA_KHUNGGIA_MASTER).ToListAsync();
-										if (lstHangHoa == null)
-										{
-											continue;
-										}
-										foreach (var tk in lstTaiKhoan)
-										{
-											List<DanhSachPhieuDatHang_ChiTiet_KPI> lstChiTiet = lst_ChiTiet.Where((DanhSachPhieuDatHang_ChiTiet_KPI s) => lstHangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA) && s.ID_TAIKHOAN == tk.ID_TAIKHOAN).ToList();
-											lst_ChiTiet_TraHang.Where((DanhSachPhieuTraHang_ChiTiet_KPI s) => lstHangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA) && s.ID_TAIKHOAN == tk.ID_TAIKHOAN).ToList();
-											dm_NhanVien NhaVien = await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID_TAIKHOAN == tk.ID_TAIKHOAN);
-											if (NhaVien == null)
-											{
-												continue;
-											}
-											List<view_dm_HangHoa_KhungGia> lstview_dm_HangHoa_KhungGia = await _context.view_dm_HangHoa_KhungGia.Where((view_dm_HangHoa_KhungGia e) => e.ID_HANGHOA_KHUNGGIA_MASTER == item2.ID_HANGHOA_KHUNGGIA_MASTER).ToListAsync();
-											v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh3 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhaVien.ID_TAIKHOAN);
-											if (NhanVienKinhDoanh3 == null)
-											{
-												NhanVienKinhDoanh3 = new v_Tinh_KPI_KinhDoanh();
-												NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>();
-												NhanVienKinhDoanh3.ID_NHANVIEN = tk.ID_TAIKHOAN;
-												NhanVienKinhDoanh3.NAME_NHANVIEN = NhaVien.MA + " - " + NhaVien.NAME;
-												NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.AddRange(Get_ChiTiet_KhungGia(view_dm_HangHoa_KhungGia_Master, lstChiTiet, lst_ChiTiet_TraHang, lstview_dm_HangHoa_KhungGia));
-												NhanVienKinhDoanh3.SOTIEN_KPI = NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Sum((v_Tinh_KPI_KinhDoanh_ChiTiet e) => e.SOTIEN_KPI);
-												if (NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet != null && NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Count > 0)
-												{
-													lstTinh_KPI_KinhDoanh.Add(NhanVienKinhDoanh3);
-												}
-											}
-											else
-											{
-												NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.AddRange(Get_ChiTiet_KhungGia(view_dm_HangHoa_KhungGia_Master, lstChiTiet, lst_ChiTiet_TraHang, lstview_dm_HangHoa_KhungGia));
-												NhanVienKinhDoanh3.SOTIEN_KPI = NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Sum((v_Tinh_KPI_KinhDoanh_ChiTiet e) => e.SOTIEN_KPI);
-											}
-										}
-									}
-								}
-							}
+							
 						}
 					}
-				}
+
+					DateTime? dateTuNgay = SP_Parameter.TUNGAY;
+					DateTime? dateDenNgay = SP_Parameter.DENNGAY;
+                    if (lstValueKhungGia != null && lstValueKhungGia.Count > 0)
+                    {
+						foreach(var itm in lstValueKhungGia)
+						{
+                            List<view_dm_HangHoa_KhungGia_HangHoa> lstValueKhungGia_HangHoa = await _context.view_dm_HangHoa_KhungGia_HangHoa.Where((view_dm_HangHoa_KhungGia_HangHoa e) => e.LOC_ID == itm.LOC_ID && e.ID_HANGHOA_KHUNGGIA_MASTER == itm.ID).ToListAsync();
+                            SP_Parameter.TUNGAY = itm.TUNGAY > dateTuNgay ? itm.TUNGAY : dateTuNgay;
+							SP_Parameter.DENNGAY = itm.DENNGAY > dateDenNgay ? dateDenNgay : itm.DENNGAY;
+                            if (await ExecuteStoredProc1.Sp_Get_DanhSachPhieuDatHang_ChiTiet_KPI(SP_Parameter) is OkObjectResult { Value: ApiResponse { Data: not null } ApiResponse3 })
+                            {
+                                List<DanhSachPhieuDatHang_ChiTiet_KPI> lst_ChiTiet = ApiResponse3.Data as List<DanhSachPhieuDatHang_ChiTiet_KPI>;
+                                lst_ChiTiet = lst_ChiTiet.Where((DanhSachPhieuDatHang_ChiTiet_KPI s) => lstValueKhungGia_HangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA)).ToList();
+                                lst_ChiTiet_TraHang = lst_ChiTiet_TraHang.Where((DanhSachPhieuTraHang_ChiTiet_KPI s) => lstValueKhungGia_HangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA)).ToList();
+                                if (lst_ChiTiet != null && lst_ChiTiet.Count > 0 && lst_ChiTiet_TraHang != null)
+                                {                            
+                                    var lstTaiKhoan = (from e in lst_ChiTiet
+                                                       group e by new { e.ID_TAIKHOAN } into g
+                                                       select new { g.Key.ID_TAIKHOAN }).ToList();
+                                   
+                                    foreach (var tk in lstTaiKhoan)
+                                    {
+                                        List<DanhSachPhieuDatHang_ChiTiet_KPI> lstChiTiet = lst_ChiTiet.Where((DanhSachPhieuDatHang_ChiTiet_KPI s) => lstValueKhungGia_HangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA) && s.ID_TAIKHOAN == tk.ID_TAIKHOAN).ToList();
+                                        lst_ChiTiet_TraHang.Where((DanhSachPhieuTraHang_ChiTiet_KPI s) => lstValueKhungGia_HangHoa.Select((view_dm_HangHoa_KhungGia_HangHoa e) => e.ID_HANGHOA).Contains(s.ID_HANGHOA) && s.ID_TAIKHOAN == tk.ID_TAIKHOAN).ToList();
+                                        dm_NhanVien NhaVien = await _context.dm_NhanVien.FirstOrDefaultAsync((dm_NhanVien e) => e.ID_TAIKHOAN == tk.ID_TAIKHOAN);
+                                        if (NhaVien == null)
+                                        {
+                                            continue;
+                                        }
+                                        List<view_dm_HangHoa_KhungGia> lstview_dm_HangHoa_KhungGia = await _context.view_dm_HangHoa_KhungGia.Where((view_dm_HangHoa_KhungGia e) => e.ID_HANGHOA_KHUNGGIA_MASTER == itm.ID).ToListAsync();
+                                        v_Tinh_KPI_KinhDoanh NhanVienKinhDoanh3 = lstTinh_KPI_KinhDoanh.FirstOrDefault((v_Tinh_KPI_KinhDoanh e) => e.ID_NHANVIEN == NhaVien.ID_TAIKHOAN);
+                                        if (NhanVienKinhDoanh3 == null)
+                                        {
+                                            NhanVienKinhDoanh3 = new v_Tinh_KPI_KinhDoanh();
+                                            NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>();
+                                            NhanVienKinhDoanh3.ID_NHANVIEN = tk.ID_TAIKHOAN;
+                                            NhanVienKinhDoanh3.NAME_NHANVIEN = NhaVien.MA + " - " + NhaVien.NAME;
+                                            NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.AddRange(Get_ChiTiet_KhungGia(itm, lstChiTiet, lst_ChiTiet_TraHang, lstview_dm_HangHoa_KhungGia));
+                                            NhanVienKinhDoanh3.SOTIEN_KPI = NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Sum((v_Tinh_KPI_KinhDoanh_ChiTiet e) => e.SOTIEN_KPI);
+                                            if (NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet != null && NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Count > 0)
+                                            {
+                                                lstTinh_KPI_KinhDoanh.Add(NhanVienKinhDoanh3);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.AddRange(Get_ChiTiet_KhungGia(itm, lstChiTiet, lst_ChiTiet_TraHang, lstview_dm_HangHoa_KhungGia));
+                                            NhanVienKinhDoanh3.SOTIEN_KPI = NhanVienKinhDoanh3.lstTinh_KPI_KinhDoanh_ChiTiet.Sum((v_Tinh_KPI_KinhDoanh_ChiTiet e) => e.SOTIEN_KPI);
+                                        }
+                                    }
+                                }
+                            }
+                        }	
+                            	                 
+                    }
+                }
 				return Ok(new ApiResponse
 				{
 					Success = true,
@@ -889,16 +886,32 @@ namespace MyApiNetCore6.Controllers
 			List<v_Tinh_KPI_KinhDoanh_ChiTiet> list = new List<v_Tinh_KPI_KinhDoanh_ChiTiet>();
 			foreach (view_dm_HangHoa_KhungGia khunggia in lstKhungGia)
 			{
-				v_Tinh_KPI_KinhDoanh_ChiTiet newv_Tinh_KPI_KinhDoanh_ChiTiet = new v_Tinh_KPI_KinhDoanh_ChiTiet();
+				//dm_HangHoa HangHoa = _context.dm_HangHoa.Where((dm_HangHoa e) => e.ID == khunggia.Id_).FirstOrDefault();
+                v_Tinh_KPI_KinhDoanh_ChiTiet newv_Tinh_KPI_KinhDoanh_ChiTiet = new v_Tinh_KPI_KinhDoanh_ChiTiet();
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.HINHTHUC = -1;
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.NAME_HINHTHUC = dm_HangHoa_KhungGia_Master.NAME;
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.ID_KPI_KINHDOANH = dm_HangHoa_KhungGia_Master.ID;
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.NAME_KPI_KINHDOANH = dm_HangHoa_KhungGia_Master.NAME;
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.ID_HANGHOA = khunggia.ID;
-				newv_Tinh_KPI_KinhDoanh_ChiTiet.NAME_HANGHOA = dm_HangHoa_KhungGia_Master.NAME + " (" + khunggia.DONGIA.ToString("N0") + ")";
+                var lstName = (from s in lstChiTietDatHang
+								where s.ID_DVT == khunggia.ID_DVT
+								   && s.DONGIA == khunggia.DONGIA
+								group s by s.ID_PHIEUDATHANG into g
+								let tongSoLuong = g.Sum(x => x.SOLUONG)
+								where tongSoLuong >= khunggia.TU
+								   && tongSoLuong <= khunggia.DEN
+								from x in g
+								select x.NAME
+							).Distinct().ToList();
+
+                string name = string.Join(", ", lstName);
+
+
+                newv_Tinh_KPI_KinhDoanh_ChiTiet.NAME_HANGHOA = name + " (" + khunggia.DONGIA.ToString("N0") + ")";
 				newv_Tinh_KPI_KinhDoanh_ChiTiet.TONGTIEN = (from s in lstChiTietDatHang
 															where s.ID_DVT == khunggia.ID_DVT && s.DONGIA == khunggia.DONGIA
-															group s by s.ID_PHIEUDATHANG into g
+															//where s.SOLUONG >= khunggia.TU && s.SOLUONG <= khunggia.DEN
+                                                            group s by s.ID_PHIEUDATHANG into g
 															select new
 															{
 																ID_PHIEUDATHANG = g.Key,
@@ -919,7 +932,8 @@ namespace MyApiNetCore6.Controllers
 				{
 					newv_Tinh_KPI_KinhDoanh_ChiTiet.TONGSOLUONG = (from s in lstChiTietDatHang
 																   where s.ID_DVT == khunggia.ID_DVT && s.DONGIA == khunggia.DONGIA
-																   group s by s.ID_PHIEUDATHANG into g
+                                                                   //where s.SOLUONG >= khunggia.TU && s.SOLUONG <= khunggia.DEN
+                                                                   group s by s.ID_PHIEUDATHANG into g
 																   select new
 																   {
 																	   ID_PHIEUDATHANG = g.Key,
@@ -937,7 +951,8 @@ namespace MyApiNetCore6.Controllers
 				{
 					var source = from e in lstChiTietDatHang
 								 where e.ID_DVT == khunggia.ID_DVT && e.DONGIA == khunggia.DONGIA
-								 group e by e.ID_PHIEUDATHANG into g
+                                 //where e.SOLUONG >= khunggia.TU && e.SOLUONG <= khunggia.DEN
+                                 group e by e.ID_PHIEUDATHANG into g
 								 select new
 								 {
 									 ID_PHIEUDATHANG = g.Key,
@@ -952,7 +967,8 @@ namespace MyApiNetCore6.Controllers
 				{
 					var source2 = from e in lstChiTietDatHang
 								  where e.ID_DVT == khunggia.ID_DVT && e.DONGIA == khunggia.DONGIA
-								  group e by e.ID_PHIEUDATHANG into g
+                                  //where e.SOLUONG >= khunggia.TU && e.SOLUONG <= khunggia.DEN
+                                  group e by e.ID_PHIEUDATHANG into g
 								  select new
 								  {
 									  ID_PHIEUDATHANG = g.Key,

@@ -90,7 +90,7 @@ namespace MyApiNetCore6.Controllers
 			try
 			{
 				new List<dm_HangHoa_KhungGia>();
-				view_dm_HangHoa_KhungGia_HangHoa view_dm_HangHoa_KhungGia_HangHoa2 = await _context.view_dm_HangHoa_KhungGia_HangHoa.FirstOrDefaultAsync((view_dm_HangHoa_KhungGia_HangHoa e) => e.LOC_ID == LOC_ID && e.ID_HANGHOA == ID_HANGHOA && e.ISACTIVE);
+				view_dm_HangHoa_KhungGia_HangHoa view_dm_HangHoa_KhungGia_HangHoa2 = await _context.view_dm_HangHoa_KhungGia_HangHoa.FirstOrDefaultAsync((view_dm_HangHoa_KhungGia_HangHoa e) => e.LOC_ID == LOC_ID && e.ID_HANGHOA == ID_HANGHOA && e.ISACTIVE && e.TUNGAY.Date <= DateTime.Now.Date && e.DENNGAY.Date >= DateTime.Now.Date);
 				if (view_dm_HangHoa_KhungGia_HangHoa2 != null)
 				{
 					List<view_dm_HangHoa_KhungGia_HangHoa> lstValue_HangHoa = await _context.view_dm_HangHoa_KhungGia_HangHoa.Where((view_dm_HangHoa_KhungGia_HangHoa e) => e.LOC_ID == LOC_ID && e.ID_HANGHOA_KHUNGGIA_MASTER == view_dm_HangHoa_KhungGia_HangHoa2.ID_HANGHOA_KHUNGGIA_MASTER && e.ISACTIVE).ToListAsync();
@@ -162,7 +162,9 @@ namespace MyApiNetCore6.Controllers
 				Mater.ID = ProductPriceRange.ID;
 				Mater.MA = ProductPriceRange.MA;
 				Mater.NAME = ProductPriceRange.NAME;
-				Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
+				Mater.TUNGAY = ProductPriceRange.TUNGAY;
+				Mater.DENNGAY = ProductPriceRange.DENNGAY;
+                Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
 				Mater.lstdm_HangHoa_KhungGia = new List<dm_HangHoa_KhungGia>();
 				Mater.lstdm_HangHoa_KhungGia = OKProductPriceRange;
 				Mater.lstdm_HangHoa_KhungGia_HangHoa = new List<v_dm_HangHoa_KhungGia_HangHoa>();
@@ -278,7 +280,9 @@ namespace MyApiNetCore6.Controllers
 				Mater.ID = ProductPriceRange.ID;
 				Mater.MA = ProductPriceRange.MA;
 				Mater.NAME = ProductPriceRange.NAME;
-				Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
+                Mater.TUNGAY = ProductPriceRange.TUNGAY;
+                Mater.DENNGAY = ProductPriceRange.DENNGAY;
+                Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
 				Mater.lstdm_HangHoa_KhungGia = new List<dm_HangHoa_KhungGia>();
 				Mater.lstdm_HangHoa_KhungGia = OKProductPriceRange;
 				Mater.lstdm_HangHoa_KhungGia_HangHoa = new List<v_dm_HangHoa_KhungGia_HangHoa>();
@@ -350,7 +354,9 @@ namespace MyApiNetCore6.Controllers
 				Mater.ID = ProductPriceRange.ID;
 				Mater.MA = ProductPriceRange.MA;
 				Mater.NAME = ProductPriceRange.NAME;
-				Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
+                Mater.TUNGAY = ProductPriceRange.TUNGAY;
+                Mater.DENNGAY = ProductPriceRange.DENNGAY;
+                Mater.ISACTIVE = ProductPriceRange.ISACTIVE;
 				Mater.lstdm_HangHoa_KhungGia = new List<dm_HangHoa_KhungGia>();
 				Mater.lstdm_HangHoa_KhungGia = OKProductPriceRange;
 				Mater.lstdm_HangHoa_KhungGia_HangHoa = new List<v_dm_HangHoa_KhungGia_HangHoa>();
