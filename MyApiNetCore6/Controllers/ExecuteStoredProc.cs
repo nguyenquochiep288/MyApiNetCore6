@@ -871,6 +871,15 @@ namespace MyApiNetCore6.Controllers
 			}
 		}
 
+		[HttpPost("Sp_Get_DanhSachPhieuThu/Paged")]
+		[Microsoft.AspNetCore.Authorization.Authorize(Roles = "User")]
+		public async Task<IActionResult> Sp_Get_DanhSachPhieuThuPaged(SP_Parameter sp_Parameter, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		{
+			page = Math.Max(1, page);
+			pageSize = Math.Min(Math.Max(1, pageSize), 1000);
+			return Ok(await Execute_StoredProcPaged<v_ct_PhieuThu>("Sp_Get_DanhSachPhieuThu", GetSP_Parameter(sp_Parameter), page, pageSize));
+		}
+
 		[HttpPost("Sp_Get_DanhSachPhieuThu_PhieuGiaoHang")]
 		public async Task<IActionResult> Sp_Get_DanhSachPhieuThu_PhieuGiaoHang(SP_Parameter sp_Parameter)
 		{
@@ -889,6 +898,15 @@ namespace MyApiNetCore6.Controllers
 					Data = ""
 				});
 			}
+		}
+
+		[HttpPost("Sp_Get_DanhSachPhieuThu_PhieuGiaoHang/Paged")]
+		[Microsoft.AspNetCore.Authorization.Authorize(Roles = "User")]
+		public async Task<IActionResult> Sp_Get_DanhSachPhieuThuPhieuGiaoHangPaged(SP_Parameter sp_Parameter, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		{
+			page = Math.Max(1, page);
+			pageSize = Math.Min(Math.Max(1, pageSize), 1000);
+			return Ok(await Execute_StoredProcPaged<v_ct_PhieuThu>("Sp_Get_DanhSachPhieuThu_PhieuGiaoHang", GetSP_Parameter(sp_Parameter), page, pageSize));
 		}
 
 		[HttpPost("Sp_Get_DanhSachPhieuChi")]
@@ -911,6 +929,15 @@ namespace MyApiNetCore6.Controllers
 			}
 		}
 
+		[HttpPost("Sp_Get_DanhSachPhieuChi/Paged")]
+		[Microsoft.AspNetCore.Authorization.Authorize(Roles = "User")]
+		public async Task<IActionResult> Sp_Get_DanhSachPhieuChiPaged(SP_Parameter sp_Parameter, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		{
+			page = Math.Max(1, page);
+			pageSize = Math.Min(Math.Max(1, pageSize), 1000);
+			return Ok(await Execute_StoredProcPaged<v_ct_PhieuChi>("Sp_Get_DanhSachPhieuChi", GetSP_Parameter(sp_Parameter), page, pageSize));
+		}
+
 		[HttpPost("Sp_Get_DanhSachPhieuChi_PhieuGiaoHang")]
 		public async Task<IActionResult> Sp_Get_DanhSachPhieuChi_PhieuGiaoHang(SP_Parameter sp_Parameter)
 		{
@@ -929,6 +956,15 @@ namespace MyApiNetCore6.Controllers
 					Data = ""
 				});
 			}
+		}
+
+		[HttpPost("Sp_Get_DanhSachPhieuChi_PhieuGiaoHang/Paged")]
+		[Microsoft.AspNetCore.Authorization.Authorize(Roles = "User")]
+		public async Task<IActionResult> Sp_Get_DanhSachPhieuChiPhieuGiaoHangPaged(SP_Parameter sp_Parameter, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		{
+			page = Math.Max(1, page);
+			pageSize = Math.Min(Math.Max(1, pageSize), 1000);
+			return Ok(await Execute_StoredProcPaged<v_ct_PhieuChi>("Sp_Get_DanhSachPhieuChi_PhieuGiaoHang", GetSP_Parameter(sp_Parameter), page, pageSize));
 		}
 
 		[HttpPost("Sp_Get_ChuongTrinhKhuyenMai")]
@@ -1381,6 +1417,97 @@ namespace MyApiNetCore6.Controllers
 				conn.Close();
 			}
 			return apiResponse;
+		}
+
+		private async Task<object> Execute_StoredProcPaged<T>(string storedProcName, Dictionary<string, object> procParams, int page, int pageSize) where T : class
+		{
+			List<T> pageData = new List<T>();
+			int totalCount = 0;
+			decimal totalSum = 0;
+			DbConnection conn = _context.Database.GetDbConnection();
+			try
+			{
+				if (conn.State != ConnectionState.Open)
+				{
+					await conn.OpenAsync();
+				}
+
+				await using (DbCommand command = conn.CreateCommand())
+				{
+					command.CommandTimeout = 120;
+					command.CommandText = storedProcName;
+					command.CommandType = CommandType.StoredProcedure;
+					foreach (KeyValuePair<string, object> procParam in procParams)
+					{
+						DbParameter parameter = command.CreateParameter();
+						parameter.ParameterName = procParam.Key;
+						parameter.Value = procParam.Value;
+						command.Parameters.Add(parameter);
+					}
+
+					await using (DbDataReader reader = await command.ExecuteReaderAsync())
+					{
+						PropertyInfo[] properties = typeof(T).GetRuntimeProperties().ToArray();
+						IReadOnlyList<DbColumn> schema = reader.GetColumnSchema();
+						Dictionary<string, DbColumn> columns = schema
+							.Where(column => properties.Any(property => string.Equals(property.Name, column.ColumnName, StringComparison.OrdinalIgnoreCase)))
+							.ToDictionary(column => column.ColumnName ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+						int sumOrdinal = schema
+							.FirstOrDefault(column => string.Equals(column.ColumnName, "SOTIEN", StringComparison.OrdinalIgnoreCase))?.ColumnOrdinal ?? -1;
+						long firstItem = ((long)page - 1) * pageSize;
+						long lastItem = firstItem + pageSize;
+
+						while (await reader.ReadAsync())
+						{
+							if (sumOrdinal >= 0 && !reader.IsDBNull(sumOrdinal))
+							{
+								totalSum += Convert.ToDecimal(reader.GetValue(sumOrdinal));
+							}
+
+							if (totalCount >= firstItem && totalCount < lastItem)
+							{
+								T item = Activator.CreateInstance<T>();
+								foreach (PropertyInfo property in properties)
+								{
+									if (!columns.TryGetValue(property.Name, out DbColumn column) || !column.ColumnOrdinal.HasValue)
+									{
+										if (property.PropertyType == typeof(string))
+										{
+											property.SetValue(item, "");
+										}
+										continue;
+									}
+
+									object value = reader.GetValue(column.ColumnOrdinal.Value);
+									if (value == DBNull.Value)
+									{
+										property.SetValue(item, property.PropertyType == typeof(string) ? "" : null);
+										continue;
+									}
+
+									property.SetValue(item, value);
+								}
+								pageData.Add(item);
+							}
+
+							totalCount++;
+						}
+					}
+				}
+
+				return new { Success = true, Message = "Success", Data = pageData, TotalCount = totalCount, TotalSum = totalSum };
+			}
+			catch (Exception exception)
+			{
+				return new { Success = false, Message = exception.Message, Data = new List<T>(), TotalCount = 0, TotalSum = 0m };
+			}
+			finally
+			{
+				if (conn.State != ConnectionState.Closed)
+				{
+					await conn.CloseAsync();
+				}
+			}
 		}
 
 		public async Task<ApiResponse> Execute_StoredProc_DataTable<T>(string storedProcName, Dictionary<string, object> procParams) where T : class

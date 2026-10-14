@@ -40,11 +40,6 @@ public class Startup
 
   public void ConfigureServices(IServiceCollection services)
   {
-    new WebHostBuilder().UseKestrel((Action<KestrelServerOptions>) (options =>
-    {
-      options.Limits.MaxRequestBufferSize = new long?(302768L);
-      options.Limits.MaxRequestLineSize = 302768;
-    }));
     services.AddControllers();
     services.AddSingleton<RequestQueue>();
     services.AddControllers().AddNewtonsoftJson();
@@ -107,9 +102,13 @@ public class Startup
 
   public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
   {
-    if (env.IsDevelopment() || env.IsProduction())
+    if (env.IsDevelopment())
     {
       app.UseDeveloperExceptionPage();
+    }
+
+    if (env.IsDevelopment() || env.IsProduction())
+    {
       app.UseSwagger();
       app.UseSwaggerUI((Action<SwaggerUIOptions>) (c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyWebApiApp v1")));
     }

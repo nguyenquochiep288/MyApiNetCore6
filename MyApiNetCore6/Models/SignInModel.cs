@@ -16,4 +16,6 @@ public class SignInModel
 
   [Required]
   public string Password { get; set; } = (string) null;
+
+  public string? DeviceId { get; set; }
 }

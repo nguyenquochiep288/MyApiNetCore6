@@ -35,7 +35,7 @@ namespace MyApiNetCore6.Controllers
 		{
 			try
 			{
-				List<view_web_Menu> lstValue = await _context.view_web_Menu.ToListAsync();
+				List<view_web_Menu> lstValue = await _context.view_web_Menu.AsNoTracking().ToListAsync();
 				return Ok(new ApiResponse
 				{
 					Success = true,
@@ -62,7 +62,7 @@ namespace MyApiNetCore6.Controllers
 			try
 			{
 				ValuesSearch = ValuesSearch.Replace("%2f", "/");
-				List<view_web_Menu> lstValue = await _context.view_web_Menu.Where(KeyWhere, ValuesSearch).ToListAsync();
+				List<view_web_Menu> lstValue = await _context.view_web_Menu.AsNoTracking().Where(KeyWhere, ValuesSearch).ToListAsync();
 				return Ok(new ApiResponse
 				{
 					Success = true,

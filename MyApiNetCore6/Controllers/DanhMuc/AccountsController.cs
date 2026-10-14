@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,6 +39,14 @@ public class AccountsController : ControllerBase
 	private readonly IAccountRepository accountRepo;
 
 	private readonly dbTrangHiepPhatContext _contextTHP;
+
+	private const string RefreshTokenProvider = "THP_REFRESH";
+
+	private const string DeviceTokenPrefix = "DEV-";
+
+	private static readonly TimeSpan AccessTokenLifetime = TimeSpan.FromDays(1);
+
+	private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(14);
 
 	public AccountsController(dbApplicationUserContext context, dbTrangHiepPhatContext contextTHP, IAccountRepository repo, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
 	{
@@ -346,38 +357,8 @@ public class AccountsController : ControllerBase
 						Message = "Tài khoản đã bị khóa!"
 					});
 				}
-				IList<string> userRoles = await userManager.GetRolesAsync(user);
-				List<Claim> authClaims = new List<Claim>
-				{
-					new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name", user.UserName),
-					new Claim("jti", Guid.NewGuid().ToString())
-				};
-				foreach (string userRole in userRoles)
-				{
-					authClaims.Add(new Claim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", userRole));
-				}
-				SymmetricSecurityKey authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-				DateTime expires = DateTime.Now.AddMinutes(30.0);
-				string issuer = _configuration["JWT:ValidIssuer"];
-				string audience = _configuration["JWT:ValidAudience"];
-				DateTime? expires2 = expires;
-				SigningCredentials signingCredentials = new SigningCredentials(authenKey, "http://www.w3.org/2001/04/xmldsig-more#hmac-sha512");
-				JwtSecurityToken token = new JwtSecurityToken(issuer, audience, authClaims, null, expires2, signingCredentials);
-				web_NhomQuyen GroupPermissions = await _contextTHP.web_NhomQuyen.FirstOrDefaultAsync((web_NhomQuyen e) => e.ID == user.ID_NHOMQUYEN);
-				return Ok(new ApiResponse
-				{
-					Success = true,
-					Message = "Authenticate success",
-					Data = new JwtSecurityTokenHandler().WriteToken(token),
-					Expires = expires.AddMinutes(-1.0),
-					Detail = new ApiResponseUser
-					{
-						FullName = user.FullName,
-						idUser = user.Id,
-						UserName = user.UserName,
-						idNhomQuyen = ((GroupPermissions != null && !GroupPermissions.ISPHANQUYEN) ? "-1" : user.ID_NHOMQUYEN)
-					}
-				});
+				(string refreshToken, DateTime refreshExpires) = await CreateRefreshTokenAsync(user, signInModel.DeviceId);
+				return Ok(await CreateAuthenticationResponseAsync(user, refreshToken, refreshExpires));
 			}
 			return Ok(new ApiResponse
 			{
@@ -396,12 +377,198 @@ public class AccountsController : ControllerBase
 		}
 	}
 
+	[HttpPost("Refresh")]
+	public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+	{
+		if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+		{
+			return Unauthorized(new ApiResponse { Success = false, Message = "Refresh token không hợp lệ." });
+		}
+
+		string[] parts = request.RefreshToken.Split('.');
+		if (parts.Length != 3 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]) || string.IsNullOrWhiteSpace(parts[2]))
+		{
+			return Unauthorized(new ApiResponse { Success = false, Message = "Refresh token không hợp lệ." });
+		}
+
+		await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+		ApplicationUser user = await userManager.FindByIdAsync(parts[0]);
+		if (user == null || !user.LockoutEnabled)
+		{
+			return Unauthorized(new ApiResponse { Success = false, Message = "Refresh token đã hết hạn hoặc bị thu hồi." });
+		}
+
+		IdentityUserToken<string> storedToken = await _context.UserTokens.FirstOrDefaultAsync(token =>
+			token.UserId == user.Id && token.LoginProvider == RefreshTokenProvider && token.Name == parts[1]);
+		string[] storedValue = (storedToken?.Value ?? string.Empty).Split('|');
+		if (storedValue.Length != 2 || !long.TryParse(storedValue[1], out long expiryTicks) || expiryTicks <= DateTime.UtcNow.Ticks || !IsRefreshTokenSecretValid(parts[2], storedValue[0]))
+		{
+			return Unauthorized(new ApiResponse { Success = false, Message = "Refresh token đã hết hạn hoặc bị thu hồi." });
+		}
+
+		string deviceTokenId = storedToken.Name.StartsWith(DeviceTokenPrefix, StringComparison.Ordinal)
+			? storedToken.Name
+			: CreateDeviceTokenId(request.DeviceId);
+		List<IdentityUserToken<string>> tokensToRemove = await _context.UserTokens
+			.Where(token => token.UserId == user.Id && token.LoginProvider == RefreshTokenProvider)
+			.ToListAsync();
+		foreach (IdentityUserToken<string> token in tokensToRemove.Where(token =>
+			token.Name == storedToken.Name ||
+				!token.Name.StartsWith(DeviceTokenPrefix, StringComparison.Ordinal) ||
+				IsRefreshTokenExpired(token.Value) ||
+				token.Name == deviceTokenId))
+		{
+			_context.UserTokens.Remove(token);
+		}
+		(string refreshToken, DateTime refreshExpires) = CreateRefreshToken(user.Id, deviceTokenId);
+		_context.UserTokens.Add(new IdentityUserToken<string>
+		{
+			UserId = user.Id,
+			LoginProvider = RefreshTokenProvider,
+			Name = deviceTokenId,
+			Value = HashRefreshSecret(refreshToken.Split('.')[2]) + "|" + refreshExpires.Ticks
+		});
+		await _context.SaveChangesAsync();
+		ApiResponse response = await CreateAuthenticationResponseAsync(user, refreshToken, refreshExpires);
+		await transaction.CommitAsync();
+
+		return Ok(response);
+	}
+
+	[HttpPost("Revoke")]
+	public async Task<IActionResult> Revoke([FromBody] RefreshTokenRequest request)
+	{
+		if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+		{
+			return Ok(new ApiResponse { Success = true, Message = "Đã đăng xuất." });
+		}
+
+		string[] parts = request.RefreshToken.Split('.');
+		if (parts.Length == 3)
+		{
+			IdentityUserToken<string> storedToken = await _context.UserTokens.FirstOrDefaultAsync(token =>
+				token.UserId == parts[0] && token.LoginProvider == RefreshTokenProvider && token.Name == parts[1]);
+			if (storedToken != null && IsRefreshTokenSecretValid(parts[2], storedToken.Value.Split('|')[0]))
+			{
+				_context.UserTokens.Remove(storedToken);
+				await _context.SaveChangesAsync();
+			}
+		}
+
+		return Ok(new ApiResponse { Success = true, Message = "Đã đăng xuất." });
+	}
+
+	private async Task<ApiResponse> CreateAuthenticationResponseAsync(ApplicationUser user, string refreshToken, DateTime refreshExpires)
+	{
+		IList<string> roles = await userManager.GetRolesAsync(user);
+		List<Claim> claims = new List<Claim>
+		{
+			new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+			new Claim("jti", Guid.NewGuid().ToString())
+		};
+		claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+		DateTime accessExpires = DateTime.UtcNow.Add(AccessTokenLifetime);
+		var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+		var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha512);
+		var jwt = new JwtSecurityToken(_configuration["JWT:ValidIssuer"], _configuration["JWT:ValidAudience"], claims, null, accessExpires, signingCredentials);
+		web_NhomQuyen groupPermissions = await _contextTHP.web_NhomQuyen.FirstOrDefaultAsync(group => group.ID == user.ID_NHOMQUYEN);
+
+		return new ApiResponse
+		{
+			Success = true,
+			Message = "Authenticate success",
+			Data = new JwtSecurityTokenHandler().WriteToken(jwt),
+			Expires = accessExpires.AddMinutes(-1),
+			RefreshToken = refreshToken,
+			RefreshTokenExpires = refreshExpires,
+			Detail = new ApiResponseUser
+			{
+				FullName = user.FullName,
+				idUser = user.Id,
+				UserName = user.UserName,
+				idNhomQuyen = groupPermissions != null && !groupPermissions.ISPHANQUYEN ? "-1" : user.ID_NHOMQUYEN
+			}
+		};
+	}
+
+	private async Task<(string Token, DateTime Expires)> CreateRefreshTokenAsync(ApplicationUser user, string deviceId)
+	{
+		string deviceTokenId = CreateDeviceTokenId(deviceId);
+		await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+		List<IdentityUserToken<string>> tokensToRemove = await _context.UserTokens
+			.Where(token => token.UserId == user.Id && token.LoginProvider == RefreshTokenProvider)
+			.ToListAsync();
+		foreach (IdentityUserToken<string> token in tokensToRemove.Where(token =>
+			!token.Name.StartsWith(DeviceTokenPrefix, StringComparison.Ordinal) ||
+				IsRefreshTokenExpired(token.Value) ||
+				token.Name == deviceTokenId))
+		{
+			_context.UserTokens.Remove(token);
+		}
+
+		(string generatedToken, DateTime expires) = CreateRefreshToken(user.Id, deviceTokenId);
+		_context.UserTokens.Add(new IdentityUserToken<string>
+		{
+			UserId = user.Id,
+			LoginProvider = RefreshTokenProvider,
+			Name = deviceTokenId,
+			Value = HashRefreshSecret(generatedToken.Split('.')[2]) + "|" + expires.Ticks
+		});
+		await _context.SaveChangesAsync();
+		await transaction.CommitAsync();
+		return (generatedToken, expires);
+	}
+
+	private static (string Token, DateTime Expires) CreateRefreshToken(string userId, string deviceTokenId)
+	{
+		string secret = Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+		return ($"{userId}.{deviceTokenId}.{secret}", DateTime.UtcNow.Add(RefreshTokenLifetime));
+	}
+
+	private static string CreateDeviceTokenId(string deviceId)
+	{
+		return DeviceTokenPrefix + (Guid.TryParse(deviceId, out Guid parsedDeviceId)
+			? parsedDeviceId.ToString("N")
+			: Guid.NewGuid().ToString("N"));
+	}
+
+	private static bool IsRefreshTokenExpired(string value)
+	{
+		string[] parts = (value ?? string.Empty).Split('|');
+		return parts.Length != 2 || !long.TryParse(parts[1], out long expiryTicks) || expiryTicks <= DateTime.UtcNow.Ticks;
+	}
+
+	private static string HashRefreshSecret(string secret)
+	{
+		return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(secret)));
+	}
+
+	private static bool IsRefreshTokenSecretValid(string secret, string expectedHash)
+	{
+		try
+		{
+			byte[] expected = Convert.FromBase64String(expectedHash);
+			byte[] actual = SHA256.HashData(Encoding.UTF8.GetBytes(secret));
+			return CryptographicOperations.FixedTimeEquals(actual, expected);
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
+	private static string Base64UrlEncode(byte[] bytes)
+	{
+		return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+	}
+
 	[HttpGet("GetNoteClass")]
 	public async Task<IActionResult> GetNoteClass()
 	{
 		try
 		{
-			List<view_web_NoteClass> lstValue = await _contextTHP.view_web_NoteClass.ToListAsync();
+			List<view_web_NoteClass> lstValue = await _contextTHP.view_web_NoteClass.AsNoTracking().ToListAsync();
 			return Ok(new ApiResponse
 			{
 				Success = true,
@@ -426,7 +593,7 @@ public class AccountsController : ControllerBase
 	{
 		try
 		{
-			List<view_web_PhanQuyen> lstValue = await _contextTHP.view_web_PhanQuyen.Where((view_web_PhanQuyen e) => e.ID_NHOMQUYEN == ID_NHOMQUYEN).ToListAsync();
+			List<view_web_PhanQuyen> lstValue = await _contextTHP.view_web_PhanQuyen.AsNoTracking().Where((view_web_PhanQuyen e) => e.ID_NHOMQUYEN == ID_NHOMQUYEN).ToListAsync();
 			return Ok(new ApiResponse
 			{
 				Success = true,
@@ -443,6 +610,58 @@ public class AccountsController : ControllerBase
 				Message = ex2.Message,
 				Data = ""
 			});
+		}
+	}
+
+	[HttpGet("GetCacheVersion/{LOC_ID}/{ID_NHOMQUYEN}")]
+	[Authorize(Roles = "User")]
+	public async Task<IActionResult> GetCacheVersion(string LOC_ID, string ID_NHOMQUYEN)
+	{
+		DbConnection connection = _contextTHP.Database.GetDbConnection();
+		bool closeConnection = connection.State != ConnectionState.Open;
+
+		try
+		{
+			if (closeConnection)
+			{
+				await connection.OpenAsync();
+			}
+
+			await using DbCommand command = connection.CreateCommand();
+			command.CommandText = "SELECT [Version] FROM dbo.web_CacheVersion WHERE [ID] = 1";
+			object result = await command.ExecuteScalarAsync();
+			if (result == null || result == DBNull.Value)
+			{
+				return StatusCode(503, new ApiResponse
+				{
+					Success = false,
+					Message = "Cache version is not configured.",
+					Data = ""
+				});
+			}
+
+			return Ok(new ApiResponse
+			{
+				Success = true,
+				Message = "Success",
+				Data = Convert.ToBase64String((byte[])result)
+			});
+		}
+		catch (Exception)
+		{
+			return StatusCode(503, new ApiResponse
+			{
+				Success = false,
+				Message = "Cache version is not configured.",
+				Data = ""
+			});
+		}
+		finally
+		{
+			if (closeConnection)
+			{
+				await connection.CloseAsync();
+			}
 		}
 	}
 }

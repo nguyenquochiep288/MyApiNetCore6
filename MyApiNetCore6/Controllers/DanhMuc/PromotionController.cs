@@ -27,8 +27,97 @@ namespace MyApiNetCore6.Controllers
 		public PromotionController(dbTrangHiepPhatContext context, IConfiguration configuration)
 		{
 			_context = context;
-			_context = context;
 			_configuration = configuration;
+		}
+
+		/// <summary>
+		/// Public read-only list for the customer promotions page. The location is
+		/// configured on the server so callers cannot enumerate other locations.
+		/// </summary>
+		[HttpGet("Public/CurrentMonth")]
+		[AllowAnonymous]
+		public async Task<IActionResult> GetCurrentMonthPublic()
+		{
+			try
+			{
+				string locationId = _configuration["PublicPromotions:LocationId"];
+				if (string.IsNullOrWhiteSpace(locationId))
+				{
+					return StatusCode(500, new ApiResponse
+					{
+						Success = false,
+						Message = "Chưa cấu hình chi nhánh hiển thị khuyến mãi.",
+						Data = Array.Empty<object>()
+					});
+				}
+
+				DateTime monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+				DateTime nextMonthStart = monthStart.AddMonths(1);
+				List<view_dm_ChuongTrinhKhuyenMai> promotions = await _context.view_dm_ChuongTrinhKhuyenMai
+					.Where(p => p.LOC_ID == locationId && p.ISACTIVE && p.TUNGAY < nextMonthStart && p.DENNGAY >= monthStart)
+					.OrderBy(p => p.TUNGAY)
+					.ThenBy(p => p.NAME)
+					.ToListAsync();
+
+				List<string> promotionIds = promotions.Select(p => p.ID).ToList();
+				List<view_dm_ChuongTrinhKhuyenMai_Tang> gifts = promotionIds.Count == 0
+					? new List<view_dm_ChuongTrinhKhuyenMai_Tang>()
+					: await _context.view_dm_ChuongTrinhKhuyenMai_Tang
+						.Where(g => g.LOC_ID == locationId && promotionIds.Contains(g.ID_CHUONGTRINHKHUYENMAI))
+						.ToListAsync();
+				List<view_dm_ChuongTrinhKhuyenMai_YeuCau> requirements = promotionIds.Count == 0
+					? new List<view_dm_ChuongTrinhKhuyenMai_YeuCau>()
+					: await _context.view_dm_ChuongTrinhKhuyenMai_YeuCau
+						.Where(r => r.LOC_ID == locationId && promotionIds.Contains(r.ID_CHUONGTRINHKHUYENMAI))
+						.ToListAsync();
+				List<string> productIds = gifts.Select(g => g.ID_HANGHOA)
+					.Concat(requirements.Select(r => r.ID_HANGHOA))
+					.Where(id => !string.IsNullOrWhiteSpace(id))
+					.Distinct()
+					.ToList();
+				Dictionary<string, string> productPictures = productIds.Count == 0
+					? new Dictionary<string, string>()
+					: await _context.view_dm_HangHoa
+						.Where(h => h.LOC_ID == locationId && productIds.Contains(h.ID))
+						.Select(h => new { h.ID, h.PICTURE })
+						.ToDictionaryAsync(h => h.ID, h => h.PICTURE);
+
+				var result = promotions.Select(p => new
+				{
+					p.MA,
+					p.NAME,
+					p.TUNGAY,
+					p.DENNGAY,
+					p.CHIETKHAU,
+					p.TIENGIAM,
+					p.IS_YEUCAUCHITIET,
+					p.TONGTIEN_DATKM,
+					p.SOLUONG_DATKM,
+					p.NAME_DVT,
+					p.ISTONGHOADON,
+					p.ISTINHLUYTUYEN,
+					Gifts = gifts.Where(g => g.ID_CHUONGTRINHKHUYENMAI == p.ID)
+						.Select(g => new { g.NAME, g.SOLUONG, g.NAME_DVT, PICTURE = !string.IsNullOrWhiteSpace(g.ID_HANGHOA) && productPictures.ContainsKey(g.ID_HANGHOA) ? productPictures[g.ID_HANGHOA] : null }).ToList(),
+					Requirements = requirements.Where(r => r.ID_CHUONGTRINHKHUYENMAI == p.ID)
+						.Select(r => new { r.NAME, r.SOLUONG, r.NAME_DVT, r.SOTIEN, r.CHIETKHAU, r.TIENGIAM, r.NAME_HINHTHUC, PICTURE = !string.IsNullOrWhiteSpace(r.ID_HANGHOA) && productPictures.ContainsKey(r.ID_HANGHOA) ? productPictures[r.ID_HANGHOA] : null }).ToList()
+				}).ToList();
+
+				return Ok(new ApiResponse
+				{
+					Success = true,
+					Message = "Success",
+					Data = result
+				});
+			}
+			catch (Exception)
+			{
+				return StatusCode(500, new ApiResponse
+				{
+					Success = false,
+					Message = "Không thể tải danh sách khuyến mãi.",
+					Data = Array.Empty<object>()
+				});
+			}
 		}
 
 		[HttpGet("{LOC_ID}")]

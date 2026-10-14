@@ -35,7 +35,7 @@ namespace MyApiNetCore6.Controllers
 		{
 			try
 			{
-				List<dm_ThueSuat> lstValue = await (from e in _context.dm_ThueSuat
+				List<dm_ThueSuat> lstValue = await (from e in _context.dm_ThueSuat.AsNoTracking()
 													where e.LOC_ID == LOC_ID
 													orderby e.MA
 													select e).ToListAsync();
@@ -65,7 +65,7 @@ namespace MyApiNetCore6.Controllers
 			try
 			{
 				ValuesSearch = ValuesSearch.Replace("%2f", "/");
-				List<dm_ThueSuat> lstValue = await (from e in _context.dm_ThueSuat.Where((dm_ThueSuat e) => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch)
+				List<dm_ThueSuat> lstValue = await (from e in _context.dm_ThueSuat.AsNoTracking().Where((dm_ThueSuat e) => e.LOC_ID == LOC_ID).Where(KeyWhere, ValuesSearch)
 													orderby e.MA
 													select e).ToListAsync();
 				return Ok(new ApiResponse

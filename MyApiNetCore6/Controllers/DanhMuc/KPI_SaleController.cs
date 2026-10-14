@@ -1,18 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using DatabaseTHP;
-using DatabaseTHP.Class;
 using DatabaseTHP.StoredProcedure.Parameter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Configuration;
 using MyApiNetCore6.Data;
 using Newtonsoft.Json;
+using System.Linq.Dynamic.Core;
 
 namespace MyApiNetCore6.Controllers
 {
@@ -1028,7 +1022,7 @@ namespace MyApiNetCore6.Controllers
 						{
 							itm.ID = Guid.NewGuid().ToString();
 							itm.ID_KPI_KINHDOANH = KPI_KinhDoanh.ID;
-							_context.dm_KPI_KinhDoanh_NhanVien.Add(itm);
+							_context.dm_KPI_KinhDoanh_NhanVien.Add(itm); 
 						}
 					}
 					if (lstdm_KPI_KinhDoanh_YeuCau != null)

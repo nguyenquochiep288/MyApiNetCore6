@@ -14,6 +14,7 @@ using MyApiNetCore6.Data;
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
@@ -57,6 +58,9 @@ public class GetIDMaxController : ControllerBase
   {
     if (string.IsNullOrEmpty(NgayLap))
       NgayLap = DateTime.Now.ToString("yyyy-MM-dd");
+    if (string.IsNullOrWhiteSpace(TableName) || !Regex.IsMatch(TableName, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+      return new ApiResponse() { Success = false, Message = "Tên bảng không hợp lệ", Data = "" };
+
     string Value = "";
     ApiResponse apiResponse = new ApiResponse();
     DbConnection conn = this._context.Database.GetDbConnection();
@@ -66,7 +70,23 @@ public class GetIDMaxController : ControllerBase
         conn.Open();
       await using (DbCommand command = conn.CreateCommand())
       {
-        command.CommandText = $"SELECT ISNULL(MAX(SOPHIEU), 0) FROM {TableName} WHERE CAST(NGAYLAP AS date) = '{NgayLap}' {(string.IsNullOrEmpty(LOC_ID) ? "" : $" AND LOC_ID = '{LOC_ID}'")}";
+        command.CommandText = $"SELECT ISNULL(MAX(SOPHIEU), 0) FROM [{TableName}] WHERE CAST(NGAYLAP AS date) = @NgayLap";
+        DbParameter dateParameter = command.CreateParameter();
+        dateParameter.ParameterName = "@NgayLap";
+        dateParameter.DbType = DbType.String;
+        dateParameter.Value = NgayLap;
+        command.Parameters.Add(dateParameter);
+
+        if (!string.IsNullOrEmpty(LOC_ID))
+        {
+          command.CommandText += " AND LOC_ID = @LOC_ID";
+          DbParameter locationParameter = command.CreateParameter();
+          locationParameter.ParameterName = "@LOC_ID";
+          locationParameter.DbType = DbType.String;
+          locationParameter.Value = LOC_ID;
+          command.Parameters.Add(locationParameter);
+        }
+
         object max = await command.ExecuteScalarAsync();
         if (max != null)
           Value = max.ToString() ?? "0";
