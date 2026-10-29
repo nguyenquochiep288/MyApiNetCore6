@@ -7,7 +7,7 @@ using DatabaseTHP.StoredProcedure;
 
 namespace MyApiNetCore6.Data
 {
-    public class dbTrangHiepPhatContext : DbContext
+    public partial class dbTrangHiepPhatContext : DbContext
     {
         public dbTrangHiepPhatContext(DbContextOptions<dbTrangHiepPhatContext> opt) : base(opt)
         {
@@ -135,11 +135,41 @@ namespace MyApiNetCore6.Data
         public virtual DbSet<ct_HoaDon> ct_HoaDon { get; set; }
         public virtual DbSet<ct_HoaDon_ChiTiet> ct_HoaDon_ChiTiet { get; set; }
         public virtual DbSet<dm_HangHoa_KhungGia_HangHoa> dm_HangHoa_KhungGia_HangHoa { get; set; }
+        public virtual DbSet<PriceFormulaRule> dm_CongThucGia { get; set; }
+        public virtual DbSet<PriceFormulaComponent> dm_CongThucGia_ThanhPhan { get; set; }
+        public virtual DbSet<PriceFormulaGroupLink> dm_CongThucGia_NhomHangHoa { get; set; }
+        public virtual DbSet<PriceCalculationHistory> PriceCalculationHistories { get; set; }
         
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<PriceFormulaRule>().HasKey(x => new { x.LOC_ID, x.ID });
+            modelBuilder.Entity<PriceFormulaRule>().HasMany(x => x.Components)
+                .WithOne().HasForeignKey(x => new { x.LOC_ID, x.ID_CONGTHUCGIA })
+                .HasPrincipalKey(x => new { x.LOC_ID, x.ID }).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<PriceFormulaRule>().HasMany(x => x.Groups)
+                .WithOne().HasForeignKey(x => new { x.LOC_ID, x.ID_CONGTHUCGIA })
+                .HasPrincipalKey(x => new { x.LOC_ID, x.ID }).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<PriceFormulaRule>().Property(x => x.TUNGAY).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceFormulaRule>().Property(x => x.DENNGAY).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceFormulaRule>().Property(x => x.THOIGIANSUA).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceFormulaRule>().Property(x => x.THOIGIANTHEM).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceFormulaComponent>().HasKey(x => new { x.LOC_ID, x.ID });
+            modelBuilder.Entity<PriceFormulaComponent>().Property(x => x.GIATRI_MACDINH).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceFormulaGroupLink>().HasKey(x => new { x.LOC_ID, x.ID_CONGTHUCGIA, x.ID_NHOMHANGHOA });
+            modelBuilder.Entity<PriceCalculationHistory>().ToTable("dm_CongThucGia_LichSuApDung").HasKey(x => new { x.LOC_ID, x.ID });
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.GIACU).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.TYLE_QD).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.GIA_QD_CU).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.GIAMUA_GANNHAT).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.GIA_MOI).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.GIA_QD_MOI).HasPrecision(18, 4);
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.NGAYNHAP_GANNHAT).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.NGUON_GIA_NHAP).HasMaxLength(20).HasDefaultValue("PHIEUNHAP");
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.THOIGIANTHEM).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.THOIGIAN_KHOIPHUC).HasColumnType("datetime2(0)");
+            modelBuilder.Entity<PriceCalculationHistory>().Property(x => x.ID_NGUOI_KHOIPHUC).HasMaxLength(50);
             modelBuilder.Entity<dm_LoaiHoaDon>()
      .HasKey(m => new { m.LOC_ID, m.ID, });
             modelBuilder.Entity<dm_HangHoa_KhungGia_HangHoa>()
@@ -214,6 +244,8 @@ namespace MyApiNetCore6.Data
             .HasKey(m => new { m.LOC_ID, m.ID, });
             modelBuilder.Entity<dm_LoaiPhieuThu>()
             .HasKey(m => new { m.LOC_ID, m.ID, });
+            modelBuilder.Entity<dm_LoaiPhieuNhap>().Property(x => x.ISNHAPTRAHANG).HasDefaultValue(false);
+            modelBuilder.Entity<dm_LoaiPhieuXuat>().Property(x => x.ISTRAHANG).HasDefaultValue(false);
             modelBuilder.Entity<dm_LoaiPhieuNhap>()
            .HasKey(m => new { m.LOC_ID, m.ID, });
             modelBuilder.Entity<dm_LoaiPhieuXuat>()
@@ -326,6 +358,19 @@ namespace MyApiNetCore6.Data
      .HasKey(m => new { m.LOC_ID, m.ID });
             modelBuilder.Entity<AspNetRequest>()
      .HasKey(m => new { m.LOC_ID, m.ID });
+            modelBuilder.Entity<PriceFormulaRule>()
+                .HasKey(m => new { m.LOC_ID, m.ID });
+            modelBuilder.Entity<PriceFormulaComponent>()
+                .HasKey(m => new { m.LOC_ID, m.ID });
+            modelBuilder.Entity<PriceFormulaRule>()
+                .HasMany(m => m.Components)
+                .WithOne()
+                .HasForeignKey(m => new { m.LOC_ID, m.ID_CONGTHUCGIA })
+                .HasPrincipalKey(m => new { m.LOC_ID, m.ID })
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<PriceFormulaComponent>()
+                .Property(m => m.GIATRI_MACDINH)
+                .HasPrecision(18, 4);
         }
     }
 }

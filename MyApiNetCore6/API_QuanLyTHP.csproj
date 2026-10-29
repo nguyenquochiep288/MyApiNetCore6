@@ -56,6 +56,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\Shared\CatalogFlagDefinitions.cs" Link="Shared\CatalogFlagDefinitions.cs" />
     <ProjectReference Include="..\..\DatabaseTHP\DatabaseTHP.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
@@ -29,7 +29,28 @@ namespace MyApiNetCore6.Controllers
 			_configuration = configuration;
 		}
 
-		[HttpGet("{LOC_ID}")]
+        public class TypeInputReturnFlagRequest
+        {
+            public bool ENABLED { get; set; }
+            public string? USER_ID { get; set; }
+        }
+
+        [HttpPut("SetReturnFlag/{LOC_ID}/{ID}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> SetReturnFlag(string LOC_ID, string ID, [FromBody] TypeInputReturnFlagRequest request)
+        {
+            var entity = await _context.dm_LoaiPhieuNhap.FirstOrDefaultAsync(x => x.LOC_ID == LOC_ID && x.ID == ID);
+            if (entity == null) return Ok(new ApiResponse { Success = false, Message = "Không tìm thấy loại phiếu." });
+            if (request.USER_ID != null && request.USER_ID.Length > 50)
+                return Ok(new ApiResponse { Success = false, Message = "Người sửa không hợp lệ." });
+            entity.ISNHAPTRAHANG = request.ENABLED;
+            entity.THOIGIANSUA = DateTime.UtcNow.AddHours(7);
+            entity.ID_NGUOISUA = request.USER_ID;
+            new AuditLogController(_context, _configuration).InserAuditLog();
+            await _context.SaveChangesAsync();
+            return Ok(new ApiResponse { Success = true, Message = "Đã cập nhật phân loại trả hàng." });
+        }
+        [HttpGet("{LOC_ID}")]
 		[Authorize(Roles = "User")]
 		public async Task<IActionResult> GetTypeInput(string LOC_ID)
 		{
