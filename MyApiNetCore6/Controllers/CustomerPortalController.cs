@@ -79,11 +79,19 @@ public class CustomerPortalController : ControllerBase
                     where link.LocId == loc && link.IsActive && (link.ExpiresUtc == null || link.ExpiresUtc > now)
                     select new { link.CustomerId, Code = c.MA, Name = c.NAME, link.CreatedUtc, link.ExpiresUtc, link.LastAccessUtc };
         const int pageSize = 25;
-        var total = await query.CountAsync();
-        page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
-        var rows = await query.OrderByDescending(x => x.LastAccessUtc).ThenByDescending(x => x.CreatedUtc)
-            .ThenBy(x => x.CustomerId).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-        return Ok(new { Total = total, Page = page, PageSize = pageSize, Rows = rows });
+        try
+        {
+            var total = await query.CountAsync();
+            page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
+            var rows = await query.OrderByDescending(x => x.LastAccessUtc).ThenByDescending(x => x.CreatedUtc)
+                .ThenBy(x => x.CustomerId).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return Ok(new { Total = total, Page = page, PageSize = pageSize, Rows = rows });
+        }
+        catch (SqlException ex) when (ex.Number == 207 || ex.Number == 208)
+        {
+            logger.LogError("Active portal links query failed: SQL {Number}, trace {TraceId}.", ex.Number, HttpContext.TraceIdentifier);
+            return StatusCode(503, new { Code = "PORTAL_LINK_SCHEMA_MISSING" });
+        }
     }
 
     [HttpGet("links/{loc}/{customerId}")]
