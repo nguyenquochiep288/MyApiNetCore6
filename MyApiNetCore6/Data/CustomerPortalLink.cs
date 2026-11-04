@@ -17,6 +17,7 @@ public class CustomerPortalLink
     public bool IsActive { get; set; }
     public DateTime CreatedUtc { get; set; }
     public DateTime? ExpiresUtc { get; set; }
+    public DateTime? LastAccessUtc { get; set; }
     public DateTime? RevokedUtc { get; set; }
     [StringLength(256)] public string CreatedBy { get; set; } = "";
     [Timestamp] public byte[] Version { get; set; } = Array.Empty<byte>();

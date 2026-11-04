@@ -27,28 +27,63 @@ public class CustomerPortalController : ControllerBase
     { this.db = db; this.config = config; this.logger = logger; }
 
     // Management requires both customer-edit permission and view permission for every exposed module.
-    private async Task<bool> CanManage(string loc, string customerId)
+    private async Task<string?> ManagementGroup(string loc)
     {
         var username = User.Identity?.Name;
-        if (string.IsNullOrEmpty(username)) return false;
+        if (string.IsNullOrEmpty(username)) return null;
         var user = await db.view_AspNetUsers.AsNoTracking().Where(x => x.UserName == username)
             .Select(x => new { x.ID_NHOMQUYEN }).FirstOrDefaultAsync();
-        if (user == null) return false;
-        if (user.ID_NHOMQUYEN == "-1") return true;
+        if (user == null) return null;
+        if (user.ID_NHOMQUYEN == "-1") return "-1";
         var group = await db.web_NhomQuyen.AsNoTracking().Where(x => x.ID == user.ID_NHOMQUYEN && x.ISACTIVE)
             .Select(x => new { x.ID, x.LOC_ID, x.ISPHANQUYEN }).FirstOrDefaultAsync();
-        if (group == null) return false;
+        if (group == null) return null;
         // AccountsController maps unrestricted groups to the MVC administrator sentinel -1.
         // The database keeps the group's real ID, so checking that ID alone denies administrators.
-        if (!group.ISPHANQUYEN) return true;
-        if (group.LOC_ID != loc) return false;
+        if (!group.ISPHANQUYEN) return "-1";
+        if (group.LOC_ID != loc) return null;
         var rights = await db.view_web_PhanQuyen.AsNoTracking().Where(x => x.LOC_ID == loc && x.ID_NHOMQUYEN == group.ID && x.TRANGTHAI).ToListAsync();
         bool Has(string controller, string right) => rights.Any(x => string.Equals(x.CONTROLLERNAME, controller, StringComparison.OrdinalIgnoreCase) && string.Equals(x.MAQUYEN, right, StringComparison.OrdinalIgnoreCase));
-        if (!Has("Customer", "Edit") || !new[] { "Deposit", "Output", "Invoiced", "DebtCustomer" }.All(x => Has(x, "View"))) return false;
-        var customer = await db.dm_KhachHang.AsNoTracking().FirstOrDefaultAsync(x => x.LOC_ID == loc && x.ID == customerId);
-        if (customer == null) return false;
-        var customerGroup = await db.web_PhanQuyenNhomKhachHang.AsNoTracking().FirstOrDefaultAsync(x => x.LOC_ID == loc && x.ID_NHOMQUYEN == group.ID && x.ID_NHOMKHACHHANG == customer.ID_NHOMKHACHHANG && x.ISACTIVE);
-        return customerGroup != null && (!customerGroup.ISPHANQUYENKHACHHANG || await db.web_PhanQuyenKhachHang.AnyAsync(x => x.LOC_ID == loc && x.ID_NHOMQUYEN == group.ID && x.ID_KHACHHANG == customerId && x.ISACTIVE));
+        if (!Has("Customer", "Edit") || !new[] { "Deposit", "Output", "Invoiced", "DebtCustomer" }.All(x => Has(x, "View"))) return null;
+        return group.ID;
+    }
+
+    private IQueryable<dm_KhachHang> ManagedCustomers(string loc, string group)
+    {
+        var customers = db.dm_KhachHang.AsNoTracking().Where(c => c.LOC_ID == loc);
+        if (group == "-1") return customers;
+        return customers.Where(c => db.web_PhanQuyenNhomKhachHang.Any(g => g.LOC_ID == loc && g.ID_NHOMQUYEN == group
+            && g.ID_NHOMKHACHHANG == c.ID_NHOMKHACHHANG && g.ISACTIVE && (!g.ISPHANQUYENKHACHHANG ||
+                db.web_PhanQuyenKhachHang.Any(p => p.LOC_ID == loc && p.ID_NHOMQUYEN == group && p.ID_KHACHHANG == c.ID && p.ISACTIVE))));
+    }
+
+    private async Task<bool> CanManage(string loc, string customerId)
+    {
+        var group = await ManagementGroup(loc);
+        return group != null && (group == "-1" || await ManagedCustomers(loc, group).AnyAsync(c => c.ID == customerId));
+    }
+
+    [HttpGet("links/{loc}")]
+    [Authorize(Roles = "User")]
+    public async Task<IActionResult> ActiveLinks(string loc, int page = 1, string? search = null)
+    {
+        if (page < 1 || page > 100000 || search?.Length > 100) return BadRequest();
+        var group = await ManagementGroup(loc);
+        if (group == null) return Forbid();
+        var customers = ManagedCustomers(loc, group).Where(c => c.ISACTIVE);
+        if (!string.IsNullOrWhiteSpace(search))
+            customers = customers.Where(c => c.MA.Contains(search.Trim()) || c.NAME.Contains(search.Trim()));
+        var now = DateTime.UtcNow;
+        var query = from link in db.CustomerPortalLinks.AsNoTracking()
+                    join c in customers on link.CustomerId equals c.ID
+                    where link.LocId == loc && link.IsActive && (link.ExpiresUtc == null || link.ExpiresUtc > now)
+                    select new { link.CustomerId, Code = c.MA, Name = c.NAME, link.CreatedUtc, link.ExpiresUtc, link.LastAccessUtc };
+        const int pageSize = 25;
+        var total = await query.CountAsync();
+        page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
+        var rows = await query.OrderByDescending(x => x.LastAccessUtc).ThenByDescending(x => x.CreatedUtc)
+            .ThenBy(x => x.CustomerId).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return Ok(new { Total = total, Page = page, PageSize = pageSize, Rows = rows });
     }
 
     [HttpGet("links/{loc}/{customerId}")]
@@ -106,6 +141,7 @@ public class CustomerPortalController : ControllerBase
         link.ProtectedToken = PortalLinkTokenStore.Protect(token, config["JWT:Secret"], loc, customerId);
         link.IsActive = true;
         link.CreatedUtc = DateTime.UtcNow;
+        link.LastAccessUtc = null;
         link.ExpiresUtc = request.ValidDays.HasValue ? DateTime.UtcNow.AddDays(request.ValidDays.Value) : null;
         link.RevokedUtc = null;
         link.CreatedBy = User.Identity?.Name ?? "";
@@ -150,31 +186,15 @@ public class CustomerPortalController : ControllerBase
             if (link == null) return NotFound(new { Message = "Link không hợp lệ hoặc đã hết hiệu lực." });
             var customer = await db.dm_KhachHang.AsNoTracking().FirstOrDefaultAsync(x => x.LOC_ID == link.LocId && x.ID == link.CustomerId && x.ISACTIVE);
             if (customer == null) return NotFound(new { Message = "Link không hợp lệ hoặc đã hết hiệu lực." });
-            if (request.Section == "payment") return await Payment(link, customer, request.Amount);
-            var today = DateTime.UtcNow.AddHours(7).Date;
-            var monthStart = new DateTime(today.Year, today.Month, 1);
-            DateTime from = (request.From ?? monthStart).Date, to = (request.To ?? monthStart.AddMonths(1).AddDays(-1)).Date;
-            if (from < new DateTime(1900, 1, 1) || to < from || to >= new DateTime(9999, 12, 31) || (to - from).TotalDays > 1096)
-                return BadRequest(new { Message = "Chọn khoảng thời gian hợp lệ, tối đa 3 năm." });
-            if (request.Page < 1 || request.Page > 100000 || (request.Search?.Length ?? 0) > 100 || (request.Id?.Length ?? 0) > 50)
-                return BadRequest(new { Message = "Tham số tra cứu không hợp lệ." });
-            var documents = Documents(link);
-            if (!string.IsNullOrEmpty(request.Id))
+            var result = await ReadSection(link, customer, request);
+            if (result is OkObjectResult)
             {
-                var doc = await documents.FirstOrDefaultAsync(x => x.Kind == request.Section && x.Id == request.Id);
-                if (doc == null) return NotFound(new { Message = "Không tìm thấy chứng từ." });
-                return Ok(new { Document = doc, Lines = await Lines(link, doc) });
+                await db.Database.ExecuteSqlInterpolatedAsync($@"UPDATE dbo.web_CustomerPortalLink
+                    SET LastAccessUtc = SYSUTCDATETIME()
+                    WHERE Id = {link.Id} AND TokenHash = {hash} AND IsActive = 1
+                    AND (ExpiresUtc IS NULL OR ExpiresUtc > SYSUTCDATETIME())");
             }
-            if (request.Section == "overview") return await Overview(link, customer, from, to);
-            if (request.Section == "debt") return await Debt(link, customer, from, to, request);
-            if (request.Section == "debt-export") return await Statement(link, customer, from, to);
-            if (!new[] { "orders", "outputs", "invoices", "receipts" }.Contains(request.Section)) return BadRequest();
-            var filtered = documents.Where(x => x.Kind == request.Section && x.Date >= from && x.Date < to.AddDays(1));
-            if (!string.IsNullOrWhiteSpace(request.Search)) filtered = filtered.Where(x => x.Code.Contains(request.Search) || (x.InvoiceNumber != null && x.InvoiceNumber.Contains(request.Search)));
-            var total = await filtered.CountAsync();
-            var sum = await filtered.SumAsync(x => (double?)x.Total) ?? 0;
-            var rows = await filtered.OrderByDescending(x => x.Date).ThenBy(x => x.Id).Skip((request.Page - 1) * 25).Take(25).ToListAsync();
-            return Ok(new { Rows = rows, Total = total, Sum = sum, Page = request.Page, PageSize = 25 });
+            return result;
         }
         catch (Exception ex)
         {
@@ -182,6 +202,35 @@ public class CustomerPortalController : ControllerBase
             logger.LogError("Customer portal read failed ({ErrorType}, SQL {SqlNumber}).", ex.GetType().Name, (ex as SqlException)?.Number);
             return StatusCode(503, new { Message = "Chưa thể tải dữ liệu. Vui lòng thử lại sau." });
         }
+    }
+
+    private async Task<IActionResult> ReadSection(CustomerPortalLink link, dm_KhachHang customer, PortalReadRequest request)
+    {
+        if (request.Section == "payment") return await Payment(link, customer, request.Amount);
+        var today = DateTime.UtcNow.AddHours(7).Date;
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        DateTime from = (request.From ?? monthStart).Date, to = (request.To ?? monthStart.AddMonths(1).AddDays(-1)).Date;
+        if (from < new DateTime(1900, 1, 1) || to < from || to >= new DateTime(9999, 12, 31) || (to - from).TotalDays > 1096)
+            return BadRequest(new { Message = "Chọn khoảng thời gian hợp lệ, tối đa 3 năm." });
+        if (request.Page < 1 || request.Page > 100000 || (request.Search?.Length ?? 0) > 100 || (request.Id?.Length ?? 0) > 50)
+            return BadRequest(new { Message = "Tham số tra cứu không hợp lệ." });
+        var documents = Documents(link);
+        if (!string.IsNullOrEmpty(request.Id))
+        {
+            var doc = await documents.FirstOrDefaultAsync(x => x.Kind == request.Section && x.Id == request.Id);
+            if (doc == null) return NotFound(new { Message = "Không tìm thấy chứng từ." });
+            return Ok(new { Document = doc, Lines = await Lines(link, doc) });
+        }
+        if (request.Section == "overview") return await Overview(link, customer, from, to);
+        if (request.Section == "debt") return await Debt(link, customer, from, to, request);
+        if (request.Section == "debt-export") return await Statement(link, customer, from, to);
+        if (!new[] { "orders", "outputs", "invoices", "receipts" }.Contains(request.Section)) return BadRequest();
+        var filtered = documents.Where(x => x.Kind == request.Section && x.Date >= from && x.Date < to.AddDays(1));
+        if (!string.IsNullOrWhiteSpace(request.Search)) filtered = filtered.Where(x => x.Code.Contains(request.Search) || (x.InvoiceNumber != null && x.InvoiceNumber.Contains(request.Search)));
+        var total = await filtered.CountAsync();
+        var sum = await filtered.SumAsync(x => (double?)x.Total) ?? 0;
+        var rows = await filtered.OrderByDescending(x => x.Date).ThenBy(x => x.Id).Skip((request.Page - 1) * 25).Take(25).ToListAsync();
+        return Ok(new { Rows = rows, Total = total, Sum = sum, Page = request.Page, PageSize = 25 });
     }
 
     private IQueryable<PortalDocument> Documents(CustomerPortalLink link)
