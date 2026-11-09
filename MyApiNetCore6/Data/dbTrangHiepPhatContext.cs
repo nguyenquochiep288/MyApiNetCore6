@@ -144,6 +144,7 @@ namespace MyApiNetCore6.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<MyApiNetCore6.Services.OpeningStockCost>().HasKey(x => new { x.LOC_ID, x.ID_HANGHOAKHO });
             modelBuilder.Entity<PriceFormulaRule>().HasKey(x => new { x.LOC_ID, x.ID });
             modelBuilder.Entity<PriceFormulaRule>().HasMany(x => x.Components)
                 .WithOne().HasForeignKey(x => new { x.LOC_ID, x.ID_CONGTHUCGIA })

@@ -721,7 +721,7 @@ namespace MyApiNetCore6.Controllers
 					}
 					AuditLogController auditLog = new AuditLogController(_context, _configuration);
 					auditLog.InserAuditLog();
-					await _context.SaveChangesAsync();
+					await MyApiNetCore6.Services.StockCostPosting.SaveMovements(_context);
 					transaction.Commit();
 					foreach (KeyValuePair<string, ct_PhieuXuat> itm3 in lstPhieuXuatCheck)
 					{

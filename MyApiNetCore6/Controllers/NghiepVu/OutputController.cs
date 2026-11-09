@@ -276,6 +276,12 @@ namespace MyApiNetCore6.Controllers
 							{
 								_context.ct_PhieuXuat_ChiTiet.Add(itm2);
 							}
+							else
+							{
+								var stored = lstPhieuNhap_ChiTiet.Single(x => x.ID == itm2.ID);
+								itm2.GIAVON = stored.GIAVON;
+								_context.Entry(stored).CurrentValues.SetValues(itm2);
+							}
 							continue;
 						}
 						return Ok(new ApiResponse
@@ -302,7 +308,7 @@ namespace MyApiNetCore6.Controllers
 				_context.Entry(Output).State = EntityState.Modified;
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
-				await _context.SaveChangesAsync();
+				await MyApiNetCore6.Services.StockCostPosting.SaveMovements(_context);
 				transaction.Commit();
 				v_ct_PhieuXuat ct_PhieuXuat2 = new v_ct_PhieuXuat
 				{
@@ -465,7 +471,7 @@ namespace MyApiNetCore6.Controllers
 				_context.ct_PhieuXuat.Add(Output);
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
-				await _context.SaveChangesAsync();
+				await MyApiNetCore6.Services.StockCostPosting.SaveMovements(_context);
 				transaction.Commit();
 				List<ct_PhieuXuat> lstPhieuDatHangCheck = await (from e in _context.ct_PhieuXuat
 																 where e.LOC_ID == Output.LOC_ID && e.MAPHIEU == Output.MAPHIEU
@@ -614,7 +620,7 @@ namespace MyApiNetCore6.Controllers
 				_context.ct_PhieuXuat.Remove(Output);
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
-				await _context.SaveChangesAsync();
+				await MyApiNetCore6.Services.StockCostPosting.SaveMovements(_context);
 				transaction.Commit();
 				return Ok(new ApiResponse
 				{

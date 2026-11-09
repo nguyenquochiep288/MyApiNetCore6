@@ -57,6 +57,9 @@
 
   <ItemGroup>
     <Compile Include="..\..\Shared\CatalogFlagDefinitions.cs" Link="Shared\CatalogFlagDefinitions.cs" />
+    <EmbeddedResource Include="Services\GrossProfitReport.sql" LogicalName="Reports.GrossProfit.sql" />
+    <EmbeddedResource Include="Services\CostAuditReport.sql" LogicalName="Reports.CostAudit.sql" />
+    <EmbeddedResource Include="Services\ReturnCostEstimates.sql" LogicalName="Reports.ReturnCostEstimates.sql" />
     <ProjectReference Include="..\..\DatabaseTHP\DatabaseTHP.csproj" />
   </ItemGroup>
 
