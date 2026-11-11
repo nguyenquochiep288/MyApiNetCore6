@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
@@ -41,6 +41,7 @@ namespace MyApiNetCore6.Controllers
         {
             var entity = await _context.dm_LoaiPhieuNhap.FirstOrDefaultAsync(x => x.LOC_ID == LOC_ID && x.ID == ID);
             if (entity == null) return Ok(new ApiResponse { Success = false, Message = "Không tìm thấy loại phiếu." });
+            if (entity.ISSYSTEM) return Ok(new ApiResponse { Success = false, Message = "Không thể sửa loại phiếu hệ thống." });
             if (request.USER_ID != null && request.USER_ID.Length > 50)
                 return Ok(new ApiResponse { Success = false, Message = "Người sửa không hợp lệ." });
             entity.ISNHAPTRAHANG = request.ENABLED;
@@ -167,7 +168,9 @@ namespace MyApiNetCore6.Controllers
 						Data = ""
 					});
 				}
-				if (!TypePaymentExistsID(LOC_ID, TypePayment.ID))
+				var systemFlag = await _context.dm_LoaiPhieuNhap.Where(x => x.LOC_ID == LOC_ID && x.ID == TypePayment.ID)
+				    .Select(x => (bool?)x.ISSYSTEM).FirstOrDefaultAsync();
+				if (!systemFlag.HasValue)
 				{
 					return Ok(new ApiResponse
 					{
@@ -176,6 +179,7 @@ namespace MyApiNetCore6.Controllers
 						Data = ""
 					});
 				}
+				if (systemFlag.Value) return Ok(new ApiResponse { Success = false, Message = "Không thể sửa loại phiếu hệ thống." });
 				_context.Entry(TypePayment).State = EntityState.Modified;
 				AuditLogController auditLog = new AuditLogController(_context, _configuration);
 				auditLog.InserAuditLog();
@@ -186,6 +190,10 @@ namespace MyApiNetCore6.Controllers
 					Message = "Success",
 					Data = TypePayment
 				});
+			}
+			catch (CatalogSystemDefaultException ex)
+			{
+				return Ok(new ApiResponse { Success = false, Message = ex.Message });
 			}
 			catch (DbUpdateConcurrencyException ex)
 			{
@@ -253,6 +261,7 @@ namespace MyApiNetCore6.Controllers
 						Data = ""
 					});
 				}
+				if (TypePayment.ISSYSTEM) return Ok(new ApiResponse { Success = false, Message = "Không thể xóa loại phiếu hệ thống." });
 				ExecuteStoredProc ExecuteStoredProc = new ExecuteStoredProc(_context, _configuration);
 				ApiResponse apiResponse = await ExecuteStoredProc.CheckDelete(TypePayment, TypePayment.ID, TypePayment.NAME);
 				if (!apiResponse.Success)
@@ -290,11 +299,6 @@ namespace MyApiNetCore6.Controllers
 		private bool TypePaymentExistsMA(string LOC_ID, string MA)
 		{
 			return _context.dm_LoaiPhieuNhap.Any((dm_LoaiPhieuNhap e) => e.LOC_ID == LOC_ID && e.MA == MA);
-		}
-
-		private bool TypePaymentExistsID(string LOC_ID, string ID)
-		{
-			return _context.dm_LoaiPhieuNhap.Any((dm_LoaiPhieuNhap e) => e.LOC_ID == LOC_ID && e.ID == ID);
 		}
 
 		private bool TypePaymentExists(dm_LoaiPhieuNhap Position)

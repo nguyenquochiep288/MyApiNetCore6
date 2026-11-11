@@ -10,6 +10,11 @@ using THP.Catalogs;
 
 namespace MyApiNetCore6.Data
 {
+    public sealed class CatalogSystemDefaultException : InvalidOperationException
+    {
+        public CatalogSystemDefaultException() : base("Loại phiếu hệ thống đang là mặc định. Không thể thay đổi mặc định của danh mục này.") { }
+    }
+
     public partial class dbTrangHiepPhatContext
     {
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -61,6 +66,8 @@ IF @result < 0 THROW 51000, N'Không thể khóa cập nhật mặc định. Vui
                         .MakeGenericMethod(winner.Metadata.ClrType);
                     var others = await ((Task<List<object>>)method.Invoke(this, new object[] { locId, id, cancellationToken })!)
                         .ConfigureAwait(false);
+                    if (others.Any(x => x is dm_LoaiPhieuNhap { ISSYSTEM: true } or dm_LoaiPhieuXuat { ISSYSTEM: true }))
+                        throw new CatalogSystemDefaultException();
                     foreach (var other in others)
                     {
                         var entry = Entry(other);

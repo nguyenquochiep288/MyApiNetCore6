@@ -42,7 +42,9 @@ namespace MyApiNetCore6.Controllers
             if (entity == null)
                 return NotFound(new ApiResponse { Success = false, Message = "Không tìm thấy dòng danh mục." });
 
-            // Only the requested flag and audit fields are changed, including on system rows.
+            if (entity is dm_LoaiPhieuNhap { ISSYSTEM: true } or dm_LoaiPhieuXuat { ISSYSTEM: true })
+                return BadRequest(new ApiResponse { Success = false, Message = "Không thể sửa loại phiếu hệ thống." });
+
             var entry = context.Entry(entity);
             entry.Property(request.FIELD).CurrentValue = request.ENABLED.Value;
             entry.Property(request.FIELD).IsModified = true;
@@ -51,7 +53,11 @@ namespace MyApiNetCore6.Controllers
             if (entityType.FindProperty("ID_NGUOISUA") != null)
                 entry.Property("ID_NGUOISUA").CurrentValue = request.USER_ID;
             new AuditLogController(context, configuration).InserAuditLog();
-            await context.SaveChangesAsync(cancellationToken);
+            try { await context.SaveChangesAsync(cancellationToken); }
+            catch (CatalogSystemDefaultException ex)
+            {
+                return BadRequest(new ApiResponse { Success = false, Message = ex.Message });
+            }
             return Ok(new ApiResponse { Success = true, Message = "Đã lưu thay đổi.",
                 Data = new { ID = id, FIELD = request.FIELD, ENABLED = request.ENABLED.Value } });
         }

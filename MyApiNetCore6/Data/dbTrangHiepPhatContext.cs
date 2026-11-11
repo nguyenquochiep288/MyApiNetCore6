@@ -245,8 +245,8 @@ namespace MyApiNetCore6.Data
             .HasKey(m => new { m.LOC_ID, m.ID, });
             modelBuilder.Entity<dm_LoaiPhieuThu>()
             .HasKey(m => new { m.LOC_ID, m.ID, });
-            modelBuilder.Entity<dm_LoaiPhieuNhap>().Property(x => x.ISNHAPTRAHANG).HasDefaultValue(false);
-            modelBuilder.Entity<dm_LoaiPhieuXuat>().Property(x => x.ISTRAHANG).HasDefaultValue(false);
+            modelBuilder.Entity<dm_LoaiPhieuNhap>().Property(x => x.ISNHAPTRAHANG).ValueGeneratedNever();
+            modelBuilder.Entity<dm_LoaiPhieuXuat>().Property(x => x.ISTRAHANG).ValueGeneratedNever();
             modelBuilder.Entity<dm_LoaiPhieuNhap>()
            .HasKey(m => new { m.LOC_ID, m.ID, });
             modelBuilder.Entity<dm_LoaiPhieuXuat>()
