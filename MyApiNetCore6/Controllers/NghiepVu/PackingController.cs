@@ -153,7 +153,9 @@ public class PackingController : ControllerBase
             SELECT p.ID, orderCode.Code, k.NAME AS DepotName,v.OutputCode,v.InputCode,p.SourceKg,p.CreatedAt,v.LastInputAt AS ReceivedAt,
                 c.SourceName, state.CostState, closing.Closed,
                 v.VoucherCount,
-                CASE WHEN closing.Closed=1 THEN p.SourceKg-p.LossKg ELSE b.ReceivedKg END AS FinishedKg,
+                CASE WHEN p.InputId IS NOT NULL AND packing.FinishedKg IS NULL THEN p.SourceKg-p.LossKg
+                    WHEN closing.Closed=1 THEN COALESCE(b.ReceivedKg,0)+COALESCE(packing.FinishedKg,0)
+                    ELSE b.ReceivedKg END AS FinishedKg,
                 p.LossKg,
                 CASE WHEN closing.Closed=1 THEN CONVERT(decimal(18,4),100.0*p.LossKg/NULLIF(p.SourceKg,0)) END AS LossRate,
                 CASE WHEN closing.Closed=0 THEN c.CurrentCost ELSE p.MaterialCost END AS MaterialCost,
@@ -185,9 +187,11 @@ public class PackingController : ControllerBase
             ) c
             OUTER APPLY (
                 SELECT CASE WHEN COUNT(*)=COUNT(Quantity*PackageCost)
-                    THEN SUM(CONVERT(decimal(28,2),ROUND(Quantity*PackageCost,2))) END AS PackageCost
+                    THEN SUM(CONVERT(decimal(28,2),ROUND(Quantity*PackageCost,2))) END AS PackageCost,
+                    SUM(CONVERT(decimal(18,6),Quantity*KgPerUnit)) AS FinishedKg
                 FROM OPENJSON(CASE WHEN p.InputId IS NOT NULL THEN p.ReceiptJson END)
-                    WITH (Quantity decimal(18,6) '$.Quantity', PackageCost decimal(18,6) '$.PackageCost')
+                    WITH (Quantity decimal(18,6) '$.Quantity', PackageCost decimal(18,6) '$.PackageCost',
+                        KgPerUnit decimal(18,6) '$.KgPerUnit')
             ) packing
             CROSS APPLY (VALUES (CASE WHEN closing.Closed=0 THEN CASE WHEN b.ReceivedKg IS NULL THEN 'pending' ELSE 'partial' END
                 WHEN c.CurrentCost IS NULL OR p.MaterialCost IS NULL
@@ -625,8 +629,8 @@ public class PackingController : ControllerBase
             var actualKg = actual.Sum(x => x.Quantity * x.KgPerUnit);
             var closeWithLossOnly = request.FinalizeOrder && receivedKg > 0 && actual.Count == 0;
             if ((!closeWithLossOnly && !Positive(actualKg)) ||
-                (request.FinalizeOrder ? actualKg + request.LossKg != remainingKg : actualKg >= remainingKg))
-                return Invalid(request.FinalizeOrder ? "Kg thành phẩm và hao hụt phải bằng kg còn lại của lệnh."
+                (request.FinalizeOrder ? request.LossKg != Math.Max(0, remainingKg - actualKg) : actualKg >= remainingKg))
+                return Invalid(request.FinalizeOrder ? "Hao hụt phải bằng khối lượng thiếu. Nếu nhập đủ hoặc vượt thì hao hụt phải bằng 0."
                     : "Nhập từng đợt phải để lại khối lượng cho đợt chốt lệnh.");
             var stockIds = actual.Select(x => x.Stock).ToArray();
             var sourceIds = await Connection.QueryAsync<string>(
@@ -825,15 +829,17 @@ public class PackingController : ControllerBase
             lines = JsonSerializer.Deserialize<List<PackingActual>>(x.ReceiptJson) }).ToList();
         var received = partial.Sum(x => x.Kg);
         var materialCost = closed ? order.MaterialCost : await ReadMaterialCost(loc, order.ID);
+        var finalReceipt = order.ReceiptJson == null ? null : JsonSerializer.Deserialize<List<PackingActual>>(order.ReceiptJson);
         return new
         {
             order.ID, code = order.Code, order.Depot, order.OutputCode, order.InputCode, order.SourceKg, order.Labor, closed,
             materialCost, order.LossKg, order.LossCost, lines = ReadPlan(order),
-            receivedKg = closed ? order.SourceKg - order.LossKg : received,
+            receivedKg = order.InputId != null && finalReceipt == null ? order.SourceKg - order.LossKg
+                : received + (finalReceipt?.Sum(x => x.Quantity * x.KgPerUnit) ?? 0),
             remainingKg = closed ? 0 : order.SourceKg - received,
             remainingCommon = materialCost + order.Labor - partial.Sum(x => x.CommonCost),
             vouchers, partialReceipts = posted,
-            receipt = order.ReceiptJson == null ? null : JsonSerializer.Deserialize<List<PackingActual>>(order.ReceiptJson)
+            receipt = finalReceipt
         };
     }
 
