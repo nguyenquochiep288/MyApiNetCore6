@@ -354,7 +354,7 @@ public class PackingController : ControllerBase
             }
 
             if (await HasDeleteDependencies(loc, id, order, targetLinks, outputIds, inputIds, allOutputIds, allInputIds,
-                issued, received, issueDays.Values.DefaultIfEmpty(order.CreatedAt.Date).Min(),
+                issued, received, single?.Direction == 1,
                 receiptDays.Values.DefaultIfEmpty(order.CreatedAt.Date).Min()))
                 return Invalid("Đã có chứng từ liên quan hoặc hàng đã phát sinh xuất/đóng gói tiếp. Không thể xóa.");
 
@@ -393,7 +393,7 @@ public class PackingController : ControllerBase
 
     private Task<bool> HasDeleteDependencies(string loc, Guid id, PackingOrder order, List<PackingVoucher> links, string[] outputIds, string[] inputIds,
         string[] allOutputIds, string[] allInputIds,
-        List<ct_PhieuXuat_ChiTiet> issued, List<ct_PhieuNhap_ChiTiet> received, DateTime issueDay, DateTime receiptDay) =>
+        List<ct_PhieuXuat_ChiTiet> issued, List<ct_PhieuNhap_ChiTiet> received, bool recalculateReceipt, DateTime receiptDay) =>
         Connection.QuerySingleAsync<bool>(@"
             SELECT CONVERT(bit,CASE WHEN
                 EXISTS (SELECT 1 FROM dbo.ct_PhieuThu WHERE LOC_ID=@loc AND CHUNGTUKEMTHEO IN @codes)
@@ -409,15 +409,32 @@ public class PackingController : ControllerBase
                 OR EXISTS (SELECT 1 FROM dbo.ct_PhieuXuat_ChiTiet d
                     JOIN dbo.ct_PhieuXuat h ON h.LOC_ID=d.LOC_ID AND h.ID=d.ID_PHIEUXUAT
                     WHERE d.LOC_ID=@loc AND d.ID_HANGHOAKHO IN @finishedStocks AND h.ID NOT IN @outputIds
-                        AND COALESCE(h.THOIGIANTHEM,h.NGAYLAP)>=@receiptDay AND d.SOLUONG<>0)
+                        AND COALESCE(h.THOIGIANTHEM,h.NGAYLAP)>=@receiptDay AND d.SOLUONG<>0
+                        -- Regular issues can be repriced, but downstream packing may have posted receipts at the old cost.
+                        AND (@recalculateReceipt=0 OR EXISTS (
+                            SELECT 1 FROM dbo.ct_LenhDongGoi_NguyenLieu m
+                            JOIN dbo.ct_LenhDongGoi downstream ON downstream.LOC_ID=m.LOC_ID AND downstream.ID=m.OrderId
+                            WHERE m.LOC_ID=d.LOC_ID AND m.DetailId=d.ID
+                                AND (downstream.InputId IS NOT NULL OR downstream.ClosedWithoutReceipt=1
+                                    OR EXISTS (SELECT 1 FROM dbo.ct_LenhDongGoi_Dot b
+                                        WHERE b.LOC_ID=m.LOC_ID AND b.OrderId=m.OrderId AND b.Direction=1)))))
                 OR EXISTS (SELECT 1 FROM dbo.ct_LenhDongGoi_NguyenLieu m
                     JOIN dbo.ct_LenhDongGoi p ON p.LOC_ID=m.LOC_ID AND p.ID=m.OrderId
                     JOIN dbo.ct_PhieuXuat_ChiTiet raw ON raw.LOC_ID=m.LOC_ID AND raw.ID=m.DetailId
                     JOIN dbo.ct_PhieuXuat header ON header.LOC_ID=raw.LOC_ID AND header.ID=raw.ID_PHIEUXUAT
-                    WHERE m.LOC_ID=@loc AND m.StockId IN @sourceStocks AND p.ID<>@id
+                    WHERE m.LOC_ID=@loc AND p.ID<>@id AND raw.SOLUONG<>0
                         AND (p.InputId IS NOT NULL OR p.ClosedWithoutReceipt=1
                             OR EXISTS (SELECT 1 FROM dbo.ct_LenhDongGoi_Dot d WHERE d.LOC_ID=p.LOC_ID AND d.OrderId=p.ID AND d.Direction=1))
-                        AND COALESCE(header.THOIGIANTHEM,header.NGAYLAP)>=@issueDay)
+                        AND EXISTS (
+                            SELECT 1 FROM dbo.ct_PhieuXuat_ChiTiet removed
+                            JOIN dbo.ct_PhieuXuat origin ON origin.LOC_ID=removed.LOC_ID AND origin.ID=removed.ID_PHIEUXUAT
+                            WHERE removed.LOC_ID=m.LOC_ID AND removed.ID IN @details
+                                AND removed.ID_HANGHOAKHO=m.StockId AND removed.SOLUONG<>0
+                                -- Match TinhGiaVonHangKho for two output movements.
+                                AND (CONVERT(date,header.THOIGIANTHEM)>CONVERT(date,origin.THOIGIANTHEM)
+                                    OR (CONVERT(date,header.THOIGIANTHEM)=CONVERT(date,origin.THOIGIANTHEM)
+                                        AND (header.SOPHIEU>origin.SOPHIEU
+                                            OR (header.SOPHIEU=origin.SOPHIEU AND raw.ID>removed.ID))))))
                 THEN 1 ELSE 0 END)", new
             {
                 loc, id, outputIds, inputIds, allOutputIds, allInputIds,
@@ -425,8 +442,7 @@ public class PackingController : ControllerBase
                     .Append(order.Code).Append("DG-" + id.ToString("N")).ToArray(),
                 details = issued.Select(x => x.ID).ToArray(),
                 finishedStocks = received.Select(x => x.ID_HANGHOAKHO).ToArray(),
-                sourceStocks = issued.Select(x => x.ID_HANGHOAKHO).ToArray(),
-                issueDay, receiptDay
+                recalculateReceipt, receiptDay
             }, Transaction);
 
     [HttpGet("trace/{id:guid}")]
